@@ -473,10 +473,11 @@
       </div>
     </header>
     <nav class="pagebar">
-      <button class="tab-btn active" data-page="stunden" onclick="switchPage('stunden')">📄 <span>Stunden & Material</span></button>
-      <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">🔧 <span>Ausführungsprotokoll</span></button>
-      <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')">🚗 <span>Fahrtenbuch</span></button>
-      <button class="tab-btn" data-page="kunden" onclick="switchPage('kunden')">👥 <span>Kunden</span></button>
+      <button class="tab-btn active" data-page="stunden" onclick="switchPage('stunden')"><span>Stunden & Material</span></button>
+      <button class="tab-btn" data-page="installation" onclick="switchPage('installation')"><span>Ausführungsprotokoll</span></button>
+      <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')"><span>Fahrtenbuch</span></button>
+      <button class="tab-btn" data-page="material" onclick="switchPage('material')"><span>Material</span></button>
+      <button class="tab-btn" data-page="kunden" onclick="switchPage('kunden')"><span>Kunden</span></button>
     </nav>
   </div>
 
@@ -488,7 +489,7 @@
     <div class="page active" id="page-stunden">
 
       <div class="lock-banner" id="ts_lockBanner" style="display:none;">
-        <span>🔒 Dieser Nachweis ist abgeschlossen und schreibgeschützt.</span>
+        <span>Dieser Nachweis ist abgeschlossen und schreibgeschützt.</span>
         <button class="btn small" onclick="tsUnlock()">Bearbeitung freigeben</button>
       </div>
 
@@ -513,7 +514,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">👤</span><h2>Auftraggeber</h2></div>
+        <div class="card-head"><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
           <div style="flex:1;min-width:260px;">
@@ -522,11 +523,7 @@
             <datalist id="ts_customerList"></datalist>
           </div>
           <div class="btn-row">
-            <button class="btn small danger" onclick="tsDeleteCustomer()">🗑 Löschen</button>
-            <button class="btn small" onclick="tsSaveCustomer()">💾 Kunde speichern</button>
-            <button class="btn small" onclick="document.getElementById('ts_customerCsvInput').click()">⇪ CSV importieren</button>
-            <button class="btn small" onclick="tsExportCustomersCsv()">⇩ CSV exportieren</button>
-            <input type="file" id="ts_customerCsvInput" class="hidden-file" accept=".csv" onchange="tsImportCustomersCsv(this.files[0])">
+            <button class="btn small primary" onclick="kdOpenModal(null, true)">+ Neuer Kunde</button>
           </div>
         </div>
 
@@ -534,14 +531,12 @@
           <div class="field"><label>Auftraggeber</label><input id="ts_f_auftraggeber" type="text"></div>
           <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="ts_f_rechnungsanschrift" type="text"></div>
           <div class="field"><label>Einsatzort / Objekt (Straße, PLZ, Ort)</label><input id="ts_f_objekt" type="text"></div>
-          <div class="objekt-row">
-            <div id="ts_objektRowWrap" style="display:none;flex:1;">
+          <div class="objekt-row" id="ts_objektRowWrap" style="display:none;">
+            <div style="flex:1;">
               <label class="combo-label">Dieser Kunde hat mehrere Objekte — auswählen</label>
               <input id="ts_objektPicker" placeholder="z. B. Haus A, Wohnung 3…" style="width:100%;">
             </div>
-            <button class="btn small" onclick="tsSaveObjekt()">💾 Als Objekt speichern</button>
           </div>
-          <div id="ts_kundeNotizBox" style="display:none;background:#fdf6e8;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#7a5c10;"></div>
           <div class="grid2">
             <div class="field"><label>Ansprechpartner vor Ort</label><input id="ts_f_ansprechpartner" type="text"></div>
             <div class="field"><label>Tel.</label><input id="ts_f_tel" type="text"></div>
@@ -551,23 +546,16 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">📋</span><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
+        <div class="card-head"><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
         <textarea class="full" id="ts_f_taetigkeiten" rows="4" placeholder="Ausgeführte Arbeiten…"></textarea>
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">📦</span><h2>Materialnachweis</h2></div>
+        <div class="card-head"><h2>Materialnachweis</h2></div>
 
         <div class="combo-row">
           <input id="ts_materialPicker" placeholder="Material suchen und auswählen…">
           <datalist id="ts_materialList"></datalist>
-          <div class="btn-row">
-            <button class="btn small danger" onclick="tsDeleteMaterialMaster()">🗑 Löschen</button>
-            <button class="btn small" onclick="tsSaveMaterialMaster()">💾 Material speichern</button>
-            <button class="btn small" onclick="document.getElementById('ts_materialCsvInput').click()">⇪ CSV importieren</button>
-            <button class="btn small" onclick="tsExportMaterialsCsv()">⇩ CSV exportieren</button>
-            <input type="file" id="ts_materialCsvInput" class="hidden-file" accept=".csv" onchange="tsImportMaterialsCsv(this.files[0])">
-          </div>
         </div>
 
         <div class="table-wrap">
@@ -590,12 +578,12 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">⚠️</span><h2>Besondere Vorkommnisse</h2></div>
+        <div class="card-head"><h2>Besondere Vorkommnisse</h2></div>
         <textarea class="full" id="ts_f_vorkommnisse" rows="3" placeholder="Auffälligkeiten, Absprachen, Nacharbeiten…"></textarea>
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">📷</span><h2>Fotodokumentation</h2></div>
+        <div class="card-head"><h2>Fotodokumentation</h2></div>
         <div class="photo-grid" id="ts_photoGrid"></div>
         <label class="photo-add-label" style="margin-top:10px;">
           +
@@ -610,8 +598,8 @@
           <input id="ts_employeePicker" placeholder="Mitarbeiter suchen und auswählen…">
           <datalist id="ts_employeeList"></datalist>
           <div class="btn-row">
-            <button class="btn small" onclick="tsSaveEmployeeMaster()">💾 Namen speichern</button>
-            <button class="btn small danger" onclick="tsDeleteEmployeeMaster()">🗑 Löschen</button>
+            <button class="btn small" onclick="tsSaveEmployeeMaster()">Namen speichern</button>
+            <button class="btn small danger" onclick="tsDeleteEmployeeMaster()">Löschen</button>
           </div>
         </div>
 
@@ -651,37 +639,32 @@
             <div class="sig-date">Datum: <input id="ts_f_datum_kunde" type="date"></div>
           </div>
         </div>
-        <div class="confirm-text">
-          Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Leistungen, Fahrzeiten und verwendeten Materialien vollständig erfasst und ordnungsgemäß ausgeführt wurden. Dieser Nachweis dient als Grundlage für die spätere Rechnung.
+        <div class="confirm-text">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Leistungen, Fahrzeiten und verwendeten Materialien vollständig erfasst und ordnungsgemäß ausgeführt wurden. Dieser Nachweis dient als Grundlage für die spätere Rechnung.
         </div>
       </section>
 
       <section class="card sammel-card" id="sammelCard" style="display:none;">
-        <div class="card-head"><span class="emoji">✍️</span><h2>Sammelunterschrift (optional)</h2></div>
-        <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px;">
-          Falls der Kunde nicht jedes Dokument einzeln unterschreiben möchte: hier einmal unterschreiben und auf alle ausgefüllten, ausgewählten Berichte gleichzeitig übernehmen.
+        <div class="card-head"><h2>Sammelunterschrift (optional)</h2></div>
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px;">Falls der Kunde nicht jedes Dokument einzeln unterschreiben möchte: hier einmal unterschreiben und auf alle ausgefüllten, ausgewählten Berichte gleichzeitig übernehmen.
         </p>
         <canvas id="sammelSig" class="sigpad"></canvas>
         <div class="btn-row" style="margin-top:6px;">
           <button class="btn small" onclick="clearSig('sammelSig')">Löschen</button>
         </div>
         <div class="sammel-options">
-          <label><input type="checkbox" id="sammel_apply_ts" checked> Stunden- & Materialnachweis</label>
-          <label><input type="checkbox" id="sammel_apply_ip"> Ausführungsprotokoll</label>
+          <label><input type="checkbox" id="sammel_apply_ts" checked>Stunden- & Materialnachweis</label>
+          <label><input type="checkbox" id="sammel_apply_ip">Ausführungsprotokoll</label>
         </div>
-        <div class="confirm-text" style="margin-bottom:10px;">
-          Ich akzeptiere alle nachfolgenden Unterlagen und bestätige dies mit meiner Unterschrift.
+        <div class="confirm-text" style="margin-bottom:10px;">Ich akzeptiere alle nachfolgenden Unterlagen und bestätige dies mit meiner Unterschrift.
         </div>
         <button class="btn primary" onclick="applyCollectiveSignature()">Unterschrift übernehmen</button>
       </section>
 
       <section class="card">
         <button class="complete-btn" onclick="tsCompleteOrder()">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
-          Auftrag abschließen
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Auftrag abschließen
         </button>
-        <p style="font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 0;">
-          Speichert den Nachweis endgültig (inkl. Ausführungsprotokoll, falls ausgefüllt) und markiert ihn als abgeschlossen.
+        <p style="font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 0;">Speichert den Nachweis endgültig (inkl. Ausführungsprotokoll, falls ausgefüllt) und markiert ihn als abgeschlossen.
         </p>
       </section>
 
@@ -693,19 +676,19 @@
     <div class="page" id="page-installation">
 
       <div class="lock-banner" id="ip_lockBanner" style="display:none;">
-        <span>🔒 Dieses Protokoll ist abgeschlossen und schreibgeschützt.</span>
+        <span>Dieses Protokoll ist abgeschlossen und schreibgeschützt.</span>
         <button class="btn small" onclick="ipUnlock()">Bearbeitung freigeben</button>
       </div>
 
       <section class="card" id="ip_typeSelector">
-        <div class="card-head"><span class="emoji">🔧</span><h2>Was für ein Protokoll möchten Sie erstellen?</h2></div>
+        <div class="card-head"><h2>Was für ein Protokoll möchten Sie erstellen?</h2></div>
         <div class="type-btn-grid">
-          <button class="type-btn" onclick="ipChooseTemplate('Montage')"><span class="icon">🔧</span>Montage</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Reparatur')"><span class="icon">🛠️</span>Reparatur</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Wartung')"><span class="icon">🧰</span>Wartung</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Besichtigung')"><span class="icon">🔍</span>Besichtigung</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Mängel')"><span class="icon">⚠️</span>Mängel</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Sonstiges')"><span class="icon">📋</span>Sonstiges</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Montage')">Montage</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Reparatur')">Reparatur</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Wartung')">Wartung</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Besichtigung')">Besichtigung</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Mängel')">Mängel</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Sonstiges')">Sonstiges</button>
         </div>
       </section>
 
@@ -713,7 +696,7 @@
 
       <div class="vorlage-current">
         <span id="ip_currentVorlageLabel">Vorlage: Montage</span>
-        <button class="btn small" onclick="ipChangeTemplate()">↺ Andere Vorlage wählen</button>
+        <button class="btn small" onclick="ipChangeTemplate()">Andere Vorlage wählen</button>
       </div>
 
       <section class="card">
@@ -737,7 +720,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">👤</span><h2>Auftraggeber</h2></div>
+        <div class="card-head"><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
           <div style="flex:1;min-width:260px;">
@@ -760,7 +743,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">🔧</span><h2>Art des Termins</h2></div>
+        <div class="card-head"><h2>Art des Termins</h2></div>
         <div class="field">
           <label>Installations-/Gewerkeart (frei wählbar)</label>
           <input id="ip_f_art" list="ip_artList" placeholder="z. B. Rauchwarnmelder, Elektro, Sanitär…">
@@ -789,12 +772,12 @@
       </section>
 
       <section class="card" id="ip_card_taetigkeiten">
-        <div class="card-head"><span class="emoji">📝</span><h2 id="ip_taetigkeiten_title">Tätigkeiten / Leistungsbeschreibung</h2></div>
+        <div class="card-head"><h2 id="ip_taetigkeiten_title">Tätigkeiten / Leistungsbeschreibung</h2></div>
         <textarea class="full" id="ip_f_taetigkeiten" rows="3" placeholder="Ausgeführte Arbeiten, sofern nicht durch die Geräteliste unten abgedeckt…"></textarea>
       </section>
 
       <section class="card" id="ip_card_positionen">
-        <div class="card-head"><span class="emoji">📋</span><h2 id="ip_positionen_title">Positionen / Bauteile</h2></div>
+        <div class="card-head"><h2 id="ip_positionen_title">Positionen / Bauteile</h2></div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -816,7 +799,7 @@
       </section>
 
       <section class="card" id="ip_card_material">
-        <div class="card-head"><span class="emoji">📦</span><h2>Verwendetes Material</h2></div>
+        <div class="card-head"><h2>Verwendetes Material</h2></div>
 
         <div class="combo-row">
           <input id="ip_materialPicker" placeholder="Material suchen und auswählen…">
@@ -843,31 +826,23 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">✅</span><h2>Hinweise / Bestätigung</h2></div>
+        <div class="card-head"><h2>Hinweise / Bestätigung</h2></div>
         <p style="font-size:11px;color:var(--muted);margin:0 0 8px;">Text antippen = als "nicht zutreffend" durchstreichen.</p>
-        <div class="checklist" id="ip_standard_checks">
-          <label class="check-item" id="ip_item_c1"><input type="checkbox" id="ip_c1"><span class="check-label-text" onclick="ipToggleStrike('c1')">Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.</span></label>
-          <label class="check-item" id="ip_item_c2"><input type="checkbox" id="ip_c2"><span class="check-label-text" onclick="ipToggleStrike('c2')">Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).</span></label>
-          <label class="check-item" id="ip_item_c3"><input type="checkbox" id="ip_c3"><span class="check-label-text" onclick="ipToggleStrike('c3')">Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.</span></label>
-          <label class="check-item" id="ip_item_c4"><input type="checkbox" id="ip_c4"><span class="check-label-text" onclick="ipToggleStrike('c4')">Arbeitsbereich besenrein hinterlassen.</span></label>
-        </div>
-        <div class="checklist" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
-          <label class="check-item" id="ip_check_funktion"><input type="checkbox" id="ip_funktion_geprueft"><span class="check-label-text" onclick="ipToggleStrike('funktion_geprueft')">Funktion geprüft</span></label>
-          <label class="check-item" id="ip_check_sicht"><input type="checkbox" id="ip_sichtpruefung"><span class="check-label-text" onclick="ipToggleStrike('sichtpruefung')">Sichtprüfung durchgeführt</span></label>
-          <label class="check-item" id="ip_check_dicht"><input type="checkbox" id="ip_dichtigkeit"><span class="check-label-text" onclick="ipToggleStrike('dichtigkeit')">Dichtigkeit geprüft</span></label>
-        </div>
+        <div id="ip_checksList"></div>
+        <button class="add-row" onclick="ipOpenCheckPicker()">+ Hinweis hinzufügen</button>
         <div class="field" style="margin-top:14px;">
           <label>Besondere Vorkommnisse / Bemerkungen</label>
           <textarea id="ip_f_bemerkungen" rows="3"></textarea>
         </div>
-        <div class="field" style="margin-top:10px;">
+        <div class="field" id="ip_naechsterTerminWrap" style="display:none;margin-top:10px;">
           <label>Empfohlener nächster Prüf- / Austauschtermin</label>
           <input id="ip_f_naechster_termin" type="date">
         </div>
+        <button class="btn small" id="ip_addTerminBtn" onclick="ipShowTerminField()" style="margin-top:10px;">+ Nächsten Prüf-/Austauschtermin festlegen</button>
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">📷</span><h2>Fotodokumentation</h2></div>
+        <div class="card-head"><h2>Fotodokumentation</h2></div>
         <div class="photo-grid" id="ip_photoGrid"></div>
         <label class="photo-add-label" style="margin-top:10px;">
           +
@@ -888,15 +863,13 @@
             <div class="sig-date">Datum: <input id="ip_f_datum_kunde" type="date"></div>
           </div>
         </div>
-        <div class="confirm-text">
-          Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Installationen vollständig ausgeführt, geprüft und ordnungsgemäß übergeben wurden.
+        <div class="confirm-text">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Installationen vollständig ausgeführt, geprüft und ordnungsgemäß übergeben wurden.
         </div>
       </section>
 
       <section class="card">
         <button class="complete-btn" onclick="ipCompleteOrder()">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
-          Auftrag abschließen
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Auftrag abschließen
         </button>
       </section>
 
@@ -910,14 +883,13 @@
     <div class="page" id="page-fahrtenbuch">
 
       <section class="card">
-        <div class="card-head"><span class="emoji">🚗</span><h2>Fahrtenbuch</h2></div>
-        <div class="disclaimer-box">
-          ⚠️ Für die steuerliche Anerkennung durch das Finanzamt muss ein Fahrtenbuch zeitnah, lückenlos und in "geschlossener Form" geführt werden. Deshalb: Neue Fahrten sind zunächst als <strong>Entwurf</strong> frei bearbeitbar. Über "Abschließen" wird der Eintrag gesperrt; danach sind nur noch protokollierte Korrekturen möglich. Für eine rechtsverbindliche Nutzung empfehlen wir, das einmal mit deinem Steuerberater abzustimmen.
+        <div class="card-head"><h2>Fahrtenbuch</h2></div>
+        <div class="disclaimer-box">Für die steuerliche Anerkennung durch das Finanzamt muss ein Fahrtenbuch zeitnah, lückenlos und in "geschlossener Form" geführt werden. Deshalb: Neue Fahrten sind zunächst als <strong>Entwurf</strong>frei bearbeitbar. Über "Abschließen" wird der Eintrag gesperrt; danach sind nur noch protokollierte Korrekturen möglich. Für eine rechtsverbindliche Nutzung empfehlen wir, das einmal mit deinem Steuerberater abzustimmen.
         </div>
 
         <div class="btn-row" style="margin-bottom:14px;">
           <button class="btn primary" onclick="fbAddDraftRow()">+ Fahrt hinzufügen</button>
-          <button class="btn" onclick="fbImportFromTimesheet()">↓ Aus aktuellem Stundennachweis übernehmen</button>
+          <button class="btn" onclick="fbImportFromTimesheet()">Aus aktuellem Stundennachweis übernehmen</button>
         </div>
 
         <div class="table-wrap">
@@ -952,56 +924,34 @@
     <div class="page" id="page-kunden">
 
       <section class="card">
-        <div class="card-head"><span class="emoji">👥</span><h2>Kunden verwalten</h2></div>
+        <div class="card-head"><h2>Kunden verwalten</h2></div>
         <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderList()">
         <div class="btn-row" style="margin-bottom:14px;">
-          <button class="btn primary" onclick="kdNewCustomer()">+ Neuer Kunde</button>
-          <button class="btn" onclick="document.getElementById('kd_csvInput').click()">⇪ CSV importieren</button>
-          <button class="btn" onclick="tsExportCustomersCsv()">⇩ CSV exportieren</button>
+          <button class="btn primary" onclick="kdOpenModal(null, true)">+ Neuer Kunde</button>
+          <button class="btn" onclick="document.getElementById('kd_csvInput').click()">CSV importieren</button>
+          <button class="btn" onclick="tsExportCustomersCsv()">CSV exportieren</button>
           <input type="file" id="kd_csvInput" class="hidden-file" accept=".csv" onchange="tsImportCustomersCsv(this.files[0])">
         </div>
         <div id="kd_list"></div>
       </section>
 
-      <section class="card" id="kd_editCard" style="display:none;">
-        <div class="card-head"><span class="emoji">✏️</span><h2 id="kd_editTitle">Kunde bearbeiten</h2></div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="field"><label>Name / Auftraggeber</label><input id="kd_f_name" type="text"></div>
-          <div class="field"><label>Kundennummer</label><input id="kd_f_kdnr" type="text"></div>
-          <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="kd_f_rechnungsanschrift" type="text"></div>
-          <div class="field"><label>Standard-Objekt / Einsatzort (Straße, PLZ, Ort)</label><input id="kd_f_objekt" type="text"></div>
-          <div class="grid2">
-            <div class="field"><label>Ansprechpartner</label><input id="kd_f_ansprechpartner" type="text"></div>
-            <div class="field"><label>Tel.</label><input id="kd_f_tel" type="text"></div>
-          </div>
-          <div class="field"><label>E-Mail</label><input id="kd_f_email" type="email"></div>
-          <div class="field">
-            <label>Notizen / Besonderheiten</label>
-            <textarea id="kd_f_notizen" rows="3" placeholder="z. B. Schlüssel beim Nachbarn, Hund im Garten, bevorzugte Ansprechzeit…"></textarea>
-          </div>
-        </div>
-        <div class="btn-row" style="margin-top:14px;">
-          <button class="btn primary" onclick="kdSaveCustomer()">💾 Speichern</button>
-          <button class="btn danger" onclick="kdDeleteCustomer()">🗑 Kunde löschen</button>
-          <button class="btn" onclick="kdCloseEdit()">Abbrechen</button>
-        </div>
+    </div>
 
-        <div class="card-head" style="margin-top:22px;"><span class="emoji">🏠</span><h2>Objekte dieses Kunden (falls mehrere Einsatzorte)</h2></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:130px;">Bezeichnung</th>
-                <th>Adresse</th>
-                <th style="width:140px;">Ansprechpartner</th>
-                <th style="width:110px;">Tel.</th>
-                <th class="col-del"></th>
-              </tr>
-            </thead>
-            <tbody id="kd_objekteBody"></tbody>
-          </table>
+    <!-- ============================================================ -->
+    <!-- SEITE 5: MATERIAL                                             -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-material">
+
+      <section class="card">
+        <div class="card-head"><h2>Material verwalten</h2></div>
+        <input type="text" id="mt_search" class="modal-search" placeholder="Material suchen (Bezeichnung, Artikelnr., Hersteller)…" oninput="mtRenderList()">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" onclick="mtOpenModal(null)">+ Neues Material</button>
+          <button class="btn" onclick="document.getElementById('mt_csvInput').click()">CSV importieren</button>
+          <button class="btn" onclick="tsExportMaterialsCsv()">CSV exportieren</button>
+          <input type="file" id="mt_csvInput" class="hidden-file" accept=".csv" onchange="tsImportMaterialsCsv(this.files[0])">
         </div>
-        <button class="add-row" onclick="kdAddObjektRow()">+ Objekt hinzufügen</button>
+        <div id="mt_list"></div>
       </section>
 
     </div>
@@ -1040,6 +990,108 @@
     <input type="text" id="ip_modalSearch" class="modal-search" placeholder="Nach Kunde oder Nr. suchen…" oninput="ipRenderModalList()">
     <div id="ip_modalList"></div>
     <button class="btn modal-close" onclick="ipCloseLoadModal()">Schließen</button>
+  </div>
+</div>
+
+<!-- Modal: Kunde anlegen/bearbeiten -->
+<div class="modal-overlay" id="kd_editModal">
+  <div class="modal" style="max-width:560px;">
+    <h3 id="kd_editTitle">Neuer Kunde</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="field"><label>Name / Auftraggeber</label><input id="kd_f_name" type="text"></div>
+      <div class="grid2">
+        <div class="field"><label>Kundennummer</label><input id="kd_f_kdnr" type="text"></div>
+        <div class="field"><label>Auftragsnummer (falls fest)</label><input id="kd_f_auftragsnr" type="text"></div>
+      </div>
+      <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="kd_f_rechnungsanschrift" type="text"></div>
+      <div class="field"><label>Standard-Objekt / Einsatzort (Straße, PLZ, Ort)</label><input id="kd_f_objekt" type="text"></div>
+      <div class="grid2">
+        <div class="field"><label>Ansprechpartner</label><input id="kd_f_ansprechpartner" type="text"></div>
+        <div class="field"><label>Tel.</label><input id="kd_f_tel" type="text"></div>
+      </div>
+      <div class="field"><label>E-Mail</label><input id="kd_f_email" type="email"></div>
+      <div class="field">
+        <label>Notizen / Besonderheiten</label>
+        <textarea id="kd_f_notizen" rows="2" placeholder="z. B. Schlüssel beim Nachbarn, bevorzugte Ansprechzeit…"></textarea>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn primary" onclick="kdSaveCustomer()">Speichern</button>
+      <button class="btn danger" id="kd_deleteBtn" onclick="kdDeleteCustomer()">Kunde löschen</button>
+    </div>
+
+    <div class="card-head" style="margin-top:20px;"><h2 style="font-size:12px;">Objekte dieses Kunden (falls mehrere Einsatzorte)</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:110px;">Bezeichnung</th>
+            <th>Adresse</th>
+            <th style="width:120px;">Ansprechpartner</th>
+            <th style="width:90px;">Tel.</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="kd_objekteBody"></tbody>
+      </table>
+    </div>
+    <button class="add-row" onclick="kdAddObjektRow()">+ Objekt hinzufügen</button>
+
+    <button class="btn modal-close" onclick="kdCloseEdit()">Schließen</button>
+  </div>
+</div>
+
+<!-- Modal: Material anlegen/bearbeiten -->
+<div class="modal-overlay" id="mt_editModal">
+  <div class="modal" style="max-width:480px;">
+    <h3 id="mt_editTitle">Neues Material</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="field">
+        <label>Artikelnummer</label>
+        <div class="btn-row">
+          <input id="mt_f_artikelnr" type="text" style="flex:1;">
+          <button class="btn small" onclick="mtStartScan()">Code scannen</button>
+        </div>
+      </div>
+      <div class="field"><label>Artikelbezeichnung</label><input id="mt_f_bezeichnung" type="text"></div>
+      <div class="field"><label>Hersteller</label><input id="mt_f_hersteller" type="text"></div>
+      <div class="grid2">
+        <div class="field"><label>Einheit</label><input id="mt_f_einheit" type="text" placeholder="z. B. Stück, m, kg"></div>
+        <div class="field"><label>Preis (optional)</label><input id="mt_f_preis" type="text"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn primary" onclick="mtSaveMaterial()">Speichern</button>
+      <button class="btn danger" id="mt_deleteBtn" onclick="mtDeleteMaterial()">Material löschen</button>
+    </div>
+    <button class="btn modal-close" onclick="mtCloseEdit()">Schließen</button>
+  </div>
+</div>
+
+<!-- Modal: QR-/Barcode-Scanner -->
+<div class="modal-overlay" id="mt_scanModal">
+  <div class="modal">
+    <h3>Code scannen</h3>
+    <video id="mt_scanVideo" style="width:100%;border-radius:8px;background:#000;" playsinline autoplay muted></video>
+    <p id="mt_scanStatus" style="font-size:12.5px;color:var(--muted);margin-top:10px;">Kamera wird gestartet…</p>
+    <button class="btn modal-close" onclick="mtStopScan()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Modal: Hinweis/Checklisten-Punkt hinzufügen -->
+<div class="modal-overlay" id="ip_checkPickerModal">
+  <div class="modal">
+    <h3>Hinweis hinzufügen</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin:0 0 10px;">Vorlage antippen zum Hinzufügen, oder eigenen Text unten eingeben.</p>
+    <div id="ip_checkTemplateList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="field" style="margin-top:14px;">
+      <label>Eigener Hinweis</label>
+      <div class="btn-row">
+        <input id="ip_customCheckInput" type="text" style="flex:1;" placeholder="Eigenen Text eingeben…">
+        <button class="btn small primary" onclick="ipAddCustomCheck()">Hinzufügen</button>
+      </div>
+    </div>
+    <button class="btn modal-close" onclick="ipCloseCheckPicker()">Fertig</button>
   </div>
 </div>
 
@@ -1174,12 +1226,24 @@ function initSig(canvasId){
   function resize(){
     const ratio = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    if(rect.width === 0 || rect.height === 0) return; // Canvas gerade nicht sichtbar - nicht anfassen
+    // Vorhandene Zeichnung sichern, da das Setzen von width/height den Canvas-Inhalt löscht
+    // (z.B. wenn die Bildschirmtastatur auf- oder zuklappt und dadurch ein resize-Event feuert)
+    let preserved = null;
+    if(!sigEmpty[canvasId] && canvas.width > 0 && canvas.height > 0){
+      try { preserved = canvas.toDataURL('image/png'); } catch(e){}
+    }
     canvas.width = rect.width * ratio;
     canvas.height = rect.height * ratio;
     const ctx = canvas.getContext('2d');
     ctx.scale(ratio, ratio);
     ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1f2937';
     sigCtx[canvasId] = ctx;
+    if(preserved){
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0, rect.width, rect.height); };
+      img.src = preserved;
+    }
   }
   resize();
   window.addEventListener('resize', resize);
@@ -1273,6 +1337,7 @@ async function switchPage(page){
   document.getElementById('page-installation').classList.toggle('active', page === 'installation');
   document.getElementById('page-fahrtenbuch').classList.toggle('active', page === 'fahrtenbuch');
   document.getElementById('page-kunden').classList.toggle('active', page === 'kunden');
+  document.getElementById('page-material').classList.toggle('active', page === 'material');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
 
   if(page === 'installation' && !ipInitialized){
@@ -1286,6 +1351,9 @@ async function switchPage(page){
   if(page === 'kunden'){
     kdRenderList();
   }
+  if(page === 'material'){
+    mtRenderList();
+  }
 }
 let fbInitialized = false;
 
@@ -1294,19 +1362,22 @@ async function newItem(){
   if(currentPage === 'stunden') await tsNewTimesheet();
   else if(currentPage === 'installation') await ipNewProtocol();
   else if(currentPage === 'fahrtenbuch') fbAddDraftRow();
-  else if(currentPage === 'kunden') kdNewCustomer();
+  else if(currentPage === 'kunden') kdOpenModal(null, true);
+  else if(currentPage === 'material') mtOpenModal(null);
 }
 async function saveItem(){
   if(currentPage === 'stunden') await tsSaveTimesheet();
   else if(currentPage === 'installation') await ipSaveProtocol();
   else if(currentPage === 'fahrtenbuch') showToast('Fahrten werden einzeln über "Abschließen" gespeichert');
-  else if(currentPage === 'kunden') await kdSaveCustomer();
+  else if(currentPage === 'kunden') showToast('Kunden werden im Pop-up gespeichert');
+  else if(currentPage === 'material') showToast('Material wird im Pop-up gespeichert');
 }
 async function openList(){
   if(currentPage === 'stunden') await tsOpenLoadModal();
   else if(currentPage === 'installation') await ipOpenLoadModal();
   else if(currentPage === 'fahrtenbuch') await fbLoadTrips();
   else if(currentPage === 'kunden') kdRenderList();
+  else if(currentPage === 'material') mtRenderList();
 }
 
 /* ---------- Kunde auf BEIDEN Seiten übernehmen ---------- */
@@ -1321,11 +1392,17 @@ function applyCustomerEverywhere(c){
     const el = document.getElementById(id);
     if(el) el.value = val || '';
   });
+  if(c.auftragsnr){
+    const tsAuftragsnr = document.getElementById('ts_f_auftragsnr');
+    const ipAuftragsnr = document.getElementById('ip_f_auftragsnr');
+    if(tsAuftragsnr) tsAuftragsnr.value = c.auftragsnr;
+    if(ipAuftragsnr) ipAuftragsnr.value = c.auftragsnr;
+  }
   tsSelectedCustomerId = c.id || null;
   loadObjekteForCustomer(c.id);
   const notizBox = document.getElementById('ts_kundeNotizBox');
   if(notizBox){
-    if(c.notizen){ notizBox.style.display=''; notizBox.textContent = 'ℹ️ ' + c.notizen; }
+    if(c.notizen){ notizBox.style.display=''; notizBox.textContent = 'Hinweis: ' + c.notizen; }
     else { notizBox.style.display='none'; notizBox.textContent=''; }
   }
 }
@@ -1438,7 +1515,7 @@ async function tsDeleteCustomer(){
 }
 function tsExportCustomersCsv(){
   const rows = tsCustomers.map(c => ({
-    Auftraggeber: c.name||'', Kundennummer: c.kdnr||'', Rechnungsanschrift: c.rechnungsanschrift||'',
+    Auftraggeber: c.name||'', Kundennummer: c.kdnr||'', Auftragsnummer: c.auftragsnr||'', Rechnungsanschrift: c.rechnungsanschrift||'',
     Einsatzort: c.objekt||'', Ansprechpartner: c.ansprechpartner||'', Tel: c.tel||'', Email: c.email||''
   }));
   downloadCsv(rows, 'kunden.csv');
@@ -1458,6 +1535,7 @@ function tsImportCustomersCsv(file){
       const rows = res.data.map(r => ({
         name: pick(r,'Auftraggeber','name'),
         kdnr: pick(r,'Kundennummer','kdnr','KdNr'),
+        auftragsnr: pick(r,'Auftragsnummer','Auftragsnr'),
         rechnungsanschrift: pick(r,'Rechnungsanschrift'),
         objekt: pick(r,'Einsatzort','Objekt'),
         ansprechpartner: pick(r,'Ansprechpartner'),
@@ -1474,7 +1552,7 @@ function tsImportCustomersCsv(file){
       if(error){ showToast('Fehler beim Import: '+error.message); return; }
       await tsLoadCustomers();
       showToast(rows.length + ' Kunden importiert/aktualisiert');
-      document.getElementById('ts_customerCsvInput').value = '';
+      document.getElementById('kd_csvInput') && (document.getElementById('kd_csvInput').value = '');
     }
   });
 }
@@ -1520,7 +1598,7 @@ async function tsDeleteMaterialMaster(){
 }
 function tsExportMaterialsCsv(){
   const rows = tsMaterialsMaster.map(m => ({
-    Artikelnr: m.artikelnr||'', Bezeichnung: m.bezeichnung||'', Einheit: m.einheit||'', Preis: m.preis!=null?m.preis:''
+    Artikelnr: m.artikelnr||'', Bezeichnung: m.bezeichnung||'', Hersteller: m.hersteller||'', Einheit: m.einheit||'', Preis: m.preis!=null?m.preis:''
   }));
   downloadCsv(rows, 'material.csv');
 }
@@ -1534,6 +1612,7 @@ function tsImportMaterialsCsv(file){
         return {
           artikelnr: pick(r,'Artikelnr','Artikelnr.','Artikelnummer'),
           bezeichnung: pick(r,'Bezeichnung','Artikelbezeichnung'),
+          hersteller: pick(r,'Hersteller'),
           einheit: pick(r,'Einheit'),
           preis: preisRaw ? parseFloat(String(preisRaw).replace(',','.')) : null
         };
@@ -1548,7 +1627,7 @@ function tsImportMaterialsCsv(file){
       if(error){ showToast('Fehler beim Import: '+error.message); return; }
       await tsLoadMaterials();
       showToast(rows.length + ' Materialpositionen importiert/aktualisiert');
-      document.getElementById('ts_materialCsvInput').value = '';
+      document.getElementById('mt_csvInput') && (document.getElementById('mt_csvInput').value = '');
     }
   });
 }
@@ -1844,6 +1923,7 @@ async function tsRenderModalList(){
       </div>
       <div class="modal-actions">
         <button class="btn small" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
+        <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
         <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
       </div>
     `;
@@ -1856,6 +1936,13 @@ async function tsLoadTimesheet(id){
   tsApplyRecord(data);
   tsCloseLoadModal();
   showToast('Nachweis geladen');
+}
+async function tsOpenAndPrint(id){
+  const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
+  if(error){ showToast('Fehler: '+error.message); return; }
+  tsApplyRecord(data);
+  tsCloseLoadModal();
+  await printCurrent();
 }
 
 
@@ -2001,48 +2088,48 @@ const VORLAGE_CONFIG = {
   Montage: {
     positionenLabel: 'Installierte Positionen / Bauteile',
     positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Einbaudatum','Test i.O.'],
-    showPositionen: true, showMaterial: true, showStandardChecks: true,
-    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    showPositionen: true, showMaterial: true,
+    suggestedChecks: ['Installation gemäß Herstellervorgaben und geltender Normen durchgeführt.','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.','Arbeitsbereich besenrein hinterlassen.'],
     taetigkeitenLabel: 'Tätigkeiten / Leistungsbeschreibung',
     taetigkeitenPlaceholder: 'Ausgeführte Montagearbeiten…'
   },
   Reparatur: {
     positionenLabel: 'Reparierte Bauteile',
     positionenCols: ['Bauteil / Ort','Hersteller / Typ','Seriennummer','Ersatzteil','Datum','Behoben'],
-    showPositionen: true, showMaterial: true, showStandardChecks: true,
-    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    showPositionen: true, showMaterial: true,
+    suggestedChecks: ['Funktion geprüft','Sichtprüfung durchgeführt','Arbeitsbereich besenrein hinterlassen.'],
     taetigkeitenLabel: 'Beschreibung der Reparatur',
     taetigkeitenPlaceholder: 'Fehlerbild, durchgeführte Reparatur…'
   },
   Wartung: {
     positionenLabel: 'Gewartete Positionen / Bauteile',
     positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Letzte Wartung','i.O.'],
-    showPositionen: true, showMaterial: true, showStandardChecks: true,
-    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    showPositionen: true, showMaterial: true,
+    suggestedChecks: ['Funktion geprüft','Sichtprüfung durchgeführt','Dichtigkeit geprüft'],
     taetigkeitenLabel: 'Durchgeführte Wartungsarbeiten',
     taetigkeitenPlaceholder: 'z. B. gereinigt, Batterie getauscht, Funktionstest…'
   },
   Besichtigung: {
     positionenLabel: 'Begutachtete Bereiche',
     positionenCols: ['Bereich / Raum','Zustand','Auffälligkeit','Anmerkung','Festgestellt am','i.O.'],
-    showPositionen: true, showMaterial: false, showStandardChecks: false,
-    checks: { funktion:false, sicht:true, dichtigkeit:false },
+    showPositionen: true, showMaterial: false,
+    suggestedChecks: ['Sichtprüfung durchgeführt'],
     taetigkeitenLabel: 'Befund / Feststellungen',
     taetigkeitenPlaceholder: 'Was wurde bei der Besichtigung festgestellt?'
   },
   Mängel: {
     positionenLabel: 'Festgestellte Mängel',
     positionenCols: ['Ort des Mangels','Beschreibung','Schweregrad','Empfohlene Maßnahme','Festgestellt am','Behoben'],
-    showPositionen: true, showMaterial: false, showStandardChecks: false,
-    checks: { funktion:false, sicht:true, dichtigkeit:false },
+    showPositionen: true, showMaterial: false,
+    suggestedChecks: ['Sichtprüfung durchgeführt'],
     taetigkeitenLabel: 'Zusammenfassung / Weiteres Vorgehen',
     taetigkeitenPlaceholder: 'Zusammenfassung der Mängel und empfohlenes weiteres Vorgehen…'
   },
   Sonstiges: {
     positionenLabel: 'Positionen / Bauteile',
     positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Datum','i.O.'],
-    showPositionen: true, showMaterial: true, showStandardChecks: true,
-    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    showPositionen: true, showMaterial: true,
+    suggestedChecks: [],
     taetigkeitenLabel: 'Tätigkeiten / Leistungsbeschreibung',
     taetigkeitenPlaceholder: 'Ausgeführte Arbeiten…'
   }
@@ -2063,11 +2150,6 @@ function ipApplyTemplateFields(){
   document.getElementById('ip_taetigkeiten_title').textContent = cfg.taetigkeitenLabel;
   document.getElementById('ip_f_taetigkeiten').placeholder = cfg.taetigkeitenPlaceholder;
 
-  document.getElementById('ip_standard_checks').style.display = cfg.showStandardChecks ? '' : 'none';
-  document.getElementById('ip_check_funktion').style.display = cfg.checks.funktion ? '' : 'none';
-  document.getElementById('ip_check_sicht').style.display = cfg.checks.sicht ? '' : 'none';
-  document.getElementById('ip_check_dicht').style.display = cfg.checks.dichtigkeit ? '' : 'none';
-
   const label = document.getElementById('ip_currentVorlageLabel');
   if(label) label.textContent = 'Vorlage: ' + key;
 }
@@ -2083,6 +2165,13 @@ function ipEnsureSigsInitialized(){
 function ipChooseTemplate(type){
   document.getElementById('ip_f_termin_art').value = type;
   ipApplyTemplateFields();
+  if(!ipCurrentId && !ipChecks.length){
+    const cfg = getVorlageConfig(type);
+    (cfg.suggestedChecks || []).forEach(text => {
+      ipChecks.push({ id: ipCheckId(), text, checked:false, na:false });
+    });
+    ipRenderChecks();
+  }
   document.getElementById('ip_typeSelector').style.display = 'none';
   document.getElementById('ip_formContent').style.display = '';
   ipEnsureSigsInitialized();
@@ -2112,24 +2201,85 @@ function renderMonteurChips(){
 }
 
 /* ---------- Durchstreichen ("nicht zutreffend") ---------- */
-let ipChecklistNA = {};
-function ipToggleStrike(id){
-  if(ipLocked) return;
-  ipChecklistNA[id] = !ipChecklistNA[id];
-  const item = document.getElementById('ip_item_' + id) || document.getElementById('ip_check_' + (id==='funktion_geprueft'?'funktion':id==='sichtpruefung'?'sicht':id==='dichtigkeit'?'dicht':id));
-  if(item) item.classList.toggle('struck', ipChecklistNA[id]);
-  if(ipChecklistNA[id]){
-    const cb = document.getElementById('ip_' + id);
-    if(cb) cb.checked = false;
+/* ---------- Frei konfigurierbare Checkliste ---------- */
+let ipChecks = [];
+
+function ipCheckId(){ return 'chk' + Date.now() + Math.random().toString(36).slice(2,7); }
+
+function ipRenderChecks(){
+  const wrap = document.getElementById('ip_checksList');
+  if(!wrap) return;
+  if(!ipChecks.length){
+    wrap.innerHTML = '<div class="empty-note">Noch keine Hinweise ausgewählt.</div>';
+    return;
   }
+  wrap.innerHTML = ipChecks.map(c => `
+    <label class="check-item${c.na?' struck':''}" style="justify-content:space-between;">
+      <span style="display:flex;align-items:flex-start;gap:8px;flex:1;">
+        <input type="checkbox" ${c.checked?'checked':''} onchange="ipCheckSetDone('${c.id}',this.checked)">
+        <span class="check-label-text" onclick="ipCheckToggleStrike('${c.id}')">${escAttr(c.text)}</span>
+      </span>
+      <button type="button" class="row-del" onclick="ipRemoveCheck('${c.id}')">✕</button>
+    </label>
+  `).join('');
 }
-function ipApplyChecklistNA(naList){
-  ipChecklistNA = {};
-  (naList || []).forEach(id => { ipChecklistNA[id] = true; });
-  ['c1','c2','c3','c4','funktion_geprueft','sichtpruefung','dichtigkeit'].forEach(id => {
-    const item = document.getElementById('ip_item_' + id) || document.getElementById('ip_check_' + (id==='funktion_geprueft'?'funktion':id==='sichtpruefung'?'sicht':id==='dichtigkeit'?'dicht':id));
-    if(item) item.classList.toggle('struck', !!ipChecklistNA[id]);
-  });
+function ipCheckSetDone(id, val){
+  const c = ipChecks.find(x => x.id === id);
+  if(c) c.checked = val;
+}
+function ipCheckToggleStrike(id){
+  if(ipLocked) return;
+  const c = ipChecks.find(x => x.id === id);
+  if(!c) return;
+  c.na = !c.na;
+  if(c.na) c.checked = false;
+  ipRenderChecks();
+}
+function ipRemoveCheck(id){
+  ipChecks = ipChecks.filter(x => x.id !== id);
+  ipRenderChecks();
+}
+function ipAddCheck(text){
+  if(ipChecks.some(c => c.text === text)) return;
+  ipChecks.push({ id: ipCheckId(), text, checked:false, na:false });
+  ipRenderChecks();
+  ipOpenCheckPicker();
+}
+function ipAddCustomCheck(){
+  const input = document.getElementById('ip_customCheckInput');
+  const text = input.value.trim();
+  if(!text) return;
+  ipAddCheck(text);
+  input.value = '';
+}
+
+const CHECK_TEMPLATES = [
+  'Installation gemäß Herstellervorgaben und geltender Normen durchgeführt.',
+  'Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).',
+  'Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.',
+  'Arbeitsbereich besenrein hinterlassen.',
+  'Funktion geprüft',
+  'Sichtprüfung durchgeführt',
+  'Dichtigkeit geprüft',
+  'Erdung / Schutzleiter geprüft',
+  'Kennzeichnung / Beschriftung angebracht',
+  'Altgerät fachgerecht entsorgt',
+  'Kunde über Garantie-/Gewährleistungsbedingungen informiert'
+];
+function ipOpenCheckPicker(){
+  const wrap = document.getElementById('ip_checkTemplateList');
+  wrap.innerHTML = CHECK_TEMPLATES.map(t => {
+    const already = ipChecks.some(c => c.text === t);
+    return `<button type="button" class="btn small" style="justify-content:flex-start;text-align:left;${already?'opacity:.45;':''}" onclick="ipAddCheck(${JSON.stringify(t)})">${already?'(bereits hinzugefügt) ':''}${escAttr(t)}</button>`;
+  }).join('');
+  document.getElementById('ip_checkPickerModal').classList.add('open');
+}
+function ipCloseCheckPicker(){
+  document.getElementById('ip_checkPickerModal').classList.remove('open');
+}
+function ipShowTerminField(){
+  document.getElementById('ip_naechsterTerminWrap').style.display = '';
+  document.getElementById('ip_addTerminBtn').style.display = 'none';
 }
 
 const ipFieldMap = {
@@ -2150,11 +2300,7 @@ function ipCollectRecord(){
     if(ipDateCols.includes(col) && val === '') val = null;
     rec[col] = val;
   });
-  ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => rec['c'+(i+1)] = document.getElementById(id).checked);
-  rec.funktion_geprueft = document.getElementById('ip_funktion_geprueft').checked;
-  rec.sichtpruefung = document.getElementById('ip_sichtpruefung').checked;
-  rec.dichtigkeit = document.getElementById('ip_dichtigkeit').checked;
-  rec.checklist_na = Object.keys(ipChecklistNA).filter(k => ipChecklistNA[k]);
+  rec.custom_checks = ipChecks;
   rec.devices = ipDeviceRows;
   rec.material = ipMaterialRows;
   rec.fotos = ipPhotos;
@@ -2166,10 +2312,15 @@ function ipApplyRecord(rec){
   Object.entries(ipFieldMap).forEach(([fieldId, col]) => {
     document.getElementById(fieldId).value = rec[col] || '';
   });
-  ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => document.getElementById(id).checked = !!rec['c'+(i+1)]);
-  document.getElementById('ip_funktion_geprueft').checked = !!rec.funktion_geprueft;
-  document.getElementById('ip_sichtpruefung').checked = !!rec.sichtpruefung;
-  document.getElementById('ip_dichtigkeit').checked = !!rec.dichtigkeit;
+  ipChecks = (rec.custom_checks && rec.custom_checks.length) ? rec.custom_checks.map(c=>({...c})) : [];
+  ipRenderChecks();
+  if(rec.naechster_termin){
+    document.getElementById('ip_naechsterTerminWrap').style.display = '';
+    document.getElementById('ip_addTerminBtn').style.display = 'none';
+  } else {
+    document.getElementById('ip_naechsterTerminWrap').style.display = 'none';
+    document.getElementById('ip_addTerminBtn').style.display = '';
+  }
   ipDeviceRows = (rec.devices && rec.devices.length) ? rec.devices.map(d=>({...d})) : [];
   ipMaterialRows = (rec.material && rec.material.length) ? rec.material.map(d=>({...d})) : [];
   ipPhotos = (rec.fotos && rec.fotos.length) ? [...rec.fotos] : [];
@@ -2183,7 +2334,6 @@ function ipApplyRecord(rec){
   setSigData('ip_sigKunde', rec.sig_kunde);
   ipCurrentId = rec.id;
   ipApplyTemplateFields();
-  ipApplyChecklistNA(rec.checklist_na);
   renderMonteurChips();
   updateSammelVisibility();
   setLocked('installation', rec.status === 'abgeschlossen');
@@ -2194,17 +2344,11 @@ async function ipNewProtocol(){
   ipDeviceRows = [];
   ipMaterialRows = [];
   ipPhotos = [];
-  ipChecklistNA = {};
+  ipChecks = [];
+  ipRenderChecks();
   Object.keys(ipFieldMap).forEach(id => document.getElementById(id).value = '');
-  ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach(id => {
-    document.getElementById(id).checked = false;
-    const item = document.getElementById('ip_item_' + id);
-    if(item) item.classList.remove('struck');
-  });
-  document.getElementById('ip_funktion_geprueft').checked = false;
-  document.getElementById('ip_sichtpruefung').checked = false;
-  document.getElementById('ip_dichtigkeit').checked = false;
-  ['ip_check_funktion','ip_check_sicht','ip_check_dicht'].forEach(id => document.getElementById(id).classList.remove('struck'));
+  document.getElementById('ip_naechsterTerminWrap').style.display = 'none';
+  document.getElementById('ip_addTerminBtn').style.display = '';
   document.getElementById('ip_f_datum').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_datum_monteur').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_datum_kunde').value = new Date().toISOString().slice(0,10);
@@ -2277,6 +2421,7 @@ async function ipRenderModalList(){
       </div>
       <div class="modal-actions">
         <button class="btn small" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
+        <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
         <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
       </div>
     `;
@@ -2289,6 +2434,13 @@ async function ipLoadProtocol(id){
   ipApplyRecord(data);
   ipCloseLoadModal();
   showToast('Protokoll geladen');
+}
+async function ipOpenAndPrint(id){
+  const { data, error } = await sb.from('protocols').select('*').eq('id', id).single();
+  if(error){ showToast('Fehler: '+error.message); return; }
+  ipApplyRecord(data);
+  ipCloseLoadModal();
+  await printCurrent();
 }
 
 /* ================================================================
@@ -2617,9 +2769,7 @@ function ipHasSomeData(){
     ipDeviceRows.some(r=>r.ort||r.typ||r.seriennr||r.datum) ||
     ipMaterialRows.some(r=>r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis) ||
     ipPhotos.length > 0 ||
-    document.getElementById('ip_funktion_geprueft').checked ||
-    document.getElementById('ip_sichtpruefung').checked ||
-    document.getElementById('ip_dichtigkeit').checked);
+    ipChecks.length > 0);
 }
 
 function buildTsPrintHtml(){
@@ -2743,28 +2893,15 @@ function buildIpPrintHtml(){
   }
 
   html += `<div class="pd-section"><div class="pd-section-head">Hinweise / Bestätigung</div><div class="pd-section-body pd-checklist">`;
-  if(cfg.showStandardChecks){
-    const checks = [
-      ['ip_c1','c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
-      ['ip_c2','c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
-      ['ip_c3','c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
-      ['ip_c4','c4','Arbeitsbereich besenrein hinterlassen.']
-    ];
-    checks.forEach(([id,key,label]) => {
-      const checked = document.getElementById(id).checked;
-      const na = ipChecklistNA[key];
-      html += na ? `<div>⊘ <s>${label}</s> <i>(nicht zutreffend)</i></div>` : `<div>${checked?'☑':'☐'} ${label}</div>`;
+  if(ipChecks.length){
+    ipChecks.forEach(c => {
+      html += c.na
+        ? `<div><s>${escAttr(c.text)}</s> <i>(nicht zutreffend)</i></div>`
+        : `<div>${c.checked?'☑':'☐'} ${escAttr(c.text)}</div>`;
     });
+  } else {
+    html += `<span class="pd-empty-note">Keine Hinweise erfasst</span>`;
   }
-  const extraChecks = [];
-  if(cfg.checks.funktion) extraChecks.push(['ip_funktion_geprueft','funktion_geprueft','Funktion geprüft']);
-  if(cfg.checks.sicht) extraChecks.push(['ip_sichtpruefung','sichtpruefung','Sichtprüfung durchgeführt']);
-  if(cfg.checks.dichtigkeit) extraChecks.push(['ip_dichtigkeit','dichtigkeit','Dichtigkeit geprüft']);
-  extraChecks.forEach(([id,key,label]) => {
-    const checked = document.getElementById(id).checked;
-    const na = ipChecklistNA[key];
-    html += na ? `<div>⊘ <s>${label}</s> <i>(nicht zutreffend)</i></div>` : `<div>${checked?'☑':'☐'} ${label}</div>`;
-  });
   html += `</div></div>`;
 
   if(pdVal('ip_f_bemerkungen')){
@@ -3209,7 +3346,7 @@ function kdRenderList(){
         <div class="sub">${escAttr(c.objekt || '')} ${c.tel ? '· '+escAttr(c.tel) : ''}</div>
       </div>
       <div class="modal-actions">
-        <button class="btn small" onclick="kdEditCustomer('${c.id}')">Bearbeiten</button>
+        <button class="btn small" onclick="kdOpenModal('${c.id}')">Bearbeiten</button>
       </div>
     `;
     wrap.appendChild(div);
@@ -3217,25 +3354,33 @@ function kdRenderList(){
 }
 
 function kdClearForm(){
-  ['kd_f_name','kd_f_kdnr','kd_f_rechnungsanschrift','kd_f_objekt','kd_f_ansprechpartner','kd_f_tel','kd_f_email','kd_f_notizen']
+  ['kd_f_name','kd_f_kdnr','kd_f_auftragsnr','kd_f_rechnungsanschrift','kd_f_objekt','kd_f_ansprechpartner','kd_f_tel','kd_f_email','kd_f_notizen']
     .forEach(id => document.getElementById(id).value = '');
 }
 
-function kdNewCustomer(){
-  kdEditingId = null;
-  kdObjekteRows = [];
-  kdClearForm();
-  document.getElementById('kd_editTitle').textContent = 'Neuer Kunde';
-  document.getElementById('kd_editCard').style.display = '';
-  kdRenderObjekte();
-}
+let kdApplyToActivePage = false;
 
-async function kdEditCustomer(id){
+function kdOpenModal(id, forceNew){
+  kdApplyToActivePage = !!forceNew && (currentPage === 'stunden' || currentPage === 'installation');
+  if(forceNew || !id){
+    kdEditingId = null;
+    kdObjekteRows = [];
+    kdClearForm();
+    document.getElementById('kd_editTitle').textContent = 'Neuer Kunde';
+    document.getElementById('kd_deleteBtn').style.display = 'none';
+    kdRenderObjekte();
+    document.getElementById('kd_editModal').classList.add('open');
+  } else {
+    kdOpenModalForEdit(id);
+  }
+}
+async function kdOpenModalForEdit(id){
   const c = tsCustomers.find(x => x.id === id);
   if(!c) return;
   kdEditingId = id;
   document.getElementById('kd_f_name').value = c.name || '';
   document.getElementById('kd_f_kdnr').value = c.kdnr || '';
+  document.getElementById('kd_f_auftragsnr').value = c.auftragsnr || '';
   document.getElementById('kd_f_rechnungsanschrift').value = c.rechnungsanschrift || '';
   document.getElementById('kd_f_objekt').value = c.objekt || '';
   document.getElementById('kd_f_ansprechpartner').value = c.ansprechpartner || '';
@@ -3243,14 +3388,15 @@ async function kdEditCustomer(id){
   document.getElementById('kd_f_email').value = c.email || '';
   document.getElementById('kd_f_notizen').value = c.notizen || '';
   document.getElementById('kd_editTitle').textContent = 'Kunde bearbeiten';
-  document.getElementById('kd_editCard').style.display = '';
+  document.getElementById('kd_deleteBtn').style.display = '';
+  document.getElementById('kd_editModal').classList.add('open');
   const { data, error } = await sb.from('objekte').select('*').eq('customer_id', id).order('name');
   kdObjekteRows = error ? [] : (data || []);
   kdRenderObjekte();
 }
 
 function kdCloseEdit(){
-  document.getElementById('kd_editCard').style.display = 'none';
+  document.getElementById('kd_editModal').classList.remove('open');
   kdEditingId = null;
 }
 
@@ -3258,6 +3404,7 @@ async function kdSaveCustomer(){
   const rec = {
     name: document.getElementById('kd_f_name').value.trim(),
     kdnr: document.getElementById('kd_f_kdnr').value,
+    auftragsnr: document.getElementById('kd_f_auftragsnr').value,
     rechnungsanschrift: document.getElementById('kd_f_rechnungsanschrift').value,
     objekt: document.getElementById('kd_f_objekt').value,
     ansprechpartner: document.getElementById('kd_f_ansprechpartner').value,
@@ -3280,6 +3427,11 @@ async function kdSaveCustomer(){
 
   await tsLoadCustomers();
   kdRenderList();
+  if(kdApplyToActivePage){
+    applyCustomerEverywhere(data);
+    kdApplyToActivePage = false;
+  }
+  kdCloseEdit();
   showToast('Kunde gespeichert');
 }
 
@@ -3321,6 +3473,146 @@ function kdRenderObjekte(){
     `;
     body.appendChild(tr);
   });
+}
+
+/* ================================================================
+   ================================================================
+   SEITE 5: MATERIAL VERWALTEN
+   ================================================================
+   ================================================================ */
+let mtEditingId = null;
+
+function mtRenderList(){
+  const wrap = document.getElementById('mt_list');
+  if(!wrap) return;
+  const q = (document.getElementById('mt_search')?.value || '').trim().toLowerCase();
+  let list = tsMaterialsMaster;
+  if(q) list = list.filter(m =>
+    (m.bezeichnung||'').toLowerCase().includes(q) ||
+    (m.artikelnr||'').toLowerCase().includes(q) ||
+    (m.hersteller||'').toLowerCase().includes(q)
+  );
+  if(!list.length){ wrap.innerHTML = '<div class="empty-note">Kein Material gefunden.</div>'; return; }
+  wrap.innerHTML = '';
+  list.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'modal-item';
+    div.innerHTML = `
+      <div class="info">
+        <div class="name">${escAttr(m.bezeichnung || 'Ohne Bezeichnung')}</div>
+        <div class="sub">${escAttr(m.artikelnr || '')} ${m.hersteller ? '· '+escAttr(m.hersteller) : ''} ${m.preis!=null && m.preis!=='' ? '· '+escAttr(m.preis)+' €' : ''}</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn small" onclick="mtOpenModal('${m.id}')">Bearbeiten</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+}
+
+function mtClearForm(){
+  ['mt_f_artikelnr','mt_f_bezeichnung','mt_f_hersteller','mt_f_einheit','mt_f_preis']
+    .forEach(id => document.getElementById(id).value = '');
+}
+
+function mtOpenModal(id){
+  if(!id){
+    mtEditingId = null;
+    mtClearForm();
+    document.getElementById('mt_editTitle').textContent = 'Neues Material';
+    document.getElementById('mt_deleteBtn').style.display = 'none';
+  } else {
+    const m = tsMaterialsMaster.find(x => x.id === id);
+    if(!m) return;
+    mtEditingId = id;
+    document.getElementById('mt_f_artikelnr').value = m.artikelnr || '';
+    document.getElementById('mt_f_bezeichnung').value = m.bezeichnung || '';
+    document.getElementById('mt_f_hersteller').value = m.hersteller || '';
+    document.getElementById('mt_f_einheit').value = m.einheit || '';
+    document.getElementById('mt_f_preis').value = m.preis != null ? m.preis : '';
+    document.getElementById('mt_editTitle').textContent = 'Material bearbeiten';
+    document.getElementById('mt_deleteBtn').style.display = '';
+  }
+  document.getElementById('mt_editModal').classList.add('open');
+}
+function mtCloseEdit(){
+  document.getElementById('mt_editModal').classList.remove('open');
+  mtEditingId = null;
+}
+
+async function mtSaveMaterial(){
+  const bezeichnung = document.getElementById('mt_f_bezeichnung').value.trim();
+  if(!bezeichnung){ showToast('Bitte eine Artikelbezeichnung eintragen'); return; }
+  const preisRaw = document.getElementById('mt_f_preis').value;
+  const rec = {
+    artikelnr: document.getElementById('mt_f_artikelnr').value,
+    bezeichnung,
+    hersteller: document.getElementById('mt_f_hersteller').value,
+    einheit: document.getElementById('mt_f_einheit').value,
+    preis: preisRaw ? parseFloat(String(preisRaw).replace(',','.')) : null
+  };
+  if(mtEditingId) rec.id = mtEditingId;
+  const { error } = await sb.from('materials').upsert(rec);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await tsLoadMaterials();
+  mtRenderList();
+  mtCloseEdit();
+  showToast('Material gespeichert');
+}
+async function mtDeleteMaterial(){
+  if(!mtEditingId){ mtCloseEdit(); return; }
+  if(!confirm('Dieses Material wirklich löschen?')) return;
+  const { error } = await sb.from('materials').delete().eq('id', mtEditingId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await tsLoadMaterials();
+  mtRenderList();
+  mtCloseEdit();
+  showToast('Material gelöscht');
+}
+
+/* ---------- QR-/Barcode-Scanner (nutzt native BarcodeDetector API) ---------- */
+let mtScanStream = null;
+let mtScanRAF = null;
+
+async function mtStartScan(){
+  document.getElementById('mt_scanModal').classList.add('open');
+  const statusEl = document.getElementById('mt_scanStatus');
+  if(!('BarcodeDetector' in window)){
+    statusEl.textContent = 'Dieser Browser unterstützt keine Code-Erkennung. Bitte Artikelnummer manuell eingeben.';
+    return;
+  }
+  try {
+    mtScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('mt_scanVideo');
+    video.srcObject = mtScanStream;
+    statusEl.textContent = 'Code vor die Kamera halten…';
+    const detector = new BarcodeDetector({ formats: ['qr_code','ean_13','ean_8','code_128','code_39'] });
+    const scanLoop = async () => {
+      if(!mtScanStream) return;
+      try {
+        const codes = await detector.detect(video);
+        if(codes.length){
+          document.getElementById('mt_f_artikelnr').value = codes[0].rawValue;
+          statusEl.textContent = 'Erkannt: ' + codes[0].rawValue;
+          mtStopScan();
+          return;
+        }
+      } catch(e){ /* einzelnen Frame ignorieren */ }
+      mtScanRAF = requestAnimationFrame(scanLoop);
+    };
+    scanLoop();
+  } catch(e){
+    statusEl.textContent = 'Kamera konnte nicht gestartet werden: ' + e.message;
+  }
+}
+function mtStopScan(){
+  if(mtScanRAF) cancelAnimationFrame(mtScanRAF);
+  mtScanRAF = null;
+  if(mtScanStream){
+    mtScanStream.getTracks().forEach(t => t.stop());
+    mtScanStream = null;
+  }
+  document.getElementById('mt_scanModal').classList.remove('open');
 }
 
 /* ================================================================
