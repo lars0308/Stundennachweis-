@@ -301,6 +301,40 @@
   .pd-checklist > div{ margin-bottom:4px; font-size:12px; }
   .pd-check{ margin-right:6px; }
 
+  /* Fotodokumentation */
+  .photo-grid{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+  .photo-thumb{ position:relative; width:90px; height:90px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-thumb .photo-del{
+    position:absolute; top:2px; right:2px; background:rgba(0,0,0,.6); color:#fff; border:none;
+    border-radius:50%; width:20px; height:20px; font-size:12px; line-height:1; cursor:pointer;
+  }
+  .photo-add-label{
+    display:flex; align-items:center; justify-content:center; width:90px; height:90px;
+    border:1px dashed #c9ccd1; border-radius:8px; color:var(--green-dark); font-size:24px; cursor:pointer;
+  }
+  .photo-add-label input{ display:none; }
+  .pd-photo-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pd-photo-grid img{ width:120px; height:120px; object-fit:cover; border:1px solid #d7e0cc; border-radius:4px; }
+
+  /* Sammelunterschrift */
+  .sammel-card{ border:1px dashed #c9ccd1; }
+  .sammel-options{ display:flex; flex-wrap:wrap; gap:16px; margin:12px 0; font-size:13px; }
+  .sammel-options label{ display:flex; align-items:center; gap:6px; }
+  .sammel-options input{ width:16px; height:16px; accent-color:var(--green); }
+
+  /* Eigene, robuste Such-Dropdowns (ersetzen natives <datalist>, das auf manchen
+     Tablets/Browsern unzuverlässig aufklappt) */
+  .ac-list{
+    position:fixed; z-index:500; background:#fff; border:1px solid var(--border); border-radius:8px;
+    box-shadow:0 6px 20px rgba(0,0,0,.15); max-height:230px; overflow-y:auto; display:none;
+  }
+  .ac-list.open{ display:block; }
+  .ac-item{ padding:9px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid #f1f2f4; }
+  .ac-item:last-child{ border-bottom:none; }
+  .ac-item:hover{ background:var(--green-light); }
+  .ac-empty{ padding:9px 12px; font-size:12.5px; color:var(--muted); }
+
 </style>
 </head>
 <body>
@@ -348,6 +382,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg>
           <span class="btn-label">PDF erstellen</span>
         </button>
+        <button class="btn" onclick="emailCurrent()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+          <span class="btn-label">E-Mail</span>
+        </button>
         <button class="btn" onclick="logout()">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           <span class="btn-label">Abmelden</span>
@@ -356,7 +394,7 @@
     </header>
     <nav class="pagebar">
       <button class="tab-btn active" data-page="stunden" onclick="switchPage('stunden')">📄 <span>Stunden & Material</span></button>
-      <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">🔧 <span>Installation</span></button>
+      <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">🔧 <span>Ausführungsprotokoll</span></button>
       <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')">🚗 <span>Fahrtenbuch</span></button>
     </nav>
   </div>
@@ -392,10 +430,9 @@
         <div class="card-head"><span class="emoji">👤</span><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
-          <input list="ts_customerList" id="ts_customerPicker" placeholder="Gespeicherten Kunden wählen…">
+          <input id="ts_customerPicker" placeholder="Kunden suchen und auswählen…">
           <datalist id="ts_customerList"></datalist>
           <div class="btn-row">
-            <button class="btn small" onclick="tsImportCustomer()">↓ Importieren</button>
             <button class="btn small danger" onclick="tsDeleteCustomer()">🗑 Löschen</button>
             <button class="btn small" onclick="tsSaveCustomer()">💾 Kunde speichern</button>
             <button class="btn small" onclick="document.getElementById('ts_customerCsvInput').click()">⇪ CSV importieren</button>
@@ -412,6 +449,7 @@
             <div class="field"><label>Ansprechpartner vor Ort</label><input id="ts_f_ansprechpartner" type="text"></div>
             <div class="field"><label>Tel.</label><input id="ts_f_tel" type="text"></div>
           </div>
+          <div class="field"><label>E-Mail (für Versand)</label><input id="ts_f_email" type="email"></div>
         </div>
       </section>
 
@@ -424,10 +462,9 @@
         <div class="card-head"><span class="emoji">📦</span><h2>Materialnachweis</h2></div>
 
         <div class="combo-row">
-          <input list="ts_materialList" id="ts_materialPicker" placeholder="Gespeichertes Material wählen…">
+          <input id="ts_materialPicker" placeholder="Material suchen und auswählen…">
           <datalist id="ts_materialList"></datalist>
           <div class="btn-row">
-            <button class="btn small" onclick="tsInsertMaterialRow()">↓ Einfügen</button>
             <button class="btn small danger" onclick="tsDeleteMaterialMaster()">🗑 Löschen</button>
             <button class="btn small" onclick="tsSaveMaterialMaster()">💾 Material speichern</button>
             <button class="btn small" onclick="document.getElementById('ts_materialCsvInput').click()">⇪ CSV importieren</button>
@@ -464,10 +501,9 @@
         <div class="card-head"><span class="emoji">⏱</span><h2>Arbeitszeiten & Pause</h2></div>
 
         <div class="combo-row">
-          <input list="ts_employeeList" id="ts_employeePicker" placeholder="Gespeicherten Mitarbeiter wählen…">
+          <input id="ts_employeePicker" placeholder="Mitarbeiter suchen und auswählen…">
           <datalist id="ts_employeeList"></datalist>
           <div class="btn-row">
-            <button class="btn small" onclick="tsInsertEmployeeRow()">↓ Einfügen</button>
             <button class="btn small" onclick="tsSaveEmployeeMaster()">💾 Namen speichern</button>
             <button class="btn small danger" onclick="tsDeleteEmployeeMaster()">🗑 Löschen</button>
           </div>
@@ -513,6 +549,25 @@
         </div>
       </section>
 
+      <section class="card sammel-card" id="sammelCard" style="display:none;">
+        <div class="card-head"><span class="emoji">✍️</span><h2>Sammelunterschrift (optional)</h2></div>
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px;">
+          Falls der Kunde nicht jedes Dokument einzeln unterschreiben möchte: hier einmal unterschreiben und auf alle ausgefüllten, ausgewählten Berichte gleichzeitig übernehmen.
+        </p>
+        <canvas id="sammelSig" class="sigpad"></canvas>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn small" onclick="clearSig('sammelSig')">Löschen</button>
+        </div>
+        <div class="sammel-options">
+          <label><input type="checkbox" id="sammel_apply_ts" checked> Stunden- & Materialnachweis</label>
+          <label><input type="checkbox" id="sammel_apply_ip"> Ausführungsprotokoll</label>
+        </div>
+        <div class="confirm-text" style="margin-bottom:10px;">
+          Ich akzeptiere alle nachfolgenden Unterlagen und bestätige dies mit meiner Unterschrift.
+        </div>
+        <button class="btn primary" onclick="applyCollectiveSignature()">Unterschrift übernehmen</button>
+      </section>
+
     </div>
 
     <!-- ============================================================ -->
@@ -544,11 +599,8 @@
         <div class="card-head"><span class="emoji">👤</span><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
-          <input list="ip_customerList" id="ip_customerPicker" placeholder="Gespeicherten Kunden wählen…">
+          <input id="ip_customerPicker" placeholder="Kunden suchen und auswählen…">
           <datalist id="ip_customerList"></datalist>
-          <div class="btn-row">
-            <button class="btn small" onclick="ipImportCustomer()">↓ Importieren</button>
-          </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:12px;">
@@ -559,6 +611,7 @@
             <div class="field"><label>Ansprechpartner vor Ort</label><input id="ip_f_ansprechpartner" type="text"></div>
             <div class="field"><label>Tel.</label><input id="ip_f_tel" type="text"></div>
           </div>
+          <div class="field"><label>E-Mail (für Versand)</label><input id="ip_f_email" type="email"></div>
         </div>
       </section>
 
@@ -578,13 +631,13 @@
             </datalist>
           </div>
           <div class="field">
-            <label>Termin-Art</label>
+            <label>Vorlage</label>
             <select id="ip_f_termin_art">
-              <option>Einbau</option>
-              <option>Wartung</option>
-              <option>Austausch</option>
+              <option>Montage</option>
               <option>Reparatur</option>
-              <option>Kontrolle</option>
+              <option>Wartung</option>
+              <option>Besichtigung</option>
+              <option>Mängel</option>
               <option>Sonstiges</option>
             </select>
           </div>
@@ -600,7 +653,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">📋</span><h2>Installierte Geräte / Komponenten</h2></div>
+        <div class="card-head"><span class="emoji">📋</span><h2>Positionen / Bauteile</h2></div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -625,11 +678,8 @@
         <div class="card-head"><span class="emoji">📦</span><h2>Verwendetes Material</h2></div>
 
         <div class="combo-row">
-          <input list="ip_materialList" id="ip_materialPicker" placeholder="Gespeichertes Material wählen…">
+          <input id="ip_materialPicker" placeholder="Material suchen und auswählen…">
           <datalist id="ip_materialList"></datalist>
-          <div class="btn-row">
-            <button class="btn small" onclick="ipInsertMaterialRow()">↓ Einfügen</button>
-          </div>
         </div>
 
         <div class="table-wrap">
@@ -659,6 +709,11 @@
           <label class="check-item"><input type="checkbox" id="ip_c3">Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.</label>
           <label class="check-item"><input type="checkbox" id="ip_c4">Arbeitsbereich besenrein hinterlassen.</label>
         </div>
+        <div class="checklist" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
+          <label class="check-item"><input type="checkbox" id="ip_funktion_geprueft">Funktion geprüft</label>
+          <label class="check-item"><input type="checkbox" id="ip_sichtpruefung">Sichtprüfung durchgeführt</label>
+          <label class="check-item"><input type="checkbox" id="ip_dichtigkeit">Dichtigkeit geprüft</label>
+        </div>
         <div class="field" style="margin-top:14px;">
           <label>Besondere Vorkommnisse / Bemerkungen</label>
           <textarea id="ip_f_bemerkungen" rows="3"></textarea>
@@ -667,6 +722,15 @@
           <label>Empfohlener nächster Prüf- / Austauschtermin</label>
           <input id="ip_f_naechster_termin" type="date">
         </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="emoji">📷</span><h2>Fotodokumentation</h2></div>
+        <div class="photo-grid" id="ip_photoGrid"></div>
+        <label class="photo-add-label" style="margin-top:10px;">
+          +
+          <input type="file" accept="image/*" capture="environment" multiple onchange="ipAddPhotos(this.files)">
+        </label>
       </section>
 
       <section class="card">
@@ -762,6 +826,8 @@
     <button class="btn modal-close" onclick="ipCloseLoadModal()">Schließen</button>
   </div>
 </div>
+
+<div id="globalAcList" class="ac-list"></div>
 
 <div id="printArea"></div>
 
@@ -907,8 +973,10 @@ async function enterApp(){
   setStatus('ok', 'Online · synchron');
   initSig('ts_sigAuftragnehmer');
   initSig('ts_sigKunde');
+  initSig('sammelSig');
   await Promise.all([tsLoadCustomers(), tsLoadMaterials(), tsLoadEmployees()]);
   await tsNewTimesheet();
+  updateSammelVisibility();
 }
 sb.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
@@ -960,9 +1028,9 @@ async function openList(){
 function applyCustomerEverywhere(c){
   const map = {
     ts_f_auftraggeber: c.name, ts_f_kdnr: c.kdnr, ts_f_rechnungsanschrift: c.rechnungsanschrift,
-    ts_f_objekt: c.objekt, ts_f_ansprechpartner: c.ansprechpartner, ts_f_tel: c.tel,
+    ts_f_objekt: c.objekt, ts_f_ansprechpartner: c.ansprechpartner, ts_f_tel: c.tel, ts_f_email: c.email,
     ip_f_auftraggeber: c.name, ip_f_kdnr: c.kdnr, ip_f_rechnungsanschrift: c.rechnungsanschrift,
-    ip_f_objekt: c.objekt, ip_f_ansprechpartner: c.ansprechpartner, ip_f_tel: c.tel
+    ip_f_objekt: c.objekt, ip_f_ansprechpartner: c.ansprechpartner, ip_f_tel: c.tel, ip_f_email: c.email
   };
   Object.entries(map).forEach(([id, val]) => {
     const el = document.getElementById(id);
@@ -1039,7 +1107,7 @@ async function tsDeleteCustomer(){
 function tsExportCustomersCsv(){
   const rows = tsCustomers.map(c => ({
     Auftraggeber: c.name||'', Kundennummer: c.kdnr||'', Rechnungsanschrift: c.rechnungsanschrift||'',
-    Einsatzort: c.objekt||'', Ansprechpartner: c.ansprechpartner||'', Tel: c.tel||''
+    Einsatzort: c.objekt||'', Ansprechpartner: c.ansprechpartner||'', Tel: c.tel||'', Email: c.email||''
   }));
   downloadCsv(rows, 'kunden.csv');
 }
@@ -1061,7 +1129,8 @@ function tsImportCustomersCsv(file){
         rechnungsanschrift: pick(r,'Rechnungsanschrift'),
         objekt: pick(r,'Einsatzort','Objekt'),
         ansprechpartner: pick(r,'Ansprechpartner'),
-        tel: pick(r,'Tel','Telefon')
+        tel: pick(r,'Tel','Telefon'),
+        email: pick(r,'Email','E-Mail','Mail')
       })).filter(r => r.name);
       if(!rows.length){ showToast('Keine gültigen Zeilen in der CSV gefunden — bitte Spaltenüberschriften prüfen'); return; }
       // bestehende Kunden (nach Name) aktualisieren statt duplizieren
@@ -1203,13 +1272,14 @@ function tsRenderMaterial(){
       <td><input type="text" value="${escAttr(r.menge)}" onchange="tsMaterialRows[${idx}].menge=this.value;tsUpdateMaterialSum()"></td>
       <td><input type="text" value="${escAttr(r.einheit)}" onchange="tsMaterialRows[${idx}].einheit=this.value"></td>
       <td><input type="text" value="${escAttr(r.artikelnr)}" onchange="tsMaterialRows[${idx}].artikelnr=this.value"></td>
-      <td><input type="text" value="${escAttr(r.bezeichnung)}" onchange="tsMaterialRows[${idx}].bezeichnung=this.value"></td>
+      <td><input type="text" class="mat-bez-input" data-scope="ts" data-idx="${idx}" value="${escAttr(r.bezeichnung)}" onchange="tsMaterialRows[${idx}].bezeichnung=this.value"></td>
       <td><input type="text" value="${escAttr(r.preis)}" onchange="tsMaterialRows[${idx}].preis=this.value;tsUpdateMaterialSum()"></td>
       <td class="col-del"><button class="row-del" onclick="tsRemoveMaterialRow(${idx})">✕</button></td>
     `;
     body.appendChild(tr);
   });
   tsUpdateMaterialSum();
+  wireMaterialRowAutocomplete('ts', tsMaterialRows, tsRenderMaterial);
 }
 function tsUpdateMaterialSum(){
   let sum = 0, any = false;
@@ -1276,7 +1346,7 @@ function tsRenderWork(){
 const tsFieldMap = {
   ts_f_berichtsnr:'berichtsnr', ts_f_kdnr:'kdnr', ts_f_auftragsnr:'auftragsnr', ts_f_einsatzdatum:'einsatzdatum',
   ts_f_auftraggeber:'auftraggeber', ts_f_rechnungsanschrift:'rechnungsanschrift', ts_f_objekt:'objekt',
-  ts_f_ansprechpartner:'ansprechpartner', ts_f_tel:'tel', ts_f_taetigkeiten:'taetigkeiten', ts_f_vorkommnisse:'vorkommnisse',
+  ts_f_ansprechpartner:'ansprechpartner', ts_f_tel:'tel', ts_f_email:'email', ts_f_taetigkeiten:'taetigkeiten', ts_f_vorkommnisse:'vorkommnisse',
   ts_f_datum_auftragnehmer:'datum_auftragnehmer', ts_f_datum_kunde:'datum_kunde'
 };
 const tsDateCols = ['einsatzdatum','datum_auftragnehmer','datum_kunde'];
@@ -1315,6 +1385,8 @@ async function tsNewTimesheet(){
   tsWorkRows = [];
   Object.keys(tsFieldMap).forEach(id => document.getElementById(id).value = '');
   document.getElementById('ts_f_einsatzdatum').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ts_f_datum_auftragnehmer').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ts_f_datum_kunde').value = new Date().toISOString().slice(0,10);
   clearSig('ts_sigAuftragnehmer'); clearSig('ts_sigKunde');
   tsAddMaterialRow(); tsAddMaterialRow();
   tsAddWorkRow({ name:'Battermann', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
@@ -1386,6 +1458,7 @@ async function tsLoadTimesheet(id){
 let ipCurrentId = null;
 let ipDeviceRows = [];
 let ipMaterialRows = [];
+let ipPhotos = [];
 
 function ipInsertMaterialRow(){
   const name = document.getElementById('ip_materialPicker').value.trim();
@@ -1411,13 +1484,14 @@ function ipRenderMaterial(){
       <td><input type="text" value="${escAttr(r.menge)}" onchange="ipMaterialRows[${idx}].menge=this.value;ipUpdateMaterialSum()"></td>
       <td><input type="text" value="${escAttr(r.einheit)}" onchange="ipMaterialRows[${idx}].einheit=this.value"></td>
       <td><input type="text" value="${escAttr(r.artikelnr)}" onchange="ipMaterialRows[${idx}].artikelnr=this.value"></td>
-      <td><input type="text" value="${escAttr(r.bezeichnung)}" onchange="ipMaterialRows[${idx}].bezeichnung=this.value"></td>
+      <td><input type="text" class="mat-bez-input" data-scope="ip" data-idx="${idx}" value="${escAttr(r.bezeichnung)}" onchange="ipMaterialRows[${idx}].bezeichnung=this.value"></td>
       <td><input type="text" value="${escAttr(r.preis)}" onchange="ipMaterialRows[${idx}].preis=this.value;ipUpdateMaterialSum()"></td>
       <td class="col-del"><button class="row-del" onclick="ipRemoveMaterialRow(${idx})">✕</button></td>
     `;
     body.appendChild(tr);
   });
   ipUpdateMaterialSum();
+  wireMaterialRowAutocomplete('ip', ipMaterialRows, ipRenderMaterial);
 }
 function ipUpdateMaterialSum(){
   let sum = 0, any = false;
@@ -1457,10 +1531,52 @@ function ipRenderDevices(){
   });
 }
 
+/* ---------- Fotodokumentation ---------- */
+function ipAddPhotos(fileList){
+  const files = Array.from(fileList || []);
+  if(!files.length) return;
+  let pending = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1000;
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          const scale = maxDim / Math.max(w,h);
+          w = Math.round(w*scale); h = Math.round(h*scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        ipPhotos.push(canvas.toDataURL('image/jpeg', 0.72));
+        ipRenderPhotos();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function ipRemovePhoto(idx){
+  ipPhotos.splice(idx,1);
+  ipRenderPhotos();
+}
+function ipRenderPhotos(){
+  const grid = document.getElementById('ip_photoGrid');
+  if(!grid) return;
+  grid.innerHTML = ipPhotos.map((src,idx) => `
+    <div class="photo-thumb">
+      <img src="${src}">
+      <button class="photo-del" onclick="ipRemovePhoto(${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
 const ipFieldMap = {
   ip_f_nr:'nr', ip_f_kdnr:'kdnr', ip_f_auftragsnr:'auftragsnr', ip_f_datum:'datum',
   ip_f_auftraggeber:'auftraggeber', ip_f_rechnungsanschrift:'rechnungsanschrift', ip_f_objekt:'objekt',
-  ip_f_ansprechpartner:'ansprechpartner', ip_f_tel:'tel', ip_f_art:'art', ip_f_termin_art:'termin_art',
+  ip_f_ansprechpartner:'ansprechpartner', ip_f_tel:'tel', ip_f_email:'email', ip_f_art:'art', ip_f_termin_art:'termin_art',
   ip_f_taetigkeiten:'taetigkeiten', ip_f_monteur:'monteur',
   ip_f_bemerkungen:'bemerkungen', ip_f_naechster_termin:'naechster_termin',
   ip_f_datum_monteur:'datum_monteur', ip_f_datum_kunde:'datum_kunde'
@@ -1476,8 +1592,12 @@ function ipCollectRecord(){
     rec[col] = val;
   });
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => rec['c'+(i+1)] = document.getElementById(id).checked);
+  rec.funktion_geprueft = document.getElementById('ip_funktion_geprueft').checked;
+  rec.sichtpruefung = document.getElementById('ip_sichtpruefung').checked;
+  rec.dichtigkeit = document.getElementById('ip_dichtigkeit').checked;
   rec.devices = ipDeviceRows;
   rec.material = ipMaterialRows;
+  rec.fotos = ipPhotos;
   rec.sig_monteur = getSigData('ip_sigMonteur');
   rec.sig_kunde = getSigData('ip_sigKunde');
   return rec;
@@ -1487,26 +1607,40 @@ function ipApplyRecord(rec){
     document.getElementById(fieldId).value = rec[col] || '';
   });
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => document.getElementById(id).checked = !!rec['c'+(i+1)]);
+  document.getElementById('ip_funktion_geprueft').checked = !!rec.funktion_geprueft;
+  document.getElementById('ip_sichtpruefung').checked = !!rec.sichtpruefung;
+  document.getElementById('ip_dichtigkeit').checked = !!rec.dichtigkeit;
   ipDeviceRows = (rec.devices && rec.devices.length) ? rec.devices.map(d=>({...d})) : [];
   ipMaterialRows = (rec.material && rec.material.length) ? rec.material.map(d=>({...d})) : [];
+  ipPhotos = (rec.fotos && rec.fotos.length) ? [...rec.fotos] : [];
   ipRenderDevices();
   ipRenderMaterial();
+  ipRenderPhotos();
   setSigData('ip_sigMonteur', rec.sig_monteur);
   setSigData('ip_sigKunde', rec.sig_kunde);
   ipCurrentId = rec.id;
+  updateSammelVisibility();
 }
 
 async function ipNewProtocol(){
   ipCurrentId = null;
   ipDeviceRows = [];
   ipMaterialRows = [];
+  ipPhotos = [];
   Object.keys(ipFieldMap).forEach(id => document.getElementById(id).value = '');
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('ip_funktion_geprueft').checked = false;
+  document.getElementById('ip_sichtpruefung').checked = false;
+  document.getElementById('ip_dichtigkeit').checked = false;
   document.getElementById('ip_f_datum').value = new Date().toISOString().slice(0,10);
-  document.getElementById('ip_f_termin_art').value = 'Einbau';
+  document.getElementById('ip_f_datum_monteur').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ip_f_datum_kunde').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ip_f_termin_art').value = 'Montage';
   clearSig('ip_sigMonteur'); clearSig('ip_sigKunde');
   ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow();
   ipAddMaterialRow(); ipAddMaterialRow();
+  ipRenderPhotos();
+  updateSammelVisibility();
   document.getElementById('ip_f_nr').value = await nextNumber('protocols','nr','IP');
   document.getElementById('ip_f_auftragsnr').value = await nextNumber('protocols','auftragsnr','AUF');
   showToast('Neues Protokoll angelegt');
@@ -1879,7 +2013,11 @@ function tsHasSomeData(){
 function ipHasSomeData(){
   return !!(pdVal('ip_f_auftraggeber') || pdVal('ip_f_art') || pdVal('ip_f_monteur') || pdVal('ip_f_bemerkungen') ||
     ipDeviceRows.some(r=>r.ort||r.typ||r.seriennr||r.datum) ||
-    ipMaterialRows.some(r=>r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis));
+    ipMaterialRows.some(r=>r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis) ||
+    ipPhotos.length > 0 ||
+    document.getElementById('ip_funktion_geprueft').checked ||
+    document.getElementById('ip_sichtpruefung').checked ||
+    document.getElementById('ip_dichtigkeit').checked);
 }
 
 function buildTsPrintHtml(){
@@ -1897,6 +2035,9 @@ function buildTsPrintHtml(){
   html += `<div class="pd-line">Rechnungsanschrift (Straße, PLZ, Ort): <b>${escAttr(pdVal('ts_f_rechnungsanschrift'))||'–'}</b></div>`;
   html += `<div class="pd-line">Einsatzort / Objekt (Straße, PLZ, Ort): <b>${escAttr(pdVal('ts_f_objekt'))||'–'}</b></div>`;
   html += `<div class="pd-line pd-line-split"><span>Ansprechpartner vor Ort: <b>${escAttr(pdVal('ts_f_ansprechpartner'))||'–'}</b></span><span>Tel.: <b>${escAttr(pdVal('ts_f_tel'))||'–'}</b></span></div>`;
+  if(pdVal('ts_f_email')){
+    html += `<div class="pd-line">E-Mail: <b>${escAttr(pdVal('ts_f_email'))}</b></div>`;
+  }
   html += `</div></div>`;
 
   html += `<div class="pd-section"><div class="pd-section-head">Tätigkeiten / Leistungsbeschreibung</div><div class="pd-section-body"><div class="pd-freetext">${pdVal('ts_f_taetigkeiten') ? escAttr(pdVal('ts_f_taetigkeiten')) : '<span class="pd-empty-note">Keine Angabe</span>'}</div></div></div>`;
@@ -1939,9 +2080,9 @@ function buildTsPrintHtml(){
 }
 
 function buildIpPrintHtml(){
-  const terminArt = pdVal('ip_f_termin_art') || 'Einbau';
-  const titleMap = { Wartung:'Wartungsprotokoll', Austausch:'Austauschprotokoll', Reparatur:'Reparaturprotokoll', Kontrolle:'Kontrollprotokoll' };
-  const title = titleMap[terminArt] || 'Installationsprotokoll';
+  const terminArt = pdVal('ip_f_termin_art') || 'Montage';
+  const titleMap = { Montage:'Montageprotokoll', Reparatur:'Reparaturprotokoll', Wartung:'Wartungsprotokoll', Besichtigung:'Besichtigungsprotokoll', Mängel:'Mängelprotokoll' };
+  const title = titleMap[terminArt] || 'Ausführungsprotokoll';
   const meta = [
     ['Protokoll-Nr.', pdVal('ip_f_nr')],
     ['Kundennummer', pdVal('ip_f_kdnr')],
@@ -1956,6 +2097,9 @@ function buildIpPrintHtml(){
   html += `<div class="pd-line">Rechnungsanschrift (Straße, PLZ, Ort): <b>${escAttr(pdVal('ip_f_rechnungsanschrift'))||'–'}</b></div>`;
   html += `<div class="pd-line">Einsatzort / Objekt (Straße, PLZ, Ort): <b>${escAttr(pdVal('ip_f_objekt'))||'–'}</b></div>`;
   html += `<div class="pd-line pd-line-split"><span>Ansprechpartner vor Ort: <b>${escAttr(pdVal('ip_f_ansprechpartner'))||'–'}</b></span><span>Tel.: <b>${escAttr(pdVal('ip_f_tel'))||'–'}</b></span></div>`;
+  if(pdVal('ip_f_email')){
+    html += `<div class="pd-line">E-Mail: <b>${escAttr(pdVal('ip_f_email'))}</b></div>`;
+  }
   html += `</div></div>`;
 
   html += `<div class="pd-section"><div class="pd-section-head">Art des Termins</div><div class="pd-section-body">`;
@@ -1998,6 +2142,15 @@ function buildIpPrintHtml(){
     ['ip_c4','Arbeitsbereich besenrein hinterlassen.']
   ];
   checks.forEach(([id,label]) => {
+    const checked = document.getElementById(id).checked;
+    html += `<div>${checked?'☑':'☐'} ${label}</div>`;
+  });
+  const extraChecks = [
+    ['ip_funktion_geprueft','Funktion geprüft'],
+    ['ip_sichtpruefung','Sichtprüfung durchgeführt'],
+    ['ip_dichtigkeit','Dichtigkeit geprüft']
+  ];
+  extraChecks.forEach(([id,label]) => {
     const checked = document.getElementById(id).checked;
     html += `<div>${checked?'☑':'☐'} ${label}</div>`;
   });
@@ -2055,6 +2208,214 @@ async function printCurrent(){
   }
   document.getElementById('printArea').innerHTML = html;
   setTimeout(() => window.print(), 80);
+}
+
+/* ================================================================
+   ================================================================
+   EIGENE SUCH-DROPDOWNS (ersetzen natives datalist)
+   ================================================================
+   ================================================================ */
+let acCurrentInput = null;
+
+function acShow(inputEl, items, labelFn, onSelect){
+  const list = document.getElementById('globalAcList');
+  const query = inputEl.value.trim().toLowerCase();
+  const matches = query
+    ? items.filter(it => labelFn(it).toLowerCase().includes(query)).slice(0,8)
+    : items.slice(0,8);
+  if(!matches.length){
+    list.innerHTML = `<div class="ac-empty">Keine Treffer</div>`;
+  } else {
+    list.innerHTML = matches.map((it,i) => `<div class="ac-item" data-i="${i}">${escAttr(labelFn(it))}</div>`).join('');
+  }
+  const rect = inputEl.getBoundingClientRect();
+  list.style.left = rect.left + 'px';
+  list.style.top = (rect.bottom + 4) + 'px';
+  list.style.width = Math.max(rect.width, 220) + 'px';
+  list.classList.add('open');
+  acCurrentInput = inputEl;
+  Array.from(list.querySelectorAll('.ac-item')).forEach(el => {
+    el.onmousedown = (e) => {
+      e.preventDefault();
+      const item = matches[parseInt(el.dataset.i,10)];
+      acHide();
+      onSelect(item);
+    };
+  });
+}
+function acHide(){
+  const list = document.getElementById('globalAcList');
+  list.classList.remove('open');
+  acCurrentInput = null;
+}
+document.addEventListener('click', (e) => {
+  const list = document.getElementById('globalAcList');
+  if(acCurrentInput && e.target !== acCurrentInput && !list.contains(e.target)) acHide();
+});
+
+function wirePickerAutocomplete(inputId, itemsGetter, labelFn, onSelect){
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  const trigger = () => acShow(el, itemsGetter(), labelFn, onSelect);
+  el.addEventListener('input', trigger);
+  el.addEventListener('focus', trigger);
+}
+function wireMaterialRowAutocomplete(scope, rowsArray, rerenderFn){
+  document.querySelectorAll(`.mat-bez-input[data-scope="${scope}"]`).forEach(input => {
+    input.addEventListener('input', () => {
+      acShow(input, tsMaterialsMaster, m => m.bezeichnung, (m) => {
+        const idx = parseInt(input.dataset.idx,10);
+        rowsArray[idx].bezeichnung = m.bezeichnung || '';
+        rowsArray[idx].einheit = m.einheit || '';
+        rowsArray[idx].artikelnr = m.artikelnr || '';
+        rowsArray[idx].preis = m.preis != null ? m.preis : '';
+        rerenderFn();
+      });
+    });
+  });
+}
+
+wirePickerAutocomplete('ts_customerPicker', () => tsCustomers, c => c.name, (c) => {
+  applyCustomerEverywhere(c);
+  document.getElementById('ts_customerPicker').value = '';
+  showToast('Kunde übernommen (beide Seiten)');
+});
+wirePickerAutocomplete('ip_customerPicker', () => tsCustomers, c => c.name, (c) => {
+  applyCustomerEverywhere(c);
+  document.getElementById('ip_customerPicker').value = '';
+  showToast('Kunde übernommen (beide Seiten)');
+});
+wirePickerAutocomplete('ts_materialPicker', () => tsMaterialsMaster, m => m.bezeichnung, (m) => {
+  tsAddMaterialRow({ menge:'1', einheit:m.einheit||'', artikelnr:m.artikelnr||'', bezeichnung:m.bezeichnung||'', preis:m.preis!=null?m.preis:'' });
+  document.getElementById('ts_materialPicker').value = '';
+  showToast('Material eingefügt');
+});
+wirePickerAutocomplete('ip_materialPicker', () => tsMaterialsMaster, m => m.bezeichnung, (m) => {
+  ipAddMaterialRow({ menge:'1', einheit:m.einheit||'', artikelnr:m.artikelnr||'', bezeichnung:m.bezeichnung||'', preis:m.preis!=null?m.preis:'' });
+  document.getElementById('ip_materialPicker').value = '';
+  showToast('Material eingefügt');
+});
+wirePickerAutocomplete('ts_employeePicker', () => tsEmployees, e => e.name, (e) => {
+  tsAddWorkRow({ name:e.name, von:'', bis:'', pause:'', fahrzeit:'', km:'' });
+  document.getElementById('ts_employeePicker').value = '';
+});
+
+/* ================================================================
+   KUNDE: LIVE-SYNC ZWISCHEN DEN SEITEN + SAMMELUNTERSCHRIFT-SICHTBARKEIT
+   ================================================================ */
+function updateSammelVisibility(){
+  const card = document.getElementById('sammelCard');
+  if(!card) return;
+  card.style.display = ipHasSomeData() ? '' : 'none';
+}
+
+(function wireAuftraggeberMirror(){
+  const pairs = [
+    ['ts_f_auftraggeber','ip_f_auftraggeber'], ['ts_f_kdnr','ip_f_kdnr'],
+    ['ts_f_rechnungsanschrift','ip_f_rechnungsanschrift'], ['ts_f_objekt','ip_f_objekt'],
+    ['ts_f_ansprechpartner','ip_f_ansprechpartner'], ['ts_f_tel','ip_f_tel'], ['ts_f_email','ip_f_email']
+  ];
+  pairs.forEach(([fromId,toId]) => {
+    const fromEl = document.getElementById(fromId);
+    if(!fromEl) return;
+    fromEl.addEventListener('input', () => {
+      const toEl = document.getElementById(toId);
+      if(toEl) toEl.value = fromEl.value;
+    });
+  });
+})();
+
+// Jede Änderung auf der Ausführungsprotokoll-Seite aktualisiert die Sichtbarkeit der Sammelunterschrift
+document.getElementById('page-installation').addEventListener('input', updateSammelVisibility);
+document.getElementById('page-installation').addEventListener('change', updateSammelVisibility);
+
+/* ================================================================
+   ================================================================
+   SAMMELUNTERSCHRIFT & E-MAIL-VERSAND
+   ================================================================
+   ================================================================ */
+async function applyCollectiveSignature(){
+  const data = getSigData('sammelSig');
+  if(!data){ showToast('Bitte zuerst unterschreiben'); return; }
+  const applyToTs = document.getElementById('sammel_apply_ts').checked;
+  const applyToIp = document.getElementById('sammel_apply_ip').checked;
+  if(!applyToTs && !applyToIp){ showToast('Bitte mindestens ein Dokument auswählen'); return; }
+  if(applyToIp && !ipHasSomeData()){ showToast('Ausführungsprotokoll ist noch leer — bitte erst ausfüllen'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const applied = [];
+  if(applyToTs){
+    setSigData('ts_sigKunde', data);
+    document.getElementById('ts_f_datum_kunde').value = today;
+    applied.push('Stundennachweis');
+  }
+  if(applyToIp){
+    setSigData('ip_sigKunde', data);
+    document.getElementById('ip_f_datum_kunde').value = today;
+    applied.push('Ausführungsprotokoll');
+  }
+  showToast('Unterschrift übernommen: ' + applied.join(', '));
+}
+
+/* E-Mail: Browser können keine PDF-Anhänge automatisch anfügen. Deshalb: zuerst
+   Druckdialog öffnen (PDF speichern), danach automatisch das Mailprogramm mit
+   vorausgefülltem Betreff/Text öffnen — der Nutzer hängt die eben gespeicherte
+   PDF-Datei manuell an. */
+let pendingEmailInfo = null;
+
+window.addEventListener('afterprint', () => {
+  if(!pendingEmailInfo) return;
+  const info = pendingEmailInfo;
+  pendingEmailInfo = null;
+  const subject = encodeURIComponent(info.subject);
+  const body = encodeURIComponent(info.body);
+  const to = encodeURIComponent(info.to || '');
+  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+});
+
+function downloadPhotosAsFiles(photos, prefix){
+  photos.forEach((src, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = src;
+      a.download = `${prefix || 'foto'}-${i+1}.jpg`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, i * 350);
+  });
+}
+
+async function emailCurrent(){
+  let to = '', subject = '', body = '';
+  let photosToSend = [];
+  if(currentPage === 'stunden'){
+    await tsSaveTimesheet();
+    const nr = pdVal('ts_f_berichtsnr');
+    const kunde = pdVal('ts_f_auftraggeber');
+    to = pdVal('ts_f_email');
+    subject = `Stunden- & Materialnachweis ${nr} – ${kunde}`;
+    body = `Guten Tag,\n\nanbei erhalten Sie den Stunden- & Materialnachweis ${nr}${kunde?(' für '+kunde):''}.\n\nBitte fügen Sie die soeben gespeicherte PDF-Datei als Anhang hinzu.\n\nMit freundlichen Grüßen\nObjekt- und Reparaturservice Battermann`;
+    if(ipHasSomeData()){
+      await ipSaveProtocol();
+      photosToSend = ipPhotos;
+    }
+  } else if(currentPage === 'installation'){
+    await ipSaveProtocol();
+    const nr = pdVal('ip_f_nr');
+    const kunde = pdVal('ip_f_auftraggeber');
+    to = pdVal('ip_f_email');
+    subject = `Ausführungsprotokoll ${nr} – ${kunde}`;
+    body = `Guten Tag,\n\nanbei erhalten Sie das Ausführungsprotokoll ${nr}${kunde?(' für '+kunde):''}.\n\nBitte fügen Sie die soeben gespeicherte PDF-Datei als Anhang hinzu.\n\nMit freundlichen Grüßen\nObjekt- und Reparaturservice Battermann`;
+    photosToSend = ipPhotos;
+  } else {
+    subject = 'Fahrtenbuch';
+    body = `Guten Tag,\n\nanbei das Fahrtenbuch.\n\nBitte fügen Sie die soeben gespeicherte PDF-Datei als Anhang hinzu.\n\nMit freundlichen Grüßen\nObjekt- und Reparaturservice Battermann`;
+  }
+  if(photosToSend.length){
+    body += `\n\nHinweis: ${photosToSend.length} Foto(s) wurden zusätzlich als Dateien heruntergeladen. Bitte fügen Sie diese ebenfalls als Anhang hinzu.`;
+    downloadPhotosAsFiles(photosToSend, pdVal('ip_f_nr') || 'foto');
+  }
+  pendingEmailInfo = { to, subject, body };
+  showToast('PDF wird erstellt — danach öffnet sich das Mailprogramm');
+  await printCurrent();
 }
 
 /* ================================================================
