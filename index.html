@@ -439,6 +439,7 @@
       <button class="tab-btn active" data-page="stunden" onclick="switchPage('stunden')">📄 <span>Stunden & Material</span></button>
       <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">🔧 <span>Ausführungsprotokoll</span></button>
       <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')">🚗 <span>Fahrtenbuch</span></button>
+      <button class="tab-btn" data-page="kunden" onclick="switchPage('kunden')">👥 <span>Kunden</span></button>
     </nav>
   </div>
 
@@ -492,12 +493,13 @@
           <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="ts_f_rechnungsanschrift" type="text"></div>
           <div class="field"><label>Einsatzort / Objekt (Straße, PLZ, Ort)</label><input id="ts_f_objekt" type="text"></div>
           <div class="objekt-row">
-            <div>
-              <label class="combo-label">Gespeichertes Objekt dieses Kunden wählen</label>
+            <div id="ts_objektRowWrap" style="display:none;flex:1;">
+              <label class="combo-label">Dieser Kunde hat mehrere Objekte — auswählen</label>
               <input id="ts_objektPicker" placeholder="z. B. Haus A, Wohnung 3…" style="width:100%;">
             </div>
-            <button class="btn small" onclick="tsSaveObjekt()">💾 Objekt speichern</button>
+            <button class="btn small" onclick="tsSaveObjekt()">💾 Als Objekt speichern</button>
           </div>
+          <div id="ts_kundeNotizBox" style="display:none;background:#fdf6e8;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#7a5c10;"></div>
           <div class="grid2">
             <div class="field"><label>Ansprechpartner vor Ort</label><input id="ts_f_ansprechpartner" type="text"></div>
             <div class="field"><label>Tel.</label><input id="ts_f_tel" type="text"></div>
@@ -868,10 +870,69 @@
 
     </div>
 
+    <!-- ============================================================ -->
+    <!-- SEITE 4: KUNDEN                                               -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-kunden">
+
+      <section class="card">
+        <div class="card-head"><span class="emoji">👥</span><h2>Kunden verwalten</h2></div>
+        <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderList()">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" onclick="kdNewCustomer()">+ Neuer Kunde</button>
+          <button class="btn" onclick="document.getElementById('kd_csvInput').click()">⇪ CSV importieren</button>
+          <button class="btn" onclick="tsExportCustomersCsv()">⇩ CSV exportieren</button>
+          <input type="file" id="kd_csvInput" class="hidden-file" accept=".csv" onchange="tsImportCustomersCsv(this.files[0])">
+        </div>
+        <div id="kd_list"></div>
+      </section>
+
+      <section class="card" id="kd_editCard" style="display:none;">
+        <div class="card-head"><span class="emoji">✏️</span><h2 id="kd_editTitle">Kunde bearbeiten</h2></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="field"><label>Name / Auftraggeber</label><input id="kd_f_name" type="text"></div>
+          <div class="field"><label>Kundennummer</label><input id="kd_f_kdnr" type="text"></div>
+          <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="kd_f_rechnungsanschrift" type="text"></div>
+          <div class="field"><label>Standard-Objekt / Einsatzort (Straße, PLZ, Ort)</label><input id="kd_f_objekt" type="text"></div>
+          <div class="grid2">
+            <div class="field"><label>Ansprechpartner</label><input id="kd_f_ansprechpartner" type="text"></div>
+            <div class="field"><label>Tel.</label><input id="kd_f_tel" type="text"></div>
+          </div>
+          <div class="field"><label>E-Mail</label><input id="kd_f_email" type="email"></div>
+          <div class="field">
+            <label>Notizen / Besonderheiten</label>
+            <textarea id="kd_f_notizen" rows="3" placeholder="z. B. Schlüssel beim Nachbarn, Hund im Garten, bevorzugte Ansprechzeit…"></textarea>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn primary" onclick="kdSaveCustomer()">💾 Speichern</button>
+          <button class="btn danger" onclick="kdDeleteCustomer()">🗑 Kunde löschen</button>
+          <button class="btn" onclick="kdCloseEdit()">Abbrechen</button>
+        </div>
+
+        <div class="card-head" style="margin-top:22px;"><span class="emoji">🏠</span><h2>Objekte dieses Kunden (falls mehrere Einsatzorte)</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:130px;">Bezeichnung</th>
+                <th>Adresse</th>
+                <th style="width:140px;">Ansprechpartner</th>
+                <th style="width:110px;">Tel.</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="kd_objekteBody"></tbody>
+          </table>
+        </div>
+        <button class="add-row" onclick="kdAddObjektRow()">+ Objekt hinzufügen</button>
+      </section>
+
+    </div>
+
   </main>
 
   <footer>
-    <div class="line1">Original für den Auftragnehmer. Durchschlag für den Kunden.</div>
     <div class="line2">
       <span>📍 Südstraße 25, 31698 Lindhorst</span>
       <span>📞 01556 7467763</span>
@@ -1072,6 +1133,8 @@ async function switchPage(page){
   currentPage = page;
   document.getElementById('page-stunden').classList.toggle('active', page === 'stunden');
   document.getElementById('page-installation').classList.toggle('active', page === 'installation');
+  document.getElementById('page-fahrtenbuch').classList.toggle('active', page === 'fahrtenbuch');
+  document.getElementById('page-kunden').classList.toggle('active', page === 'kunden');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
 
   if(page === 'installation' && !ipInitialized){
@@ -1084,6 +1147,9 @@ async function switchPage(page){
     fbInitialized = true;
     await fbLoadTrips();
   }
+  if(page === 'kunden'){
+    kdRenderList();
+  }
 }
 let fbInitialized = false;
 
@@ -1091,17 +1157,20 @@ let fbInitialized = false;
 async function newItem(){
   if(currentPage === 'stunden') await tsNewTimesheet();
   else if(currentPage === 'installation') await ipNewProtocol();
-  else fbAddDraftRow();
+  else if(currentPage === 'fahrtenbuch') fbAddDraftRow();
+  else if(currentPage === 'kunden') kdNewCustomer();
 }
 async function saveItem(){
   if(currentPage === 'stunden') await tsSaveTimesheet();
   else if(currentPage === 'installation') await ipSaveProtocol();
-  else showToast('Fahrten werden einzeln über "Abschließen" gespeichert');
+  else if(currentPage === 'fahrtenbuch') showToast('Fahrten werden einzeln über "Abschließen" gespeichert');
+  else if(currentPage === 'kunden') await kdSaveCustomer();
 }
 async function openList(){
   if(currentPage === 'stunden') await tsOpenLoadModal();
   else if(currentPage === 'installation') await ipOpenLoadModal();
-  else await fbLoadTrips();
+  else if(currentPage === 'fahrtenbuch') await fbLoadTrips();
+  else if(currentPage === 'kunden') kdRenderList();
 }
 
 /* ---------- Kunde auf BEIDEN Seiten übernehmen ---------- */
@@ -1118,15 +1187,22 @@ function applyCustomerEverywhere(c){
   });
   tsSelectedCustomerId = c.id || null;
   loadObjekteForCustomer(c.id);
+  const notizBox = document.getElementById('ts_kundeNotizBox');
+  if(notizBox){
+    if(c.notizen){ notizBox.style.display=''; notizBox.textContent = 'ℹ️ ' + c.notizen; }
+    else { notizBox.style.display='none'; notizBox.textContent=''; }
+  }
 }
 
 /* ---------- Objekte (mehrere Einsatzorte pro Kunde) ---------- */
 async function loadObjekteForCustomer(customerId){
   tsObjekte = [];
-  if(!customerId) return;
-  const { data, error } = await sb.from('objekte').select('*').eq('customer_id', customerId).order('name');
-  if(error){ return; } // Tabelle evtl. noch nicht angelegt - kein harter Fehler
-  tsObjekte = data || [];
+  if(customerId){
+    const { data, error } = await sb.from('objekte').select('*').eq('customer_id', customerId).order('name');
+    if(!error) tsObjekte = data || [];
+  }
+  const wrap = document.getElementById('ts_objektRowWrap');
+  if(wrap) wrap.style.display = tsObjekte.length > 1 ? '' : 'none';
 }
 function pickObjekt(o){
   document.getElementById('ts_f_objekt').value = o.adresse || '';
@@ -2804,6 +2880,145 @@ async function emailCurrent(){
   pendingEmailInfo = { to, subject, body };
   showToast('PDF wird erstellt — danach öffnet sich das Mailprogramm');
   await printCurrent();
+}
+
+/* ================================================================
+   ================================================================
+   SEITE 4: KUNDEN VERWALTEN
+   ================================================================
+   ================================================================ */
+let kdEditingId = null;
+let kdObjekteRows = [];
+
+function kdRenderList(){
+  const wrap = document.getElementById('kd_list');
+  if(!wrap) return;
+  const q = (document.getElementById('kd_search')?.value || '').trim().toLowerCase();
+  let list = tsCustomers;
+  if(q) list = list.filter(c => (c.name||'').toLowerCase().includes(q) || (c.kdnr||'').toLowerCase().includes(q) || (c.objekt||'').toLowerCase().includes(q));
+  if(!list.length){ wrap.innerHTML = '<div class="empty-note">Keine Kunden gefunden.</div>'; return; }
+  wrap.innerHTML = '';
+  list.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'modal-item';
+    div.innerHTML = `
+      <div class="info">
+        <div class="name">${escAttr(c.name || 'Ohne Namen')}</div>
+        <div class="sub">${escAttr(c.objekt || '')} ${c.tel ? '· '+escAttr(c.tel) : ''}</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn small" onclick="kdEditCustomer('${c.id}')">Bearbeiten</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+}
+
+function kdClearForm(){
+  ['kd_f_name','kd_f_kdnr','kd_f_rechnungsanschrift','kd_f_objekt','kd_f_ansprechpartner','kd_f_tel','kd_f_email','kd_f_notizen']
+    .forEach(id => document.getElementById(id).value = '');
+}
+
+function kdNewCustomer(){
+  kdEditingId = null;
+  kdObjekteRows = [];
+  kdClearForm();
+  document.getElementById('kd_editTitle').textContent = 'Neuer Kunde';
+  document.getElementById('kd_editCard').style.display = '';
+  kdRenderObjekte();
+}
+
+async function kdEditCustomer(id){
+  const c = tsCustomers.find(x => x.id === id);
+  if(!c) return;
+  kdEditingId = id;
+  document.getElementById('kd_f_name').value = c.name || '';
+  document.getElementById('kd_f_kdnr').value = c.kdnr || '';
+  document.getElementById('kd_f_rechnungsanschrift').value = c.rechnungsanschrift || '';
+  document.getElementById('kd_f_objekt').value = c.objekt || '';
+  document.getElementById('kd_f_ansprechpartner').value = c.ansprechpartner || '';
+  document.getElementById('kd_f_tel').value = c.tel || '';
+  document.getElementById('kd_f_email').value = c.email || '';
+  document.getElementById('kd_f_notizen').value = c.notizen || '';
+  document.getElementById('kd_editTitle').textContent = 'Kunde bearbeiten';
+  document.getElementById('kd_editCard').style.display = '';
+  const { data, error } = await sb.from('objekte').select('*').eq('customer_id', id).order('name');
+  kdObjekteRows = error ? [] : (data || []);
+  kdRenderObjekte();
+}
+
+function kdCloseEdit(){
+  document.getElementById('kd_editCard').style.display = 'none';
+  kdEditingId = null;
+}
+
+async function kdSaveCustomer(){
+  const rec = {
+    name: document.getElementById('kd_f_name').value.trim(),
+    kdnr: document.getElementById('kd_f_kdnr').value,
+    rechnungsanschrift: document.getElementById('kd_f_rechnungsanschrift').value,
+    objekt: document.getElementById('kd_f_objekt').value,
+    ansprechpartner: document.getElementById('kd_f_ansprechpartner').value,
+    tel: document.getElementById('kd_f_tel').value,
+    email: document.getElementById('kd_f_email').value,
+    notizen: document.getElementById('kd_f_notizen').value
+  };
+  if(!rec.name){ showToast('Bitte einen Namen eintragen'); return; }
+  if(kdEditingId) rec.id = kdEditingId;
+  const { data, error } = await sb.from('customers').upsert(rec).select().single();
+  if(error){ showToast('Fehler: '+error.message); return; }
+  kdEditingId = data.id;
+
+  for(const o of kdObjekteRows){
+    if(!o.name && !o.adresse) continue;
+    const orec = { customer_id: kdEditingId, name: o.name, adresse: o.adresse, ansprechpartner: o.ansprechpartner, tel: o.tel };
+    if(o.id) orec.id = o.id;
+    await sb.from('objekte').upsert(orec);
+  }
+
+  await tsLoadCustomers();
+  kdRenderList();
+  showToast('Kunde gespeichert');
+}
+
+async function kdDeleteCustomer(){
+  if(!kdEditingId){ kdCloseEdit(); return; }
+  if(!confirm('Diesen Kunden wirklich löschen? Zugehörige Objekte werden mitgelöscht.')) return;
+  const { error } = await sb.from('customers').delete().eq('id', kdEditingId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await tsLoadCustomers();
+  kdRenderList();
+  kdCloseEdit();
+  showToast('Kunde gelöscht');
+}
+
+function kdAddObjektRow(){
+  kdObjekteRows.push({ name:'', adresse:'', ansprechpartner:'', tel:'' });
+  kdRenderObjekte();
+}
+async function kdRemoveObjektRow(idx){
+  const o = kdObjekteRows[idx];
+  if(o.id){
+    if(!confirm('Dieses Objekt wirklich löschen?')) return;
+    await sb.from('objekte').delete().eq('id', o.id);
+  }
+  kdObjekteRows.splice(idx,1);
+  kdRenderObjekte();
+}
+function kdRenderObjekte(){
+  const body = document.getElementById('kd_objekteBody');
+  body.innerHTML = '';
+  kdObjekteRows.forEach((o,idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${escAttr(o.name)}" onchange="kdObjekteRows[${idx}].name=this.value"></td>
+      <td><input type="text" value="${escAttr(o.adresse)}" onchange="kdObjekteRows[${idx}].adresse=this.value"></td>
+      <td><input type="text" value="${escAttr(o.ansprechpartner)}" onchange="kdObjekteRows[${idx}].ansprechpartner=this.value"></td>
+      <td><input type="text" value="${escAttr(o.tel)}" onchange="kdObjekteRows[${idx}].tel=this.value"></td>
+      <td class="col-del"><button class="row-del" onclick="kdRemoveObjektRow(${idx})">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
 }
 
 /* ================================================================
