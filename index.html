@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="theme-color" content="#4a6b2a">
+<link rel="manifest" id="pwaManifest">
+<link rel="apple-touch-icon" id="appleTouchIcon">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Battermann">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Objekt- und Reparaturservice Battermann – Nachweise</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -378,6 +384,37 @@
   .pd-review img{ width:52px; height:52px; }
   .pd-review span{ font-size:9.5px; color:#888; line-height:1.4; }
 
+  /* Abgeschlossen = schreibgeschützt */
+  .lock-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:#e6efe0; border:1px solid #cfe0c2; color:var(--green-dark);
+    border-radius:8px; padding:10px 14px; font-size:12.5px; font-weight:600; margin-bottom:14px;
+  }
+  .lock-banner .btn{ background:#fff; }
+
+  /* Ausführungsprotokoll: Typ-Auswahl zuerst */
+  .type-btn-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (min-width:500px){ .type-btn-grid{ grid-template-columns:1fr 1fr 1fr; } }
+  .type-btn{
+    padding:20px 12px; border:2px solid var(--border); border-radius:12px; background:#fff;
+    font-size:14px; font-weight:700; color:var(--text); cursor:pointer; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .type-btn:hover{ border-color:var(--green); background:var(--green-light); }
+  .type-btn .icon{ font-size:26px; }
+  .vorlage-current{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+    background:var(--green-light); border-radius:8px; padding:8px 12px; margin-bottom:14px; font-size:13px; color:var(--green-dark); font-weight:600;
+  }
+
+  /* Durchstreich-Funktion in Checklisten */
+  .check-item.struck .check-label-text{ text-decoration:line-through; opacity:.55; }
+  .check-label-text{ cursor:pointer; }
+  .check-item{ display:flex; align-items:flex-start; gap:8px; }
+
+  /* Monteur-Vorschlag-Chips */
+  #ip_monteurChips .btn{ font-size:11.5px; padding:5px 10px; }
+
 </style>
 </head>
 <body>
@@ -449,6 +486,11 @@
     <!-- SEITE 1: STUNDEN- & MATERIALNACHWEIS                          -->
     <!-- ============================================================ -->
     <div class="page active" id="page-stunden">
+
+      <div class="lock-banner" id="ts_lockBanner" style="display:none;">
+        <span>🔒 Dieser Nachweis ist abgeschlossen und schreibgeschützt.</span>
+        <button class="btn small" onclick="tsUnlock()">Bearbeitung freigeben</button>
+      </div>
 
       <section class="card">
         <div class="top-row">
@@ -553,6 +595,15 @@
       </section>
 
       <section class="card">
+        <div class="card-head"><span class="emoji">📷</span><h2>Fotodokumentation</h2></div>
+        <div class="photo-grid" id="ts_photoGrid"></div>
+        <label class="photo-add-label" style="margin-top:10px;">
+          +
+          <input type="file" accept="image/*" capture="environment" multiple onchange="tsAddPhotos(this.files)">
+        </label>
+      </section>
+
+      <section class="card">
         <div class="card-head"><span class="emoji">⏱</span><h2>Arbeitszeiten & Pause</h2></div>
 
         <div class="combo-row">
@@ -569,6 +620,7 @@
             <thead>
               <tr>
                 <th style="width:120px;">Name</th>
+                <th style="width:100px;">Kennzeichen</th>
                 <th style="width:90px;">Von</th>
                 <th style="width:90px;">Bis</th>
                 <th style="width:80px;">Pause (Min)</th>
@@ -640,6 +692,30 @@
     <!-- ============================================================ -->
     <div class="page" id="page-installation">
 
+      <div class="lock-banner" id="ip_lockBanner" style="display:none;">
+        <span>🔒 Dieses Protokoll ist abgeschlossen und schreibgeschützt.</span>
+        <button class="btn small" onclick="ipUnlock()">Bearbeitung freigeben</button>
+      </div>
+
+      <section class="card" id="ip_typeSelector">
+        <div class="card-head"><span class="emoji">🔧</span><h2>Was für ein Protokoll möchten Sie erstellen?</h2></div>
+        <div class="type-btn-grid">
+          <button class="type-btn" onclick="ipChooseTemplate('Montage')"><span class="icon">🔧</span>Montage</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Reparatur')"><span class="icon">🛠️</span>Reparatur</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Wartung')"><span class="icon">🧰</span>Wartung</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Besichtigung')"><span class="icon">🔍</span>Besichtigung</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Mängel')"><span class="icon">⚠️</span>Mängel</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Sonstiges')"><span class="icon">📋</span>Sonstiges</button>
+        </div>
+      </section>
+
+      <div id="ip_formContent" style="display:none;">
+
+      <div class="vorlage-current">
+        <span id="ip_currentVorlageLabel">Vorlage: Montage</span>
+        <button class="btn small" onclick="ipChangeTemplate()">↺ Andere Vorlage wählen</button>
+      </div>
+
       <section class="card">
         <div class="top-row">
           <div class="company">
@@ -685,33 +761,30 @@
 
       <section class="card">
         <div class="card-head"><span class="emoji">🔧</span><h2>Art des Termins</h2></div>
-        <div class="grid2">
-          <div class="field">
-            <label>Installations-/Gewerkeart (frei wählbar)</label>
-            <input id="ip_f_art" list="ip_artList" placeholder="z. B. Rauchwarnmelder, Elektro, Sanitär…">
-            <datalist id="ip_artList">
-              <option value="Rauchwarnmelder"></option>
-              <option value="Elektroinstallation"></option>
-              <option value="Sanitär / Heizung"></option>
-              <option value="Sicherheitstechnik"></option>
-              <option value="Netzwerktechnik"></option>
-              <option value="Sonstiges"></option>
-            </datalist>
-          </div>
-          <div class="field">
-            <label>Vorlage</label>
-            <select id="ip_f_termin_art" onchange="ipApplyTemplateFields()">
-              <option>Montage</option>
-              <option>Reparatur</option>
-              <option>Wartung</option>
-              <option>Besichtigung</option>
-              <option>Mängel</option>
-              <option>Sonstiges</option>
-            </select>
-          </div>
+        <div class="field">
+          <label>Installations-/Gewerkeart (frei wählbar)</label>
+          <input id="ip_f_art" list="ip_artList" placeholder="z. B. Rauchwarnmelder, Elektro, Sanitär…">
+          <datalist id="ip_artList">
+            <option value="Rauchwarnmelder"></option>
+            <option value="Elektroinstallation"></option>
+            <option value="Sanitär / Heizung"></option>
+            <option value="Sicherheitstechnik"></option>
+            <option value="Netzwerktechnik"></option>
+            <option value="Sonstiges"></option>
+          </datalist>
         </div>
+        <select id="ip_f_termin_art" style="display:none;">
+          <option>Montage</option>
+          <option>Reparatur</option>
+          <option>Wartung</option>
+          <option>Besichtigung</option>
+          <option>Mängel</option>
+          <option>Sonstiges</option>
+        </select>
         <div class="field" style="margin-top:12px;">
-          <label>Ausführender Techniker / Monteur</label><input id="ip_f_monteur" type="text">
+          <label>Ausführender Techniker / Monteur</label>
+          <input id="ip_f_monteur" type="text">
+          <div id="ip_monteurChips" class="btn-row" style="margin-top:6px;"></div>
         </div>
       </section>
 
@@ -771,16 +844,17 @@
 
       <section class="card">
         <div class="card-head"><span class="emoji">✅</span><h2>Hinweise / Bestätigung</h2></div>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 8px;">Text antippen = als "nicht zutreffend" durchstreichen.</p>
         <div class="checklist" id="ip_standard_checks">
-          <label class="check-item"><input type="checkbox" id="ip_c1">Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.</label>
-          <label class="check-item"><input type="checkbox" id="ip_c2">Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).</label>
-          <label class="check-item"><input type="checkbox" id="ip_c3">Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.</label>
-          <label class="check-item"><input type="checkbox" id="ip_c4">Arbeitsbereich besenrein hinterlassen.</label>
+          <label class="check-item" id="ip_item_c1"><input type="checkbox" id="ip_c1"><span class="check-label-text" onclick="ipToggleStrike('c1')">Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.</span></label>
+          <label class="check-item" id="ip_item_c2"><input type="checkbox" id="ip_c2"><span class="check-label-text" onclick="ipToggleStrike('c2')">Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).</span></label>
+          <label class="check-item" id="ip_item_c3"><input type="checkbox" id="ip_c3"><span class="check-label-text" onclick="ipToggleStrike('c3')">Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.</span></label>
+          <label class="check-item" id="ip_item_c4"><input type="checkbox" id="ip_c4"><span class="check-label-text" onclick="ipToggleStrike('c4')">Arbeitsbereich besenrein hinterlassen.</span></label>
         </div>
         <div class="checklist" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
-          <label class="check-item" id="ip_check_funktion"><input type="checkbox" id="ip_funktion_geprueft">Funktion geprüft</label>
-          <label class="check-item" id="ip_check_sicht"><input type="checkbox" id="ip_sichtpruefung">Sichtprüfung durchgeführt</label>
-          <label class="check-item" id="ip_check_dicht"><input type="checkbox" id="ip_dichtigkeit">Dichtigkeit geprüft</label>
+          <label class="check-item" id="ip_check_funktion"><input type="checkbox" id="ip_funktion_geprueft"><span class="check-label-text" onclick="ipToggleStrike('funktion_geprueft')">Funktion geprüft</span></label>
+          <label class="check-item" id="ip_check_sicht"><input type="checkbox" id="ip_sichtpruefung"><span class="check-label-text" onclick="ipToggleStrike('sichtpruefung')">Sichtprüfung durchgeführt</span></label>
+          <label class="check-item" id="ip_check_dicht"><input type="checkbox" id="ip_dichtigkeit"><span class="check-label-text" onclick="ipToggleStrike('dichtigkeit')">Dichtigkeit geprüft</span></label>
         </div>
         <div class="field" style="margin-top:14px;">
           <label>Besondere Vorkommnisse / Bemerkungen</label>
@@ -825,6 +899,8 @@
           Auftrag abschließen
         </button>
       </section>
+
+      </div>
 
     </div>
 
@@ -975,6 +1051,34 @@
 
 <script>
 /* ================================================================
+   PWA: Manifest zur Laufzeit erzeugen, damit die App bei "Zum
+   Startbildschirm hinzufügen" ohne Browserleiste (Vollbild) startet.
+   ================================================================ */
+(function setupPWA(){
+  const logo = document.querySelector('.login-card img')?.src || '';
+  const appleIcon = document.getElementById('appleTouchIcon');
+  if(appleIcon && logo) appleIcon.href = logo;
+  const manifest = {
+    name: "Objekt- und Reparaturservice Battermann",
+    short_name: "Battermann",
+    start_url: ".",
+    scope: ".",
+    display: "fullscreen",
+    orientation: "portrait",
+    background_color: "#f9fafb",
+    theme_color: "#4a6b2a",
+    icons: logo ? [
+      { src: logo, sizes: "400x400", type: "image/png", purpose: "any maskable" }
+    ] : []
+  };
+  try {
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    const manifestLink = document.getElementById('pwaManifest');
+    if(manifestLink) manifestLink.href = URL.createObjectURL(blob);
+  } catch(e){ /* Manifest optional - App funktioniert auch ohne */ }
+})();
+
+/* ================================================================
    KONFIGURATION
    ================================================================ */
 const SUPABASE_URL = 'https://wihdoacgqbyxxeejoxsg.supabase.co';
@@ -984,6 +1088,39 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentPage = 'stunden';
 let ipInitialized = false;
+let tsLocked = false;
+let ipLocked = false;
+
+function setLocked(prefix, locked){
+  const pageEl = document.getElementById('page-' + prefix);
+  if(!pageEl) return;
+  pageEl.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = locked; });
+  pageEl.querySelectorAll('.add-row, .row-del, .photo-add-label').forEach(el => {
+    el.style.pointerEvents = locked ? 'none' : '';
+    el.style.opacity = locked ? '0.5' : '';
+  });
+  pageEl.querySelectorAll('canvas.sigpad').forEach(el => { el.style.pointerEvents = locked ? 'none' : ''; });
+  pageEl.querySelectorAll('.sig-title button').forEach(el => { el.style.pointerEvents = locked ? 'none' : ''; el.style.opacity = locked ? '0.4' : ''; });
+  if(prefix === 'stunden') tsLocked = locked;
+  if(prefix === 'installation') ipLocked = locked;
+  const banner = document.getElementById(prefix === 'stunden' ? 'ts_lockBanner' : 'ip_lockBanner');
+  if(banner) banner.style.display = locked ? '' : 'none';
+}
+
+async function tsUnlock(){
+  if(!confirm('Bearbeitung wirklich freigeben? Der Nachweis gilt danach wieder als Entwurf (offen).')) return;
+  const { error } = await sb.from('timesheets').update({ status:'offen' }).eq('id', tsCurrentId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  setLocked('stunden', false);
+  showToast('Bearbeitung freigegeben');
+}
+async function ipUnlock(){
+  if(!confirm('Bearbeitung wirklich freigeben? Das Protokoll gilt danach wieder als Entwurf (offen).')) return;
+  const { error } = await sb.from('protocols').update({ status:'offen' }).eq('id', ipCurrentId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  setLocked('installation', false);
+  showToast('Bearbeitung freigegeben');
+}
 
 /* ================================================================
    GEMEINSAME HILFSFUNKTIONEN (von beiden Seiten genutzt)
@@ -1070,6 +1207,7 @@ function initSig(canvasId){
 }
 function clearSig(canvasId){
   const canvas = document.getElementById(canvasId);
+  if(!sigCtx[canvasId]){ sigEmpty[canvasId] = true; return; }
   sigCtx[canvasId].clearRect(0,0,canvas.width,canvas.height);
   sigEmpty[canvasId] = true;
 }
@@ -1139,8 +1277,6 @@ async function switchPage(page){
 
   if(page === 'installation' && !ipInitialized){
     ipInitialized = true;
-    initSig('ip_sigMonteur');
-    initSig('ip_sigKunde');
     await ipNewProtocol();
   }
   if(page === 'fahrtenbuch' && !fbInitialized){
@@ -1245,6 +1381,7 @@ let tsMaterialsMaster = [];
 let tsEmployees = [];
 let tsObjekte = [];
 let tsSelectedCustomerId = null;
+let tsPhotos = [];
 
 /* ---------- Stammdaten: Kunden ---------- */
 async function tsLoadCustomers(){
@@ -1488,7 +1625,7 @@ function tsUpdateMaterialSum(){
 
 /* ---------- Arbeitszeit-Zeilen ---------- */
 function tsAddWorkRow(data){
-  tsWorkRows.push(data || { name:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
+  tsWorkRows.push(data || { name:'', kennzeichen:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   tsRenderWork();
 }
 function tsRemoveWorkRow(idx){
@@ -1522,7 +1659,8 @@ function tsRenderWork(){
     if(gesamtH) totalGesamt += gesamtH;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" value="${escAttr(r.name)}" onchange="tsWorkRows[${idx}].name=this.value"></td>
+      <td><input type="text" value="${escAttr(r.name)}" onchange="tsWorkRows[${idx}].name=this.value;renderMonteurChips()"></td>
+      <td><input type="text" value="${escAttr(r.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="tsWorkRows[${idx}].kennzeichen=this.value"></td>
       <td><input type="time" value="${escAttr(r.von)}" onchange="tsWorkRows[${idx}].von=this.value;tsRenderWork()"></td>
       <td><input type="time" value="${escAttr(r.bis)}" onchange="tsWorkRows[${idx}].bis=this.value;tsRenderWork()"></td>
       <td><input type="number" min="0" value="${escAttr(r.pause)}" onchange="tsWorkRows[${idx}].pause=this.value;tsRenderWork()"></td>
@@ -1535,6 +1673,59 @@ function tsRenderWork(){
     body.appendChild(tr);
   });
   document.getElementById('ts_workSum').textContent = totalGesamt.toFixed(2).replace('.',',') + ' h';
+  renderMonteurChips();
+}
+
+/* ---------- Fotodokumentation (Stundennachweis) ---------- */
+function tsAddPhotos(fileList){
+  const files = Array.from(fileList || []);
+  if(!files.length) return;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1000;
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          const scale = maxDim / Math.max(w,h);
+          w = Math.round(w*scale); h = Math.round(h*scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const stamp = new Date().toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        ctx.font = `${Math.max(14, Math.round(w*0.032))}px Arial`;
+        const padding = 8;
+        const textWidth = ctx.measureText(stamp).width;
+        const boxH = Math.max(20, Math.round(w*0.032)) + padding;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, h - boxH, textWidth + padding*2, boxH);
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(stamp, padding, h - boxH/2);
+        tsPhotos.push(canvas.toDataURL('image/jpeg', 0.72));
+        tsRenderPhotos();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function tsRemovePhoto(idx){
+  tsPhotos.splice(idx,1);
+  tsRenderPhotos();
+}
+function tsRenderPhotos(){
+  const grid = document.getElementById('ts_photoGrid');
+  if(!grid) return;
+  grid.innerHTML = tsPhotos.map((src,idx) => `
+    <div class="photo-thumb">
+      <img src="${src}">
+      <button class="photo-del" onclick="tsRemovePhoto(${idx})">✕</button>
+    </div>
+  `).join('');
 }
 
 /* ---------- Formular <-> Datensatz ---------- */
@@ -1556,6 +1747,7 @@ function tsCollectRecord(){
   });
   rec.material = tsMaterialRows;
   rec.arbeitszeiten = tsWorkRows;
+  rec.fotos = tsPhotos;
   rec.sig_auftragnehmer = getSigData('ts_sigAuftragnehmer');
   rec.sig_kunde = getSigData('ts_sigKunde');
   return rec;
@@ -1566,11 +1758,14 @@ function tsApplyRecord(rec){
   });
   tsMaterialRows = (rec.material && rec.material.length) ? rec.material.map(r=>({...r})) : [];
   tsWorkRows = (rec.arbeitszeiten && rec.arbeitszeiten.length) ? rec.arbeitszeiten.map(r=>({...r})) : [];
+  tsPhotos = (rec.fotos && rec.fotos.length) ? [...rec.fotos] : [];
   tsRenderMaterial();
   tsRenderWork();
+  tsRenderPhotos();
   setSigData('ts_sigAuftragnehmer', rec.sig_auftragnehmer);
   setSigData('ts_sigKunde', rec.sig_kunde);
   tsCurrentId = rec.id;
+  setLocked('stunden', rec.status === 'abgeschlossen');
 }
 
 /* ---------- Aktionen ---------- */
@@ -1578,18 +1773,22 @@ async function tsNewTimesheet(){
   tsCurrentId = null;
   tsMaterialRows = [];
   tsWorkRows = [];
+  tsPhotos = [];
+  tsRenderPhotos();
   Object.keys(tsFieldMap).forEach(id => document.getElementById(id).value = '');
   document.getElementById('ts_f_einsatzdatum').value = new Date().toISOString().slice(0,10);
   document.getElementById('ts_f_datum_auftragnehmer').value = new Date().toISOString().slice(0,10);
   document.getElementById('ts_f_datum_kunde').value = new Date().toISOString().slice(0,10);
   clearSig('ts_sigAuftragnehmer'); clearSig('ts_sigKunde');
   tsAddMaterialRow(); tsAddMaterialRow();
-  tsAddWorkRow({ name:'Battermann', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
+  tsAddWorkRow({ name:'Battermann', kennzeichen:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   document.getElementById('ts_f_berichtsnr').value = await nextNumber('timesheets','berichtsnr','AB');
   document.getElementById('ts_f_auftragsnr').value = await nextNumber('timesheets','auftragsnr','AUF');
+  setLocked('stunden', false);
   showToast('Neuer Nachweis angelegt');
 }
 async function tsSaveTimesheet(){
+  if(tsLocked){ showToast('Dieser Nachweis ist abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   setStatus('ok','Speichere…');
   const rec = tsCollectRecord();
   const { data, error, offline } = await trySupabaseUpsert('timesheets', rec);
@@ -1714,7 +1913,9 @@ function ipUpdateMaterialSum(){
 }
 
 function ipAddDeviceRow(data){
-  const row = data || { ort:'', typ:'', seriennr:'', batterie:'10-Jahres-Batterie', datum:'', ok:false };
+  const art = (document.getElementById('ip_f_art')?.value || '').trim();
+  const defaultBatterie = art === 'Rauchwarnmelder' ? '10-Jahres-Batterie' : '';
+  const row = data || { ort:'', typ:'', seriennr:'', batterie:defaultBatterie, datum:'', ok:false };
   ipDeviceRows.push(row);
   ipRenderDevices();
 }
@@ -1866,6 +2067,69 @@ function ipApplyTemplateFields(){
   document.getElementById('ip_check_funktion').style.display = cfg.checks.funktion ? '' : 'none';
   document.getElementById('ip_check_sicht').style.display = cfg.checks.sicht ? '' : 'none';
   document.getElementById('ip_check_dicht').style.display = cfg.checks.dichtigkeit ? '' : 'none';
+
+  const label = document.getElementById('ip_currentVorlageLabel');
+  if(label) label.textContent = 'Vorlage: ' + key;
+}
+
+/* ---------- Typ-Auswahl zuerst ---------- */
+let ipSigsInitialized = false;
+function ipEnsureSigsInitialized(){
+  if(ipSigsInitialized) return;
+  initSig('ip_sigMonteur');
+  initSig('ip_sigKunde');
+  ipSigsInitialized = true;
+}
+function ipChooseTemplate(type){
+  document.getElementById('ip_f_termin_art').value = type;
+  ipApplyTemplateFields();
+  document.getElementById('ip_typeSelector').style.display = 'none';
+  document.getElementById('ip_formContent').style.display = '';
+  ipEnsureSigsInitialized();
+  renderMonteurChips();
+}
+function ipChangeTemplate(){
+  document.getElementById('ip_typeSelector').style.display = '';
+  document.getElementById('ip_formContent').style.display = 'none';
+}
+
+/* ---------- Techniker/Monteur automatisch aus Stundenzettel ---------- */
+function renderMonteurChips(){
+  const wrap = document.getElementById('ip_monteurChips');
+  if(!wrap) return;
+  const names = [...new Set(tsWorkRows.map(r => r.name).filter(Boolean))];
+  if(names.length <= 1){
+    wrap.innerHTML = '';
+    const monteurField = document.getElementById('ip_f_monteur');
+    if(names.length === 1 && monteurField && !monteurField.value){
+      monteurField.value = names[0];
+    }
+    return;
+  }
+  wrap.innerHTML = names.map(n =>
+    `<button type="button" class="btn small" onclick="document.getElementById('ip_f_monteur').value=${JSON.stringify(n)}">${escAttr(n)}</button>`
+  ).join('');
+}
+
+/* ---------- Durchstreichen ("nicht zutreffend") ---------- */
+let ipChecklistNA = {};
+function ipToggleStrike(id){
+  if(ipLocked) return;
+  ipChecklistNA[id] = !ipChecklistNA[id];
+  const item = document.getElementById('ip_item_' + id) || document.getElementById('ip_check_' + (id==='funktion_geprueft'?'funktion':id==='sichtpruefung'?'sicht':id==='dichtigkeit'?'dicht':id));
+  if(item) item.classList.toggle('struck', ipChecklistNA[id]);
+  if(ipChecklistNA[id]){
+    const cb = document.getElementById('ip_' + id);
+    if(cb) cb.checked = false;
+  }
+}
+function ipApplyChecklistNA(naList){
+  ipChecklistNA = {};
+  (naList || []).forEach(id => { ipChecklistNA[id] = true; });
+  ['c1','c2','c3','c4','funktion_geprueft','sichtpruefung','dichtigkeit'].forEach(id => {
+    const item = document.getElementById('ip_item_' + id) || document.getElementById('ip_check_' + (id==='funktion_geprueft'?'funktion':id==='sichtpruefung'?'sicht':id==='dichtigkeit'?'dicht':id));
+    if(item) item.classList.toggle('struck', !!ipChecklistNA[id]);
+  });
 }
 
 const ipFieldMap = {
@@ -1890,6 +2154,7 @@ function ipCollectRecord(){
   rec.funktion_geprueft = document.getElementById('ip_funktion_geprueft').checked;
   rec.sichtpruefung = document.getElementById('ip_sichtpruefung').checked;
   rec.dichtigkeit = document.getElementById('ip_dichtigkeit').checked;
+  rec.checklist_na = Object.keys(ipChecklistNA).filter(k => ipChecklistNA[k]);
   rec.devices = ipDeviceRows;
   rec.material = ipMaterialRows;
   rec.fotos = ipPhotos;
@@ -1911,11 +2176,17 @@ function ipApplyRecord(rec){
   ipRenderDevices();
   ipRenderMaterial();
   ipRenderPhotos();
+  document.getElementById('ip_typeSelector').style.display = 'none';
+  document.getElementById('ip_formContent').style.display = '';
+  ipEnsureSigsInitialized();
   setSigData('ip_sigMonteur', rec.sig_monteur);
   setSigData('ip_sigKunde', rec.sig_kunde);
   ipCurrentId = rec.id;
   ipApplyTemplateFields();
+  ipApplyChecklistNA(rec.checklist_na);
+  renderMonteurChips();
   updateSammelVisibility();
+  setLocked('installation', rec.status === 'abgeschlossen');
 }
 
 async function ipNewProtocol(){
@@ -1923,16 +2194,21 @@ async function ipNewProtocol(){
   ipDeviceRows = [];
   ipMaterialRows = [];
   ipPhotos = [];
+  ipChecklistNA = {};
   Object.keys(ipFieldMap).forEach(id => document.getElementById(id).value = '');
-  ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach(id => document.getElementById(id).checked = false);
+  ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach(id => {
+    document.getElementById(id).checked = false;
+    const item = document.getElementById('ip_item_' + id);
+    if(item) item.classList.remove('struck');
+  });
   document.getElementById('ip_funktion_geprueft').checked = false;
   document.getElementById('ip_sichtpruefung').checked = false;
   document.getElementById('ip_dichtigkeit').checked = false;
+  ['ip_check_funktion','ip_check_sicht','ip_check_dicht'].forEach(id => document.getElementById(id).classList.remove('struck'));
   document.getElementById('ip_f_datum').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_datum_monteur').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_datum_kunde').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_termin_art').value = 'Montage';
-  ipApplyTemplateFields();
   clearSig('ip_sigMonteur'); clearSig('ip_sigKunde');
   ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow();
   ipAddMaterialRow(); ipAddMaterialRow();
@@ -1940,9 +2216,13 @@ async function ipNewProtocol(){
   updateSammelVisibility();
   document.getElementById('ip_f_nr').value = await nextNumber('protocols','nr','IP');
   document.getElementById('ip_f_auftragsnr').value = await nextNumber('protocols','auftragsnr','AUF');
-  showToast('Neues Protokoll angelegt');
+  setLocked('installation', false);
+  document.getElementById('ip_typeSelector').style.display = '';
+  document.getElementById('ip_formContent').style.display = 'none';
+  showToast('Neues Protokoll — bitte Vorlage wählen');
 }
 async function ipSaveProtocol(){
+  if(ipLocked){ showToast('Dieses Protokoll ist abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   setStatus('ok','Speichere…');
   const rec = ipCollectRecord();
   const { data, error, offline } = await trySupabaseUpsert('protocols', rec);
@@ -2062,7 +2342,7 @@ function fbImportFromTimesheet(){
     const km = parseFloat(r.km);
     if(!r.km || isNaN(km) || km<=0) return;
     fbAddDraftRow({
-      datum, fahrer: r.name, ziel_ort: ziel, zweck: kunde,
+      datum, fahrer: r.name, kennzeichen: r.kennzeichen || '', ziel_ort: ziel, zweck: kunde,
       km_gefahren: km, timesheet_ref: berichtsnr
     });
     count++;
@@ -2382,11 +2662,11 @@ function buildTsPrintHtml(){
   const workRows = tsWorkRows.filter(r => r.name||r.von||r.bis);
   html += `<div class="pd-section"><div class="pd-section-head">Arbeitszeiten & Pause</div><div class="pd-section-body">`;
   if(workRows.length){
-    html += `<table class="pd-table"><thead><tr><th>Name (Mitarbeiter)</th><th>Von Uhr</th><th>Bis Uhr</th><th>Pause Min.</th><th>Arbeitszeit Std.</th><th>Fahrzeit Std.</th><th>Gefahrene KM</th><th>Gesamt Std.</th></tr></thead><tbody>`;
+    html += `<table class="pd-table"><thead><tr><th>Name (Mitarbeiter)</th><th>Kennzeichen</th><th>Von Uhr</th><th>Bis Uhr</th><th>Pause Min.</th><th>Arbeitszeit Std.</th><th>Fahrzeit Std.</th><th>Gefahrene KM</th><th>Gesamt Std.</th></tr></thead><tbody>`;
     workRows.forEach(r => {
       const { arbeitszeitH, gesamtH } = tsComputeRow(r);
       const fahrzeitH = r.fahrzeit ? (parseFloat(r.fahrzeit)/60) : null;
-      html += `<tr><td>${escAttr(r.name)}</td><td>${escAttr(r.von)}</td><td>${escAttr(r.bis)}</td><td>${escAttr(r.pause)}</td><td>${arbeitszeitH!==null?arbeitszeitH.toFixed(2):''}</td><td>${fahrzeitH!==null?fahrzeitH.toFixed(2):''}</td><td>${escAttr(r.km)}</td><td>${gesamtH!==null?gesamtH.toFixed(2):''}</td></tr>`;
+      html += `<tr><td>${escAttr(r.name)}</td><td>${escAttr(r.kennzeichen)}</td><td>${escAttr(r.von)}</td><td>${escAttr(r.bis)}</td><td>${escAttr(r.pause)}</td><td>${arbeitszeitH!==null?arbeitszeitH.toFixed(2):''}</td><td>${fahrzeitH!==null?fahrzeitH.toFixed(2):''}</td><td>${escAttr(r.km)}</td><td>${gesamtH!==null?gesamtH.toFixed(2):''}</td></tr>`;
     });
     html += `</tbody></table>`;
   } else {
@@ -2465,23 +2745,25 @@ function buildIpPrintHtml(){
   html += `<div class="pd-section"><div class="pd-section-head">Hinweise / Bestätigung</div><div class="pd-section-body pd-checklist">`;
   if(cfg.showStandardChecks){
     const checks = [
-      ['ip_c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
-      ['ip_c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
-      ['ip_c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
-      ['ip_c4','Arbeitsbereich besenrein hinterlassen.']
+      ['ip_c1','c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
+      ['ip_c2','c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
+      ['ip_c3','c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
+      ['ip_c4','c4','Arbeitsbereich besenrein hinterlassen.']
     ];
-    checks.forEach(([id,label]) => {
+    checks.forEach(([id,key,label]) => {
       const checked = document.getElementById(id).checked;
-      html += `<div>${checked?'☑':'☐'} ${label}</div>`;
+      const na = ipChecklistNA[key];
+      html += na ? `<div>⊘ <s>${label}</s> <i>(nicht zutreffend)</i></div>` : `<div>${checked?'☑':'☐'} ${label}</div>`;
     });
   }
   const extraChecks = [];
-  if(cfg.checks.funktion) extraChecks.push(['ip_funktion_geprueft','Funktion geprüft']);
-  if(cfg.checks.sicht) extraChecks.push(['ip_sichtpruefung','Sichtprüfung durchgeführt']);
-  if(cfg.checks.dichtigkeit) extraChecks.push(['ip_dichtigkeit','Dichtigkeit geprüft']);
-  extraChecks.forEach(([id,label]) => {
+  if(cfg.checks.funktion) extraChecks.push(['ip_funktion_geprueft','funktion_geprueft','Funktion geprüft']);
+  if(cfg.checks.sicht) extraChecks.push(['ip_sichtpruefung','sichtpruefung','Sichtprüfung durchgeführt']);
+  if(cfg.checks.dichtigkeit) extraChecks.push(['ip_dichtigkeit','dichtigkeit','Dichtigkeit geprüft']);
+  extraChecks.forEach(([id,key,label]) => {
     const checked = document.getElementById(id).checked;
-    html += `<div>${checked?'☑':'☐'} ${label}</div>`;
+    const na = ipChecklistNA[key];
+    html += na ? `<div>⊘ <s>${label}</s> <i>(nicht zutreffend)</i></div>` : `<div>${checked?'☑':'☐'} ${label}</div>`;
   });
   html += `</div></div>`;
 
@@ -2698,11 +2980,14 @@ async function trySupabaseUpsert(table, record){
   try {
     const { data, error } = await sb.from(table).upsert(record).select().single();
     if(error){
-      const id = queueOfflineWrite(table, record);
-      return { data: { ...record, id }, error: null, offline: true };
+      // Die Anfrage kam beim Server an, wurde aber abgelehnt (z.B. fehlende Spalte,
+      // Berechtigung). Das ist KEIN Verbindungsproblem - nicht offline queuen,
+      // sondern den echten Fehler anzeigen, damit er behoben werden kann.
+      return { data: null, error, offline: false };
     }
     return { data, error: null, offline: false };
   } catch(e){
+    // Die Anfrage kam gar nicht erst durch (z.B. kein Internet) - hier offline queuen.
     const id = queueOfflineWrite(table, record);
     return { data: { ...record, id }, error: null, offline: true };
   }
@@ -2712,12 +2997,20 @@ async function syncOfflineQueue(){
   if(!q.length || !navigator.onLine) { updateOfflineBadge(); return; }
   const remaining = [];
   let ok = 0;
+  let stuck = 0;
   for(const item of q){
     try {
       const { error } = await sb.from(item.table).upsert(item.record);
-      if(error) remaining.push(item); else ok++;
+      if(error){
+        item.attempts = (item.attempts || 0) + 1;
+        item.lastError = error.message;
+        remaining.push(item);
+        if(item.attempts >= 3) stuck++;
+      } else {
+        ok++;
+      }
     } catch(e){
-      remaining.push(item);
+      remaining.push(item); // echtes Netzwerkproblem - weiter versuchen, kein Zähler
     }
   }
   saveOfflineQueueList(remaining);
@@ -2726,6 +3019,10 @@ async function syncOfflineQueue(){
     showToast(ok + ' offline gespeicherte Eintrag/Einträge synchronisiert');
     if(currentPage === 'stunden') await tsRenderModalList().catch(()=>{});
     if(currentPage === 'installation') await ipRenderModalList().catch(()=>{});
+  }
+  if(stuck > 0){
+    const first = remaining.find(i => i.attempts >= 3);
+    showToast(stuck + ' Eintrag/Einträge können nicht gespeichert werden: ' + (first?.lastError || 'unbekannter Fehler'));
   }
 }
 function offlineQueueCountFor(table){
@@ -2755,6 +3052,7 @@ setInterval(() => { if(navigator.onLine) syncOfflineQueue(); }, 30000);
    ================================================================
    ================================================================ */
 async function tsCompleteOrder(){
+  if(tsLocked){ showToast('Dieser Nachweis ist bereits abgeschlossen'); return; }
   setStatus('ok','Speichere…');
   const rec = tsCollectRecord();
   rec.status = 'abgeschlossen';
@@ -2769,9 +3067,10 @@ async function tsCompleteOrder(){
     ipRec.status = 'abgeschlossen';
     ipRec.abgeschlossen_am = new Date().toISOString();
     const res2 = await trySupabaseUpsert('protocols', ipRec);
-    if(!res2.error){ ipCurrentId = res2.data.id; ipDone = true; }
+    if(!res2.error){ ipCurrentId = res2.data.id; ipDone = true; setLocked('installation', true); }
   }
   updateOfflineBadge();
+  setLocked('stunden', true);
   showToast('Auftrag abgeschlossen' + (ipDone ? ' (inkl. Ausführungsprotokoll)' : '') + (offline ? ' — offline gespeichert' : ''));
   if(confirm('Für den nächsten Termin eine neue Vorlage anlegen?')){
     await tsNewTimesheet();
@@ -2779,6 +3078,7 @@ async function tsCompleteOrder(){
 }
 
 async function ipCompleteOrder(){
+  if(ipLocked){ showToast('Dieses Protokoll ist bereits abgeschlossen'); return; }
   setStatus('ok','Speichere…');
   const rec = ipCollectRecord();
   rec.status = 'abgeschlossen';
@@ -2787,6 +3087,7 @@ async function ipCompleteOrder(){
   if(error){ showToast('Fehler: '+error.message); return; }
   ipCurrentId = data.id;
   updateOfflineBadge();
+  setLocked('installation', true);
   showToast('Ausführungsprotokoll abgeschlossen' + (offline ? ' — offline gespeichert' : ''));
   if(confirm('Neues Protokoll anlegen?')){
     await ipNewProtocol();
@@ -2808,14 +3109,12 @@ async function applyCollectiveSignature(){
   const today = new Date().toISOString().slice(0,10);
   const applied = [];
   if(applyToTs){
-    setSigData('ts_sigKunde', data);
-    document.getElementById('ts_f_datum_kunde').value = today;
-    applied.push('Stundennachweis');
+    if(tsLocked){ showToast('Stundennachweis ist abgeschlossen — übersprungen'); }
+    else { setSigData('ts_sigKunde', data); document.getElementById('ts_f_datum_kunde').value = today; applied.push('Stundennachweis'); }
   }
   if(applyToIp){
-    setSigData('ip_sigKunde', data);
-    document.getElementById('ip_f_datum_kunde').value = today;
-    applied.push('Ausführungsprotokoll');
+    if(ipLocked){ showToast('Ausführungsprotokoll ist abgeschlossen — übersprungen'); }
+    else { setSigData('ip_sigKunde', data); document.getElementById('ip_f_datum_kunde').value = today; applied.push('Ausführungsprotokoll'); }
   }
   showToast('Unterschrift übernommen: ' + applied.join(', '));
 }
@@ -2859,7 +3158,9 @@ async function emailCurrent(){
     body = `Guten Tag,\n\nanbei erhalten Sie den Stunden- & Materialnachweis ${nr}${kunde?(' für '+kunde):''}.\n\nBitte fügen Sie die soeben gespeicherte PDF-Datei als Anhang hinzu.\n\nMit freundlichen Grüßen\nObjekt- und Reparaturservice Battermann`;
     if(ipHasSomeData()){
       await ipSaveProtocol();
-      photosToSend = ipPhotos;
+      photosToSend = [...tsPhotos, ...ipPhotos];
+    } else {
+      photosToSend = [...tsPhotos];
     }
   } else if(currentPage === 'installation'){
     await ipSaveProtocol();
@@ -2875,7 +3176,8 @@ async function emailCurrent(){
   }
   if(photosToSend.length){
     body += `\n\nHinweis: ${photosToSend.length} Foto(s) wurden zusätzlich als Dateien heruntergeladen. Bitte fügen Sie diese ebenfalls als Anhang hinzu.`;
-    downloadPhotosAsFiles(photosToSend, pdVal('ip_f_nr') || 'foto');
+    const prefix = currentPage === 'stunden' ? (pdVal('ts_f_berichtsnr') || 'foto') : (pdVal('ip_f_nr') || 'foto');
+    downloadPhotosAsFiles(photosToSend, prefix);
   }
   pendingEmailInfo = { to, subject, body };
   showToast('PDF wird erstellt — danach öffnet sich das Mailprogramm');
