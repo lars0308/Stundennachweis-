@@ -1275,8 +1275,19 @@ function initSig(canvasId){
   const canvas = document.getElementById(canvasId);
   function resize(){
     const ratio = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    if(rect.width === 0 || rect.height === 0) return; // Canvas gerade nicht sichtbar - nicht anfassen
+    let rect = canvas.getBoundingClientRect();
+    if(rect.width === 0 || rect.height === 0){
+      // Fläche ist unsichtbar (z.B. anderer Tab gerade aktiv) - Elternseite kurz
+      // sichtbar schalten, vermessen, zurückschalten. Passiert synchron, der
+      // Browser malt dazwischen kein Bild, daher kein sichtbares Flackern.
+      const hiddenPage = canvas.closest('.page:not(.active)');
+      if(hiddenPage){
+        hiddenPage.classList.add('active');
+        rect = canvas.getBoundingClientRect();
+        hiddenPage.classList.remove('active');
+      }
+      if(rect.width === 0 || rect.height === 0) return;
+    }
     // Vorhandene Zeichnung sichern, da das Setzen von width/height den Canvas-Inhalt löscht
     // (z.B. wenn die Bildschirmtastatur auf- oder zuklappt und dadurch ein resize-Event feuert)
     let preserved = null;
@@ -2212,8 +2223,17 @@ function ipApplyTemplateFields(){
 let ipSigsInitialized = false;
 function ipEnsureSigsInitialized(){
   if(ipSigsInitialized) return;
+  // Der Canvas kann nur korrekt vermessen werden, wenn die Seite sichtbar ist
+  // (sonst ist die Fläche 0x0, z.B. wenn man von der Stunden-Seite aus die
+  // Sammelunterschrift nutzt, ohne vorher den Ausführungsprotokoll-Tab geöffnet
+  // zu haben). Deshalb kurz sichtbar schalten, vermessen, wieder zurück -
+  // passiert synchron, der Browser malt dazwischen kein Bild, daher kein Flackern.
+  const page = document.getElementById('page-installation');
+  const wasActive = page.classList.contains('active');
+  if(!wasActive) page.classList.add('active');
   initSig('ip_sigMonteur');
   initSig('ip_sigKunde');
+  if(!wasActive) page.classList.remove('active');
   ipSigsInitialized = true;
 }
 function ipChooseTemplate(type){
