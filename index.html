@@ -1022,6 +1022,18 @@
 </div>
 
 <!-- Modal: Kunde anlegen/bearbeiten -->
+<!-- Modal: Auftrag abgeschlossen -->
+<div class="modal-overlay" id="completeModal">
+  <div class="modal">
+    <h3 id="completeModalTitle">Auftrag abgeschlossen</h3>
+    <p id="completeModalText" style="font-size:13px;color:var(--muted);line-height:1.5;"></p>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn primary" onclick="completeModalNewDoc()">Neue Vorlage anlegen</button>
+      <button class="btn modal-close" onclick="closeCompleteModal()">Hier bleiben</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="kd_editModal">
   <div class="modal" style="max-width:560px;">
     <h3 id="kd_editTitle">Neuer Kunde</h3>
@@ -3275,10 +3287,7 @@ async function tsCompleteOrder(){
   }
   updateOfflineBadge();
   setLocked('stunden', true);
-  showToast('Auftrag abgeschlossen' + (ipDone ? ' (inkl. Ausführungsprotokoll)' : '') + (offline ? ' — offline gespeichert' : ''));
-  if(confirm('Für den nächsten Termin eine neue Vorlage anlegen?')){
-    await tsNewTimesheet();
-  }
+  openCompleteModal('stunden', pdVal('ts_f_berichtsnr'), pdVal('ts_f_auftraggeber'), ipDone, offline);
 }
 
 async function ipCompleteOrder(){
@@ -3292,10 +3301,30 @@ async function ipCompleteOrder(){
   ipCurrentId = data.id;
   updateOfflineBadge();
   setLocked('installation', true);
-  showToast('Ausführungsprotokoll abgeschlossen' + (offline ? ' — offline gespeichert' : ''));
-  if(confirm('Neues Protokoll anlegen?')){
-    await ipNewProtocol();
-  }
+  openCompleteModal('installation', pdVal('ip_f_nr'), pdVal('ip_f_auftraggeber'), false, offline);
+}
+
+let completeModalPage = null;
+
+function openCompleteModal(page, nr, kunde, ipDone, offline){
+  completeModalPage = page;
+  const title = page === 'stunden' ? 'Stundennachweis abgeschlossen' : 'Ausführungsprotokoll abgeschlossen';
+  document.getElementById('completeModalTitle').textContent = title;
+  let text = (nr || 'Ohne Nr.') + (kunde ? ' — ' + kunde : '') + ' wurde final gespeichert und ist jetzt schreibgeschützt.';
+  if(ipDone) text += ' Das zugehörige Ausführungsprotokoll wurde ebenfalls abgeschlossen.';
+  if(offline) text += ' Hinweis: gerade offline gespeichert, wird automatisch synchronisiert.';
+  document.getElementById('completeModalText').textContent = text;
+  document.getElementById('completeModal').classList.add('open');
+}
+function closeCompleteModal(){
+  document.getElementById('completeModal').classList.remove('open');
+  completeModalPage = null;
+}
+async function completeModalNewDoc(){
+  const page = completeModalPage;
+  closeCompleteModal();
+  if(page === 'stunden') await tsNewTimesheet();
+  else if(page === 'installation') await ipNewProtocol();
 }
 
 /* ================================================================
