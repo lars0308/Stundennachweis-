@@ -236,6 +236,71 @@
     .page.active{display:block !important;}
   }
 
+  /* Fahrtenbuch */
+  .disclaimer-box{
+    background:#fdf6e8;border:1px solid #f0dfae;border-radius:8px;padding:12px 14px;
+    font-size:12px;color:#7a5c10;line-height:1.5;margin-bottom:14px;
+  }
+  .trip-table th{white-space:nowrap;}
+  .trip-locked{color:var(--text);}
+  .trip-badge{
+    display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:600;margin-left:6px;
+  }
+  .trip-badge.draft{background:#fdf1e0;color:#92620a;}
+  .trip-badge.final{background:#e6efe0;color:var(--green-dark);}
+  .trip-badge.void{background:#fdeaea;color:#b91c1c;}
+  .trip-row.storniert{opacity:.5;text-decoration:line-through;}
+  .change-log{font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .fb-summary{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:13px;}
+  .fb-summary .box{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 14px;}
+  .fb-summary .box .num{font-weight:700;color:var(--green-dark);font-size:16px;}
+  .fb-summary .box .lbl{color:var(--muted);font-size:11px;}
+
+  /* ============================================================
+     DRUCK-/PDF-VORLAGE (matches Referenz-PDF)
+     ============================================================ */
+  #printArea{ display:none; }
+  @media print{
+    body *{ visibility:hidden !important; }
+    #printArea, #printArea *{ visibility:visible !important; }
+    #printArea{ position:absolute; left:0; top:0; width:100%; display:block !important; }
+  }
+
+  .pd-page{ width:100%; padding:6mm 4mm; font-family: Arial, Helvetica, sans-serif; color:#111; box-sizing:border-box; }
+  .pd-pagebreak{ page-break-before: always; }
+  .pd-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+  .pd-logo{ height:78px; object-fit:contain; }
+  .pd-address{ text-align:right; font-size:11px; line-height:1.6; color:#333; }
+  .pd-rule{ border-top:1px solid #ccc; margin:14px 0 18px; }
+  .pd-titlerow{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; gap:20px; flex-wrap:wrap; }
+  .pd-title{ font-size:19px; font-weight:800; letter-spacing:.03em; color:#111; text-transform:uppercase; }
+  .pd-meta{ font-size:11.5px; line-height:1.9; text-align:right; white-space:nowrap; }
+  .pd-meta span{ color:#555; margin-right:4px; }
+  .pd-meta b{ color:#111; font-weight:700; }
+  .pd-section{ margin-bottom:16px; }
+  .pd-section-head{
+    background:#eef3e8; color:#3a5521; font-weight:700; font-size:11.5px;
+    letter-spacing:.04em; text-transform:uppercase; padding:6px 10px; border:1px solid #d7e0cc;
+  }
+  .pd-section-body{ border:1px solid #d7e0cc; border-top:none; padding:10px 12px; font-size:12px; }
+  .pd-line{ margin-bottom:6px; }
+  .pd-line b{ font-weight:700; }
+  .pd-line-split{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px; }
+  .pd-freetext{ white-space:pre-wrap; min-height:18px; }
+  .pd-table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  .pd-table th{ background:#f7f9f5; color:#3a5521; text-align:left; font-weight:700; padding:6px 8px; border-bottom:1px solid #d7e0cc; }
+  .pd-table td{ padding:6px 8px; border-bottom:1px solid #eee; }
+  .pd-empty-note{ color:#999; font-size:11.5px; font-style:italic; }
+  .pd-sig-grid{ display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:22px; }
+  .pd-sig-label{ font-weight:700; font-size:11.5px; color:#3a5521; text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px; }
+  .pd-sig-img{ height:55px; object-fit:contain; display:block; margin-bottom:4px; border-bottom:1px solid #333; }
+  .pd-sig-blank{ height:55px; border-bottom:1px solid #333; margin-bottom:4px; }
+  .pd-sig-date{ font-size:11.5px; }
+  .pd-confirm{ font-size:10.5px; color:#555; margin-top:16px; line-height:1.5; }
+  .pd-footer{ margin-top:24px; padding-top:10px; border-top:1px solid #ddd; text-align:center; font-size:10px; color:#888; }
+  .pd-checklist > div{ margin-bottom:4px; font-size:12px; }
+  .pd-check{ margin-right:6px; }
+
 </style>
 </head>
 <body>
@@ -279,7 +344,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg>
           <span class="btn-label">Speichern</span>
         </button>
-        <button class="btn" onclick="window.print()">
+        <button class="btn" onclick="printCurrent()">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg>
           <span class="btn-label">PDF erstellen</span>
         </button>
@@ -292,6 +357,7 @@
     <nav class="pagebar">
       <button class="tab-btn active" data-page="stunden" onclick="switchPage('stunden')">📄 <span>Stunden & Material</span></button>
       <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">🔧 <span>Installation</span></button>
+      <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')">🚗 <span>Fahrtenbuch</span></button>
     </nav>
   </div>
 
@@ -476,6 +542,15 @@
 
       <section class="card">
         <div class="card-head"><span class="emoji">👤</span><h2>Auftraggeber</h2></div>
+
+        <div class="combo-row">
+          <input list="ip_customerList" id="ip_customerPicker" placeholder="Gespeicherten Kunden wählen…">
+          <datalist id="ip_customerList"></datalist>
+          <div class="btn-row">
+            <button class="btn small" onclick="ipImportCustomer()">↓ Importieren</button>
+          </div>
+        </div>
+
         <div style="display:flex;flex-direction:column;gap:12px;">
           <div class="field"><label>Auftraggeber / Wohnungseigentümer</label><input id="ip_f_auftraggeber" type="text"></div>
           <div class="field"><label>Rechnungsanschrift (Straße, PLZ, Ort)</label><input id="ip_f_rechnungsanschrift" type="text"></div>
@@ -488,20 +563,40 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><span class="emoji">🔧</span><h2>Art der Installation</h2></div>
+        <div class="card-head"><span class="emoji">🔧</span><h2>Art des Termins</h2></div>
         <div class="grid2">
           <div class="field">
-            <label>Installationsart</label>
-            <select id="ip_f_art">
-              <option>Rauchwarnmelder</option>
-              <option>Elektroinstallation</option>
-              <option>Sanitär / Heizung</option>
-              <option>Sicherheitstechnik</option>
+            <label>Installations-/Gewerkeart (frei wählbar)</label>
+            <input id="ip_f_art" list="ip_artList" placeholder="z. B. Rauchwarnmelder, Elektro, Sanitär…">
+            <datalist id="ip_artList">
+              <option value="Rauchwarnmelder"></option>
+              <option value="Elektroinstallation"></option>
+              <option value="Sanitär / Heizung"></option>
+              <option value="Sicherheitstechnik"></option>
+              <option value="Netzwerktechnik"></option>
+              <option value="Sonstiges"></option>
+            </datalist>
+          </div>
+          <div class="field">
+            <label>Termin-Art</label>
+            <select id="ip_f_termin_art">
+              <option>Einbau</option>
+              <option>Wartung</option>
+              <option>Austausch</option>
+              <option>Reparatur</option>
+              <option>Kontrolle</option>
               <option>Sonstiges</option>
             </select>
           </div>
-          <div class="field"><label>Ausführender Techniker / Monteur</label><input id="ip_f_monteur" type="text"></div>
         </div>
+        <div class="field" style="margin-top:12px;">
+          <label>Ausführender Techniker / Monteur</label><input id="ip_f_monteur" type="text">
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="emoji">📝</span><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
+        <textarea class="full" id="ip_f_taetigkeiten" rows="3" placeholder="Ausgeführte Arbeiten, sofern nicht durch die Geräteliste unten abgedeckt…"></textarea>
       </section>
 
       <section class="card">
@@ -524,6 +619,36 @@
           </table>
         </div>
         <button class="add-row" onclick="ipAddDeviceRow()">+ Zeile hinzufügen</button>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="emoji">📦</span><h2>Verwendetes Material</h2></div>
+
+        <div class="combo-row">
+          <input list="ip_materialList" id="ip_materialPicker" placeholder="Gespeichertes Material wählen…">
+          <datalist id="ip_materialList"></datalist>
+          <div class="btn-row">
+            <button class="btn small" onclick="ipInsertMaterialRow()">↓ Einfügen</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px;">Menge</th>
+                <th style="width:80px;">Einheit</th>
+                <th style="width:110px;">Artikelnr.</th>
+                <th>Artikelbezeichnung</th>
+                <th style="width:100px;">Preis (opt.)</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="ip_materialBody"></tbody>
+          </table>
+        </div>
+        <button class="add-row" onclick="ipAddMaterialRow()">+ Zeile hinzufügen</button>
+        <div class="sum-row"><span class="label">Summe Material:</span><span class="value" id="ip_materialSum">–</span></div>
       </section>
 
       <section class="card">
@@ -564,6 +689,48 @@
 
     </div>
 
+    <!-- ============================================================ -->
+    <!-- SEITE 3: FAHRTENBUCH                                          -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-fahrtenbuch">
+
+      <section class="card">
+        <div class="card-head"><span class="emoji">🚗</span><h2>Fahrtenbuch</h2></div>
+        <div class="disclaimer-box">
+          ⚠️ Für die steuerliche Anerkennung durch das Finanzamt muss ein Fahrtenbuch zeitnah, lückenlos und in "geschlossener Form" geführt werden. Deshalb: Neue Fahrten sind zunächst als <strong>Entwurf</strong> frei bearbeitbar. Über "Abschließen" wird der Eintrag gesperrt; danach sind nur noch protokollierte Korrekturen möglich. Für eine rechtsverbindliche Nutzung empfehlen wir, das einmal mit deinem Steuerberater abzustimmen.
+        </div>
+
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" onclick="fbAddDraftRow()">+ Fahrt hinzufügen</button>
+          <button class="btn" onclick="fbImportFromTimesheet()">↓ Aus aktuellem Stundennachweis übernehmen</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="trip-table">
+            <thead>
+              <tr>
+                <th style="width:100px;">Datum</th>
+                <th style="width:110px;">Fahrer</th>
+                <th style="width:100px;">Kennzeichen</th>
+                <th style="width:130px;">Start</th>
+                <th style="width:130px;">Ziel</th>
+                <th style="width:140px;">Zweck / Kunde</th>
+                <th style="width:80px;">km Start</th>
+                <th style="width:80px;">km Ende</th>
+                <th style="width:80px;">km gefahren</th>
+                <th style="width:90px;">Art</th>
+                <th style="width:170px;"></th>
+              </tr>
+            </thead>
+            <tbody id="fb_tripsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="fb-summary" id="fb_summary"></div>
+      </section>
+
+    </div>
+
   </main>
 
   <footer>
@@ -595,6 +762,8 @@
     <button class="btn modal-close" onclick="ipCloseLoadModal()">Schließen</button>
   </div>
 </div>
+
+<div id="printArea"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -763,20 +932,42 @@ async function switchPage(page){
     initSig('ip_sigKunde');
     await ipNewProtocol();
   }
+  if(page === 'fahrtenbuch' && !fbInitialized){
+    fbInitialized = true;
+    await fbLoadTrips();
+  }
 }
+let fbInitialized = false;
 
 /* ---------- Generische Toolbar-Aktionen (delegieren an aktive Seite) ---------- */
 async function newItem(){
   if(currentPage === 'stunden') await tsNewTimesheet();
-  else await ipNewProtocol();
+  else if(currentPage === 'installation') await ipNewProtocol();
+  else fbAddDraftRow();
 }
 async function saveItem(){
   if(currentPage === 'stunden') await tsSaveTimesheet();
-  else await ipSaveProtocol();
+  else if(currentPage === 'installation') await ipSaveProtocol();
+  else showToast('Fahrten werden einzeln über "Abschließen" gespeichert');
 }
 async function openList(){
   if(currentPage === 'stunden') await tsOpenLoadModal();
-  else await ipOpenLoadModal();
+  else if(currentPage === 'installation') await ipOpenLoadModal();
+  else await fbLoadTrips();
+}
+
+/* ---------- Kunde auf BEIDEN Seiten übernehmen ---------- */
+function applyCustomerEverywhere(c){
+  const map = {
+    ts_f_auftraggeber: c.name, ts_f_kdnr: c.kdnr, ts_f_rechnungsanschrift: c.rechnungsanschrift,
+    ts_f_objekt: c.objekt, ts_f_ansprechpartner: c.ansprechpartner, ts_f_tel: c.tel,
+    ip_f_auftraggeber: c.name, ip_f_kdnr: c.kdnr, ip_f_rechnungsanschrift: c.rechnungsanschrift,
+    ip_f_objekt: c.objekt, ip_f_ansprechpartner: c.ansprechpartner, ip_f_tel: c.tel
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if(el) el.value = val || '';
+  });
 }
 
 
@@ -797,19 +988,24 @@ async function tsLoadCustomers(){
   const { data, error } = await sb.from('customers').select('*').order('name');
   if(error){ showToast('Fehler beim Laden der Kunden: '+error.message); return; }
   tsCustomers = data || [];
-  document.getElementById('ts_customerList').innerHTML = tsCustomers.map(c => `<option value="${escAttr(c.name)}">`).join('');
+  const options = tsCustomers.map(c => `<option value="${escAttr(c.name)}">`).join('');
+  document.getElementById('ts_customerList').innerHTML = options;
+  const ipList = document.getElementById('ip_customerList');
+  if(ipList) ipList.innerHTML = options;
 }
 function tsImportCustomer(){
   const name = document.getElementById('ts_customerPicker').value.trim();
   const c = tsCustomers.find(c => c.name === name);
   if(!c){ showToast('Kein gespeicherter Kunde mit diesem Namen gefunden'); return; }
-  document.getElementById('ts_f_auftraggeber').value = c.name || '';
-  document.getElementById('ts_f_kdnr').value = c.kdnr || '';
-  document.getElementById('ts_f_rechnungsanschrift').value = c.rechnungsanschrift || '';
-  document.getElementById('ts_f_objekt').value = c.objekt || '';
-  document.getElementById('ts_f_ansprechpartner').value = c.ansprechpartner || '';
-  document.getElementById('ts_f_tel').value = c.tel || '';
-  showToast('Kunde importiert');
+  applyCustomerEverywhere(c);
+  showToast('Kunde übernommen (beide Seiten)');
+}
+function ipImportCustomer(){
+  const name = document.getElementById('ip_customerPicker').value.trim();
+  const c = tsCustomers.find(c => c.name === name);
+  if(!c){ showToast('Kein gespeicherter Kunde mit diesem Namen gefunden'); return; }
+  applyCustomerEverywhere(c);
+  showToast('Kunde übernommen (beide Seiten)');
 }
 async function tsSaveCustomer(){
   const name = document.getElementById('ts_f_auftraggeber').value.trim();
@@ -847,24 +1043,36 @@ function tsExportCustomersCsv(){
   }));
   downloadCsv(rows, 'kunden.csv');
 }
+function normKey(k){ return (k||'').toString().trim().toLowerCase().replace(/[.\s_-]/g,''); }
+function pick(row, ...keys){
+  const normRow = {};
+  Object.keys(row).forEach(k => normRow[normKey(k)] = row[k]);
+  for(const k of keys){ const v = normRow[normKey(k)]; if(v!==undefined && v!==null && v!=='') return v; }
+  return '';
+}
 function tsImportCustomersCsv(file){
   if(!file) return;
   Papa.parse(file, {
     header: true, skipEmptyLines: true,
     complete: async (res) => {
       const rows = res.data.map(r => ({
-        name: r.Auftraggeber || r.Name || '',
-        kdnr: r.Kundennummer || r.KdNr || '',
-        rechnungsanschrift: r.Rechnungsanschrift || '',
-        objekt: r.Einsatzort || r.Objekt || '',
-        ansprechpartner: r.Ansprechpartner || '',
-        tel: r.Tel || r.Telefon || ''
+        name: pick(r,'Auftraggeber','name'),
+        kdnr: pick(r,'Kundennummer','kdnr','KdNr'),
+        rechnungsanschrift: pick(r,'Rechnungsanschrift'),
+        objekt: pick(r,'Einsatzort','Objekt'),
+        ansprechpartner: pick(r,'Ansprechpartner'),
+        tel: pick(r,'Tel','Telefon')
       })).filter(r => r.name);
-      if(!rows.length){ showToast('Keine gültigen Zeilen in der CSV gefunden'); return; }
-      const { error } = await sb.from('customers').insert(rows);
+      if(!rows.length){ showToast('Keine gültigen Zeilen in der CSV gefunden — bitte Spaltenüberschriften prüfen'); return; }
+      // bestehende Kunden (nach Name) aktualisieren statt duplizieren
+      const upserts = rows.map(r => {
+        const existing = tsCustomers.find(c => c.name === r.name);
+        return existing ? { ...r, id: existing.id } : r;
+      });
+      const { error } = await sb.from('customers').upsert(upserts);
       if(error){ showToast('Fehler beim Import: '+error.message); return; }
       await tsLoadCustomers();
-      showToast(rows.length + ' Kunden importiert');
+      showToast(rows.length + ' Kunden importiert/aktualisiert');
       document.getElementById('ts_customerCsvInput').value = '';
     }
   });
@@ -875,7 +1083,10 @@ async function tsLoadMaterials(){
   const { data, error } = await sb.from('materials').select('*').order('bezeichnung');
   if(error){ showToast('Fehler beim Laden des Materials: '+error.message); return; }
   tsMaterialsMaster = data || [];
-  document.getElementById('ts_materialList').innerHTML = tsMaterialsMaster.map(m => `<option value="${escAttr(m.bezeichnung)}">`).join('');
+  const options = tsMaterialsMaster.map(m => `<option value="${escAttr(m.bezeichnung)}">`).join('');
+  document.getElementById('ts_materialList').innerHTML = options;
+  const ipList = document.getElementById('ip_materialList');
+  if(ipList) ipList.innerHTML = options;
 }
 function tsInsertMaterialRow(){
   const name = document.getElementById('ts_materialPicker').value.trim();
@@ -917,17 +1128,25 @@ function tsImportMaterialsCsv(file){
   Papa.parse(file, {
     header: true, skipEmptyLines: true,
     complete: async (res) => {
-      const rows = res.data.map(r => ({
-        artikelnr: r.Artikelnr || r['Artikelnr.'] || '',
-        bezeichnung: r.Bezeichnung || r.Artikelbezeichnung || '',
-        einheit: r.Einheit || '',
-        preis: r.Preis ? parseFloat(String(r.Preis).replace(',','.')) : null
-      })).filter(r => r.bezeichnung);
-      if(!rows.length){ showToast('Keine gültigen Zeilen in der CSV gefunden'); return; }
-      const { error } = await sb.from('materials').insert(rows);
+      const rows = res.data.map(r => {
+        const preisRaw = pick(r,'Preis');
+        return {
+          artikelnr: pick(r,'Artikelnr','Artikelnr.','Artikelnummer'),
+          bezeichnung: pick(r,'Bezeichnung','Artikelbezeichnung'),
+          einheit: pick(r,'Einheit'),
+          preis: preisRaw ? parseFloat(String(preisRaw).replace(',','.')) : null
+        };
+      }).filter(r => r.bezeichnung);
+      if(!rows.length){ showToast('Keine gültigen Zeilen in der CSV gefunden — bitte Spaltenüberschriften prüfen'); return; }
+      // bestehendes Material (nach Artikelnr. oder Bezeichnung) aktualisieren statt duplizieren
+      const upserts = rows.map(r => {
+        const existing = tsMaterialsMaster.find(m => (r.artikelnr && m.artikelnr === r.artikelnr) || m.bezeichnung === r.bezeichnung);
+        return existing ? { ...r, id: existing.id } : r;
+      });
+      const { error } = await sb.from('materials').upsert(upserts);
       if(error){ showToast('Fehler beim Import: '+error.message); return; }
       await tsLoadMaterials();
-      showToast(rows.length + ' Materialpositionen importiert');
+      showToast(rows.length + ' Materialpositionen importiert/aktualisiert');
       document.getElementById('ts_materialCsvInput').value = '';
     }
   });
@@ -1098,7 +1317,7 @@ async function tsNewTimesheet(){
   document.getElementById('ts_f_einsatzdatum').value = new Date().toISOString().slice(0,10);
   clearSig('ts_sigAuftragnehmer'); clearSig('ts_sigKunde');
   tsAddMaterialRow(); tsAddMaterialRow();
-  tsAddWorkRow();
+  tsAddWorkRow({ name:'Battermann', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   document.getElementById('ts_f_berichtsnr').value = await nextNumber('timesheets','berichtsnr','AB');
   document.getElementById('ts_f_auftragsnr').value = await nextNumber('timesheets','auftragsnr','AUF');
   showToast('Neuer Nachweis angelegt');
@@ -1166,6 +1385,49 @@ async function tsLoadTimesheet(id){
    ================================================================ */
 let ipCurrentId = null;
 let ipDeviceRows = [];
+let ipMaterialRows = [];
+
+function ipInsertMaterialRow(){
+  const name = document.getElementById('ip_materialPicker').value.trim();
+  const m = tsMaterialsMaster.find(m => m.bezeichnung === name);
+  if(!m){ showToast('Kein gespeichertes Material mit dieser Bezeichnung gefunden'); return; }
+  ipAddMaterialRow({ menge:'1', einheit: m.einheit||'', artikelnr: m.artikelnr||'', bezeichnung: m.bezeichnung||'', preis: m.preis||'' });
+  showToast('Material eingefügt');
+}
+function ipAddMaterialRow(data){
+  ipMaterialRows.push(data || { menge:'', einheit:'', artikelnr:'', bezeichnung:'', preis:'' });
+  ipRenderMaterial();
+}
+function ipRemoveMaterialRow(idx){
+  ipMaterialRows.splice(idx,1);
+  ipRenderMaterial();
+}
+function ipRenderMaterial(){
+  const body = document.getElementById('ip_materialBody');
+  body.innerHTML = '';
+  ipMaterialRows.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${escAttr(r.menge)}" onchange="ipMaterialRows[${idx}].menge=this.value;ipUpdateMaterialSum()"></td>
+      <td><input type="text" value="${escAttr(r.einheit)}" onchange="ipMaterialRows[${idx}].einheit=this.value"></td>
+      <td><input type="text" value="${escAttr(r.artikelnr)}" onchange="ipMaterialRows[${idx}].artikelnr=this.value"></td>
+      <td><input type="text" value="${escAttr(r.bezeichnung)}" onchange="ipMaterialRows[${idx}].bezeichnung=this.value"></td>
+      <td><input type="text" value="${escAttr(r.preis)}" onchange="ipMaterialRows[${idx}].preis=this.value;ipUpdateMaterialSum()"></td>
+      <td class="col-del"><button class="row-del" onclick="ipRemoveMaterialRow(${idx})">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  ipUpdateMaterialSum();
+}
+function ipUpdateMaterialSum(){
+  let sum = 0, any = false;
+  ipMaterialRows.forEach(r => {
+    const menge = parseFloat(String(r.menge).replace(',','.'));
+    const preis = parseFloat(String(r.preis).replace(',','.'));
+    if(!isNaN(menge) && !isNaN(preis)){ sum += menge*preis; any = true; }
+  });
+  document.getElementById('ip_materialSum').textContent = any ? sum.toFixed(2).replace('.',',') + ' €' : '–';
+}
 
 function ipAddDeviceRow(data){
   const row = data || { ort:'', typ:'', seriennr:'', batterie:'10-Jahres-Batterie', datum:'', ok:false };
@@ -1198,7 +1460,8 @@ function ipRenderDevices(){
 const ipFieldMap = {
   ip_f_nr:'nr', ip_f_kdnr:'kdnr', ip_f_auftragsnr:'auftragsnr', ip_f_datum:'datum',
   ip_f_auftraggeber:'auftraggeber', ip_f_rechnungsanschrift:'rechnungsanschrift', ip_f_objekt:'objekt',
-  ip_f_ansprechpartner:'ansprechpartner', ip_f_tel:'tel', ip_f_art:'art', ip_f_monteur:'monteur',
+  ip_f_ansprechpartner:'ansprechpartner', ip_f_tel:'tel', ip_f_art:'art', ip_f_termin_art:'termin_art',
+  ip_f_taetigkeiten:'taetigkeiten', ip_f_monteur:'monteur',
   ip_f_bemerkungen:'bemerkungen', ip_f_naechster_termin:'naechster_termin',
   ip_f_datum_monteur:'datum_monteur', ip_f_datum_kunde:'datum_kunde'
 };
@@ -1214,6 +1477,7 @@ function ipCollectRecord(){
   });
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => rec['c'+(i+1)] = document.getElementById(id).checked);
   rec.devices = ipDeviceRows;
+  rec.material = ipMaterialRows;
   rec.sig_monteur = getSigData('ip_sigMonteur');
   rec.sig_kunde = getSigData('ip_sigKunde');
   return rec;
@@ -1224,7 +1488,9 @@ function ipApplyRecord(rec){
   });
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach((id,i) => document.getElementById(id).checked = !!rec['c'+(i+1)]);
   ipDeviceRows = (rec.devices && rec.devices.length) ? rec.devices.map(d=>({...d})) : [];
+  ipMaterialRows = (rec.material && rec.material.length) ? rec.material.map(d=>({...d})) : [];
   ipRenderDevices();
+  ipRenderMaterial();
   setSigData('ip_sigMonteur', rec.sig_monteur);
   setSigData('ip_sigKunde', rec.sig_kunde);
   ipCurrentId = rec.id;
@@ -1233,11 +1499,14 @@ function ipApplyRecord(rec){
 async function ipNewProtocol(){
   ipCurrentId = null;
   ipDeviceRows = [];
+  ipMaterialRows = [];
   Object.keys(ipFieldMap).forEach(id => document.getElementById(id).value = '');
   ['ip_c1','ip_c2','ip_c3','ip_c4'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('ip_f_datum').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ip_f_termin_art').value = 'Einbau';
   clearSig('ip_sigMonteur'); clearSig('ip_sigKunde');
   ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow();
+  ipAddMaterialRow(); ipAddMaterialRow();
   document.getElementById('ip_f_nr').value = await nextNumber('protocols','nr','IP');
   document.getElementById('ip_f_auftragsnr').value = await nextNumber('protocols','auftragsnr','AUF');
   showToast('Neues Protokoll angelegt');
@@ -1295,6 +1564,497 @@ async function ipLoadProtocol(id){
   ipApplyRecord(data);
   ipCloseLoadModal();
   showToast('Protokoll geladen');
+}
+
+/* ================================================================
+   ================================================================
+   SEITE 3: FAHRTENBUCH  (Präfix fb…)
+   ================================================================
+   ================================================================ */
+let fbTrips = [];       // gespeicherte Fahrten (aus DB)
+let fbDrafts = [];      // neue, noch nicht gespeicherte Entwürfe (lokal, temporäre negative IDs)
+let fbDraftSeq = -1;
+
+async function fbLoadTrips(){
+  const { data, error } = await sb.from('trips').select('*').order('datum', { ascending:false }).order('created_at', { ascending:false });
+  if(error){ showToast('Fehler beim Laden des Fahrtenbuchs: '+error.message); return; }
+  fbTrips = data || [];
+  fbRenderTrips();
+}
+
+function fbAddDraftRow(prefill){
+  const d = prefill || {};
+  fbDrafts.push({
+    _draftId: fbDraftSeq--,
+    datum: d.datum || new Date().toISOString().slice(0,10),
+    fahrer: d.fahrer || '',
+    kennzeichen: d.kennzeichen || '',
+    start_ort: d.start_ort || 'Südstraße 25, 31698 Lindhorst',
+    ziel_ort: d.ziel_ort || '',
+    zweck: d.zweck || '',
+    km_start: d.km_start || '',
+    km_ende: d.km_ende || '',
+    km_gefahren: d.km_gefahren || '',
+    typ: d.typ || 'dienstlich',
+    timesheet_ref: d.timesheet_ref || ''
+  });
+  fbRenderTrips();
+}
+
+function fbImportFromTimesheet(){
+  if(!tsWorkRows.length){ showToast('Kein aktueller Stundennachweis mit Arbeitszeiten vorhanden'); return; }
+  const datum = document.getElementById('ts_f_einsatzdatum').value;
+  const ziel = document.getElementById('ts_f_objekt').value;
+  const kunde = document.getElementById('ts_f_auftraggeber').value;
+  const berichtsnr = document.getElementById('ts_f_berichtsnr').value;
+  let count = 0;
+  tsWorkRows.forEach(r => {
+    const km = parseFloat(r.km);
+    if(!r.km || isNaN(km) || km<=0) return;
+    fbAddDraftRow({
+      datum, fahrer: r.name, ziel_ort: ziel, zweck: kunde,
+      km_gefahren: km, timesheet_ref: berichtsnr
+    });
+    count++;
+  });
+  if(count===0){ showToast('Keine Arbeitszeiten-Zeile mit ausgefüllten km gefunden'); return; }
+  showToast(count + ' Fahrt(en) als Entwurf übernommen — bitte Kennzeichen & km-Stand ergänzen');
+}
+
+function fbUpdateDraftField(draftId, field, value){
+  const d = fbDrafts.find(x => x._draftId === draftId);
+  if(!d) return;
+  d[field] = value;
+  if((field==='km_start' || field==='km_ende') && d.km_start!=='' && d.km_ende!==''){
+    const diff = parseFloat(d.km_ende) - parseFloat(d.km_start);
+    if(!isNaN(diff) && diff>=0) d.km_gefahren = diff;
+  }
+  fbRenderTrips();
+}
+
+function fbRemoveDraft(draftId){
+  fbDrafts = fbDrafts.filter(x => x._draftId !== draftId);
+  fbRenderTrips();
+}
+
+async function fbSaveDraft(draftId){
+  const d = fbDrafts.find(x => x._draftId === draftId);
+  if(!d) return;
+  if(!d.datum || !d.fahrer || !d.ziel_ort){ showToast('Bitte mindestens Datum, Fahrer und Ziel ausfüllen'); return; }
+  const rec = { ...d };
+  delete rec._draftId;
+  ['km_start','km_ende','km_gefahren'].forEach(k => { rec[k] = rec[k]==='' ? null : parseFloat(rec[k]); });
+  rec.entwurf = true;
+  const { error } = await sb.from('trips').insert(rec);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  fbDrafts = fbDrafts.filter(x => x._draftId !== draftId);
+  await fbLoadTrips();
+  showToast('Als Entwurf gespeichert — noch nicht abgeschlossen');
+}
+
+async function fbFinalizeTrip(id){
+  const t = fbTrips.find(x => x.id === id);
+  if(!t) return;
+  if(!t.kennzeichen){ showToast('Bitte vor dem Abschließen das Kennzeichen eintragen'); return; }
+  if(!confirm('Fahrt abschließen? Danach sind nur noch protokollierte Korrekturen möglich.')) return;
+  const { error } = await sb.from('trips').update({ entwurf:false, finalisiert_am: new Date().toISOString() }).eq('id', id);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await fbLoadTrips();
+  showToast('Fahrt abgeschlossen und gesperrt');
+}
+
+async function fbUpdateTripField(id, field, value){
+  const t = fbTrips.find(x => x.id === id);
+  if(!t) return;
+  const patch = {};
+  patch[field] = ['km_start','km_ende','km_gefahren'].includes(field) ? (value===''?null:parseFloat(value)) : value;
+  const { error } = await sb.from('trips').update(patch).eq('id', id);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  t[field] = patch[field];
+  if(field==='km_start' || field==='km_ende'){
+    if(t.km_start!=null && t.km_ende!=null){
+      const diff = t.km_ende - t.km_start;
+      if(!isNaN(diff) && diff>=0){
+        await sb.from('trips').update({ km_gefahren: diff }).eq('id', id);
+        t.km_gefahren = diff;
+      }
+    }
+  }
+  fbRenderTrips();
+}
+
+async function fbCorrectTrip(id, field, label){
+  const t = fbTrips.find(x => x.id === id);
+  if(!t) return;
+  const oldVal = t[field] ?? '';
+  const neu = prompt(`${label} korrigieren.\nBisheriger Wert: ${oldVal}\n\nNeuer Wert:`, oldVal);
+  if(neu === null || neu === String(oldVal)) return;
+  const grund = prompt('Kurzer Grund für die Korrektur (Pflichtangabe):', '');
+  if(!grund){ showToast('Korrektur abgebrochen — Grund erforderlich'); return; }
+  const log = Array.isArray(t.aenderungen) ? [...t.aenderungen] : [];
+  log.push({ feld: field, alt: oldVal, neu, grund, zeitpunkt: new Date().toISOString() });
+  const patch = {};
+  patch[field] = ['km_start','km_ende','km_gefahren'].includes(field) ? parseFloat(neu) : neu;
+  patch.aenderungen = log;
+  const { error } = await sb.from('trips').update(patch).eq('id', id);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await fbLoadTrips();
+  showToast('Korrektur protokolliert');
+}
+
+async function fbStornoTrip(id){
+  const grund = prompt('Grund für die Stornierung dieser Fahrt (Pflichtangabe):', '');
+  if(!grund){ return; }
+  const { error } = await sb.from('trips').update({ storniert:true, storno_grund: grund }).eq('id', id);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await fbLoadTrips();
+  showToast('Fahrt storniert (bleibt sichtbar, zählt nicht mehr)');
+}
+
+function fbRenderTrips(){
+  const body = document.getElementById('fb_tripsBody');
+  body.innerHTML = '';
+
+  fbDrafts.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.className = 'trip-row';
+    tr.innerHTML = `
+      <td><input type="date" value="${escAttr(d.datum)}" onchange="fbUpdateDraftField(${d._draftId},'datum',this.value)"></td>
+      <td><input type="text" list="ts_employeeList" value="${escAttr(d.fahrer)}" onchange="fbUpdateDraftField(${d._draftId},'fahrer',this.value)"></td>
+      <td><input type="text" value="${escAttr(d.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateDraftField(${d._draftId},'kennzeichen',this.value)"></td>
+      <td><input type="text" value="${escAttr(d.start_ort)}" onchange="fbUpdateDraftField(${d._draftId},'start_ort',this.value)"></td>
+      <td><input type="text" value="${escAttr(d.ziel_ort)}" onchange="fbUpdateDraftField(${d._draftId},'ziel_ort',this.value)"></td>
+      <td><input type="text" value="${escAttr(d.zweck)}" onchange="fbUpdateDraftField(${d._draftId},'zweck',this.value)"></td>
+      <td><input type="number" value="${escAttr(d.km_start)}" onchange="fbUpdateDraftField(${d._draftId},'km_start',this.value)"></td>
+      <td><input type="number" value="${escAttr(d.km_ende)}" onchange="fbUpdateDraftField(${d._draftId},'km_ende',this.value)"></td>
+      <td><input type="number" value="${escAttr(d.km_gefahren)}" onchange="fbUpdateDraftField(${d._draftId},'km_gefahren',this.value)"></td>
+      <td>
+        <select onchange="fbUpdateDraftField(${d._draftId},'typ',this.value)">
+          <option value="dienstlich" ${d.typ==='dienstlich'?'selected':''}>dienstlich</option>
+          <option value="privat" ${d.typ==='privat'?'selected':''}>privat</option>
+        </select>
+      </td>
+      <td>
+        <span class="trip-badge draft">Entwurf</span>
+        <div class="btn-row" style="margin-top:4px;">
+          <button class="btn small" onclick="fbSaveDraft(${d._draftId})">Speichern</button>
+          <button class="btn small danger" onclick="fbRemoveDraft(${d._draftId})">✕</button>
+        </div>
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+
+  fbTrips.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.className = 'trip-row' + (t.storniert ? ' storniert' : '');
+    if(t.entwurf){
+      tr.innerHTML = `
+        <td><input type="date" value="${escAttr(t.datum)}" onchange="fbUpdateTripField('${t.id}','datum',this.value)"></td>
+        <td><input type="text" list="ts_employeeList" value="${escAttr(t.fahrer)}" onchange="fbUpdateTripField('${t.id}','fahrer',this.value)"></td>
+        <td><input type="text" value="${escAttr(t.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateTripField('${t.id}','kennzeichen',this.value)"></td>
+        <td><input type="text" value="${escAttr(t.start_ort)}" onchange="fbUpdateTripField('${t.id}','start_ort',this.value)"></td>
+        <td><input type="text" value="${escAttr(t.ziel_ort)}" onchange="fbUpdateTripField('${t.id}','ziel_ort',this.value)"></td>
+        <td><input type="text" value="${escAttr(t.zweck)}" onchange="fbUpdateTripField('${t.id}','zweck',this.value)"></td>
+        <td><input type="number" value="${t.km_start ?? ''}" onchange="fbUpdateTripField('${t.id}','km_start',this.value)"></td>
+        <td><input type="number" value="${t.km_ende ?? ''}" onchange="fbUpdateTripField('${t.id}','km_ende',this.value)"></td>
+        <td><input type="number" value="${t.km_gefahren ?? ''}" onchange="fbUpdateTripField('${t.id}','km_gefahren',this.value)"></td>
+        <td>
+          <select onchange="fbUpdateTripField('${t.id}','typ',this.value)">
+            <option value="dienstlich" ${t.typ==='dienstlich'?'selected':''}>dienstlich</option>
+            <option value="privat" ${t.typ==='privat'?'selected':''}>privat</option>
+          </select>
+        </td>
+        <td>
+          <span class="trip-badge draft">Entwurf</span>
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn small primary" onclick="fbFinalizeTrip('${t.id}')">Abschließen</button>
+          </div>
+        </td>
+      `;
+    } else {
+      const changeCount = Array.isArray(t.aenderungen) ? t.aenderungen.length : 0;
+      tr.innerHTML = `
+        <td class="trip-locked">${escAttr(t.datum)}</td>
+        <td class="trip-locked">${escAttr(t.fahrer)}</td>
+        <td class="trip-locked">${escAttr(t.kennzeichen)}</td>
+        <td class="trip-locked">${escAttr(t.start_ort)}</td>
+        <td class="trip-locked">${escAttr(t.ziel_ort)}</td>
+        <td class="trip-locked">${escAttr(t.zweck)}</td>
+        <td class="trip-locked">${t.km_start ?? '–'}</td>
+        <td class="trip-locked">${t.km_ende ?? '–'}</td>
+        <td class="trip-locked">${t.km_gefahren ?? '–'}</td>
+        <td class="trip-locked">${escAttr(t.typ)}</td>
+        <td>
+          <span class="trip-badge ${t.storniert ? 'void' : 'final'}">${t.storniert ? 'storniert' : 'abgeschlossen'}</span>
+          ${changeCount ? `<div class="change-log">${changeCount}× korrigiert</div>` : ''}
+          ${!t.storniert ? `
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn small" onclick="fbCorrectTrip('${t.id}','km_gefahren','Gefahrene km')">Korrigieren</button>
+            <button class="btn small danger" onclick="fbStornoTrip('${t.id}')">Stornieren</button>
+          </div>` : `<div class="change-log">Grund: ${escAttr(t.storno_grund||'')}</div>`}
+        </td>
+      `;
+    }
+    body.appendChild(tr);
+  });
+
+  fbRenderSummary();
+}
+
+function fbRenderSummary(){
+  const year = new Date().getFullYear();
+  const all = fbTrips.filter(t => !t.storniert && (t.datum||'').startsWith(String(year)));
+  const dienstlich = all.filter(t => t.typ==='dienstlich').reduce((s,t)=> s + (t.km_gefahren||0), 0);
+  const privat = all.filter(t => t.typ==='privat').reduce((s,t)=> s + (t.km_gefahren||0), 0);
+  const offen = fbTrips.filter(t => t.entwurf && !t.storniert).length + fbDrafts.length;
+  document.getElementById('fb_summary').innerHTML = `
+    <div class="box"><div class="num">${dienstlich.toFixed(0)} km</div><div class="lbl">Dienstlich ${year}</div></div>
+    <div class="box"><div class="num">${privat.toFixed(0)} km</div><div class="lbl">Privat ${year}</div></div>
+    <div class="box"><div class="num">${offen}</div><div class="lbl">Offene Entwürfe</div></div>
+  `;
+}
+
+/* ================================================================
+   ================================================================
+   DRUCK-/PDF-VORLAGE
+   ================================================================
+   ================================================================ */
+function pdVal(id){ const el = document.getElementById(id); return el ? (el.value || '') : ''; }
+function fmtDate(iso){
+  if(!iso) return '';
+  const parts = iso.split('-');
+  if(parts.length !== 3) return iso;
+  const [y,m,d] = parts;
+  return `${d}.${m}.${y}`;
+}
+function logoSrc(){
+  const el = document.querySelector('#page-stunden .company img');
+  return el ? el.src : '';
+}
+function pdHeader(title, metaRows){
+  const metaHtml = metaRows.map(([label,val]) => `<div><span>${label}:</span> <b>${escAttr(val)||'–'}</b></div>`).join('');
+  return `
+    <div class="pd-header">
+      <img class="pd-logo" src="${logoSrc()}">
+      <div class="pd-address">
+        Südstraße 25, 31698 Lindhorst<br>
+        01556 7467763<br>
+        service.battermann@gmx.de<br>
+        www.service-battermann.de
+      </div>
+    </div>
+    <div class="pd-rule"></div>
+    <div class="pd-titlerow">
+      <div class="pd-title">${escAttr(title)}</div>
+      <div class="pd-meta">${metaHtml}</div>
+    </div>
+  `;
+}
+function pdFooter(){
+  return `<div class="pd-footer">Südstraße 25, 31698 Lindhorst &nbsp;·&nbsp; Tel. 01556 7467763 &nbsp;·&nbsp; service.battermann@gmx.de &nbsp;·&nbsp; www.service-battermann.de</div>`;
+}
+function pdSignatures(canvasId1,label1,date1,canvasId2,label2,date2){
+  const img1 = sigCtx[canvasId1] ? getSigData(canvasId1) : null;
+  const img2 = sigCtx[canvasId2] ? getSigData(canvasId2) : null;
+  return `<div class="pd-sig-grid">
+    <div>
+      <div class="pd-sig-label">${escAttr(label1)}</div>
+      ${img1?`<img class="pd-sig-img" src="${img1}">`:`<div class="pd-sig-blank"></div>`}
+      <div class="pd-sig-date">Datum: <b>${fmtDate(date1)||'–'}</b></div>
+    </div>
+    <div>
+      <div class="pd-sig-label">${escAttr(label2)}</div>
+      ${img2?`<img class="pd-sig-img" src="${img2}">`:`<div class="pd-sig-blank"></div>`}
+      <div class="pd-sig-date">Datum: <b>${fmtDate(date2)||'–'}</b></div>
+    </div>
+  </div>`;
+}
+
+function tsHasSomeData(){
+  return !!(pdVal('ts_f_auftraggeber') || pdVal('ts_f_objekt') ||
+    tsMaterialRows.some(r=>r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis) ||
+    tsWorkRows.some(r=>r.name||r.von||r.bis));
+}
+function ipHasSomeData(){
+  return !!(pdVal('ip_f_auftraggeber') || pdVal('ip_f_art') || pdVal('ip_f_monteur') || pdVal('ip_f_bemerkungen') ||
+    ipDeviceRows.some(r=>r.ort||r.typ||r.seriennr||r.datum) ||
+    ipMaterialRows.some(r=>r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis));
+}
+
+function buildTsPrintHtml(){
+  const meta = [
+    ['Arbeitsberichts-Nr.', pdVal('ts_f_berichtsnr')],
+    ['Kundennummer', pdVal('ts_f_kdnr')],
+    ['Auftragsnummer', pdVal('ts_f_auftragsnr')],
+    ['Einsatzdatum', fmtDate(pdVal('ts_f_einsatzdatum'))]
+  ];
+  let html = `<div class="pd-page">`;
+  html += pdHeader('Stunden- & Materialnachweis', meta);
+
+  html += `<div class="pd-section"><div class="pd-section-head">Auftraggeber</div><div class="pd-section-body">`;
+  html += `<div class="pd-line">Auftraggeber: <b>${escAttr(pdVal('ts_f_auftraggeber'))||'–'}</b></div>`;
+  html += `<div class="pd-line">Rechnungsanschrift (Straße, PLZ, Ort): <b>${escAttr(pdVal('ts_f_rechnungsanschrift'))||'–'}</b></div>`;
+  html += `<div class="pd-line">Einsatzort / Objekt (Straße, PLZ, Ort): <b>${escAttr(pdVal('ts_f_objekt'))||'–'}</b></div>`;
+  html += `<div class="pd-line pd-line-split"><span>Ansprechpartner vor Ort: <b>${escAttr(pdVal('ts_f_ansprechpartner'))||'–'}</b></span><span>Tel.: <b>${escAttr(pdVal('ts_f_tel'))||'–'}</b></span></div>`;
+  html += `</div></div>`;
+
+  html += `<div class="pd-section"><div class="pd-section-head">Tätigkeiten / Leistungsbeschreibung</div><div class="pd-section-body"><div class="pd-freetext">${pdVal('ts_f_taetigkeiten') ? escAttr(pdVal('ts_f_taetigkeiten')) : '<span class="pd-empty-note">Keine Angabe</span>'}</div></div></div>`;
+
+  const matRows = tsMaterialRows.filter(r => r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis);
+  html += `<div class="pd-section"><div class="pd-section-head">Materialnachweis</div><div class="pd-section-body">`;
+  if(matRows.length){
+    html += `<table class="pd-table"><thead><tr><th>Menge</th><th>Einheit</th><th>Artikelnummer</th><th>Artikelbezeichnung</th><th>Preis (optional)</th></tr></thead><tbody>`;
+    matRows.forEach(r => {
+      html += `<tr><td>${escAttr(r.menge)}</td><td>${escAttr(r.einheit)}</td><td>${escAttr(r.artikelnr)}</td><td>${escAttr(r.bezeichnung)}</td><td>${escAttr(r.preis)}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<span class="pd-empty-note">Kein Material erfasst</span>`;
+  }
+  html += `</div></div>`;
+
+  html += `<div class="pd-section"><div class="pd-section-head">Besondere Vorkommnisse</div><div class="pd-section-body"><div class="pd-freetext">${pdVal('ts_f_vorkommnisse') ? escAttr(pdVal('ts_f_vorkommnisse')) : '<span class="pd-empty-note">Keine</span>'}</div></div></div>`;
+
+  const workRows = tsWorkRows.filter(r => r.name||r.von||r.bis);
+  html += `<div class="pd-section"><div class="pd-section-head">Arbeitszeiten & Pause</div><div class="pd-section-body">`;
+  if(workRows.length){
+    html += `<table class="pd-table"><thead><tr><th>Name (Mitarbeiter)</th><th>Von Uhr</th><th>Bis Uhr</th><th>Pause Min.</th><th>Arbeitszeit Std.</th><th>Fahrzeit Std.</th><th>Gefahrene KM</th><th>Gesamt Std.</th></tr></thead><tbody>`;
+    workRows.forEach(r => {
+      const { arbeitszeitH, gesamtH } = tsComputeRow(r);
+      const fahrzeitH = r.fahrzeit ? (parseFloat(r.fahrzeit)/60) : null;
+      html += `<tr><td>${escAttr(r.name)}</td><td>${escAttr(r.von)}</td><td>${escAttr(r.bis)}</td><td>${escAttr(r.pause)}</td><td>${arbeitszeitH!==null?arbeitszeitH.toFixed(2):''}</td><td>${fahrzeitH!==null?fahrzeitH.toFixed(2):''}</td><td>${escAttr(r.km)}</td><td>${gesamtH!==null?gesamtH.toFixed(2):''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<span class="pd-empty-note">Keine Arbeitszeiten erfasst</span>`;
+  }
+  html += `</div></div>`;
+
+  html += pdSignatures('ts_sigAuftragnehmer','Unterschrift Auftragnehmer', pdVal('ts_f_datum_auftragnehmer'), 'ts_sigKunde','Unterschrift Kunde / Ansprechpartner', pdVal('ts_f_datum_kunde'));
+  html += `<div class="pd-confirm">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Leistungen, Fahrzeiten und verwendeten Materialien vollständig erfasst und ordnungsgemäß ausgeführt wurden. Dieser Nachweis dient als Grundlage für die spätere Rechnung.</div>`;
+  html += pdFooter();
+  html += `</div>`;
+  return html;
+}
+
+function buildIpPrintHtml(){
+  const terminArt = pdVal('ip_f_termin_art') || 'Einbau';
+  const titleMap = { Wartung:'Wartungsprotokoll', Austausch:'Austauschprotokoll', Reparatur:'Reparaturprotokoll', Kontrolle:'Kontrollprotokoll' };
+  const title = titleMap[terminArt] || 'Installationsprotokoll';
+  const meta = [
+    ['Protokoll-Nr.', pdVal('ip_f_nr')],
+    ['Kundennummer', pdVal('ip_f_kdnr')],
+    ['Auftragsnummer', pdVal('ip_f_auftragsnr')],
+    ['Einsatzdatum', fmtDate(pdVal('ip_f_datum'))]
+  ];
+  let html = `<div class="pd-page">`;
+  html += pdHeader(title, meta);
+
+  html += `<div class="pd-section"><div class="pd-section-head">Auftraggeber</div><div class="pd-section-body">`;
+  html += `<div class="pd-line">Auftraggeber / Wohnungseigentümer: <b>${escAttr(pdVal('ip_f_auftraggeber'))||'–'}</b></div>`;
+  html += `<div class="pd-line">Rechnungsanschrift (Straße, PLZ, Ort): <b>${escAttr(pdVal('ip_f_rechnungsanschrift'))||'–'}</b></div>`;
+  html += `<div class="pd-line">Einsatzort / Objekt (Straße, PLZ, Ort): <b>${escAttr(pdVal('ip_f_objekt'))||'–'}</b></div>`;
+  html += `<div class="pd-line pd-line-split"><span>Ansprechpartner vor Ort: <b>${escAttr(pdVal('ip_f_ansprechpartner'))||'–'}</b></span><span>Tel.: <b>${escAttr(pdVal('ip_f_tel'))||'–'}</b></span></div>`;
+  html += `</div></div>`;
+
+  html += `<div class="pd-section"><div class="pd-section-head">Art des Termins</div><div class="pd-section-body">`;
+  html += `<div class="pd-line pd-line-split"><span>Installations-/Gewerkeart: <b>${escAttr(pdVal('ip_f_art'))||'–'}</b></span><span>Termin-Art: <b>${escAttr(terminArt)}</b></span></div>`;
+  html += `<div class="pd-line">Ausführender Techniker / Monteur: <b>${escAttr(pdVal('ip_f_monteur'))||'–'}</b></div>`;
+  html += `</div></div>`;
+
+  if(pdVal('ip_f_taetigkeiten')){
+    html += `<div class="pd-section"><div class="pd-section-head">Tätigkeiten / Leistungsbeschreibung</div><div class="pd-section-body"><div class="pd-freetext">${escAttr(pdVal('ip_f_taetigkeiten'))}</div></div></div>`;
+  }
+
+  const devRows = ipDeviceRows.filter(r => r.ort||r.typ||r.seriennr||r.datum);
+  html += `<div class="pd-section"><div class="pd-section-head">Installierte Geräte / Komponenten</div><div class="pd-section-body">`;
+  if(devRows.length){
+    html += `<table class="pd-table"><thead><tr><th>Nr.</th><th>Einbauort/Raum</th><th>Hersteller/Typ</th><th>Seriennummer</th><th>Batterie/Versorgung</th><th>Einbaudatum</th><th>Test i.O.</th></tr></thead><tbody>`;
+    devRows.forEach((r,i) => {
+      html += `<tr><td>${i+1}</td><td>${escAttr(r.ort)}</td><td>${escAttr(r.typ)}</td><td>${escAttr(r.seriennr)}</td><td>${escAttr(r.batterie)}</td><td>${fmtDate(r.datum)}</td><td>${r.ok?'✓':''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<span class="pd-empty-note">Keine Geräte erfasst</span>`;
+  }
+  html += `</div></div>`;
+
+  const matRows = ipMaterialRows.filter(r => r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis);
+  if(matRows.length){
+    html += `<div class="pd-section"><div class="pd-section-head">Verwendetes Material</div><div class="pd-section-body">`;
+    html += `<table class="pd-table"><thead><tr><th>Menge</th><th>Einheit</th><th>Artikelnummer</th><th>Artikelbezeichnung</th><th>Preis (optional)</th></tr></thead><tbody>`;
+    matRows.forEach(r => {
+      html += `<tr><td>${escAttr(r.menge)}</td><td>${escAttr(r.einheit)}</td><td>${escAttr(r.artikelnr)}</td><td>${escAttr(r.bezeichnung)}</td><td>${escAttr(r.preis)}</td></tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+  }
+
+  html += `<div class="pd-section"><div class="pd-section-head">Hinweise / Bestätigung</div><div class="pd-section-body pd-checklist">`;
+  const checks = [
+    ['ip_c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
+    ['ip_c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
+    ['ip_c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
+    ['ip_c4','Arbeitsbereich besenrein hinterlassen.']
+  ];
+  checks.forEach(([id,label]) => {
+    const checked = document.getElementById(id).checked;
+    html += `<div>${checked?'☑':'☐'} ${label}</div>`;
+  });
+  html += `</div></div>`;
+
+  if(pdVal('ip_f_bemerkungen')){
+    html += `<div class="pd-section"><div class="pd-section-head">Besondere Vorkommnisse / Bemerkungen</div><div class="pd-section-body"><div class="pd-freetext">${escAttr(pdVal('ip_f_bemerkungen'))}</div></div></div>`;
+  }
+  if(pdVal('ip_f_naechster_termin')){
+    html += `<div class="pd-line">Empfohlener nächster Prüf-/Austauschtermin: <b>${fmtDate(pdVal('ip_f_naechster_termin'))}</b></div>`;
+  }
+
+  html += pdSignatures('ip_sigMonteur','Unterschrift Monteur', pdVal('ip_f_datum_monteur'), 'ip_sigKunde','Unterschrift Kunde', pdVal('ip_f_datum_kunde'));
+  html += `<div class="pd-confirm">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Installationen vollständig ausgeführt, geprüft und ordnungsgemäß übergeben wurden.</div>`;
+  html += pdFooter();
+  html += `</div>`;
+  return html;
+}
+
+function buildFbPrintHtml(){
+  let html = `<div class="pd-page">`;
+  html += pdHeader('Fahrtenbuch', [['Stand', fmtDate(new Date().toISOString().slice(0,10))]]);
+  html += `<div class="pd-section"><div class="pd-section-head">Fahrten</div><div class="pd-section-body">`;
+  const rows = fbTrips.filter(t => !t.storniert);
+  if(rows.length){
+    html += `<table class="pd-table"><thead><tr><th>Datum</th><th>Fahrer</th><th>Kennzeichen</th><th>Start</th><th>Ziel</th><th>Zweck</th><th>km Start</th><th>km Ende</th><th>km gefahren</th><th>Art</th></tr></thead><tbody>`;
+    rows.forEach(t => {
+      html += `<tr><td>${fmtDate(t.datum)}</td><td>${escAttr(t.fahrer)}</td><td>${escAttr(t.kennzeichen)}</td><td>${escAttr(t.start_ort)}</td><td>${escAttr(t.ziel_ort)}</td><td>${escAttr(t.zweck)}</td><td>${t.km_start??''}</td><td>${t.km_ende??''}</td><td>${t.km_gefahren??''}</td><td>${escAttr(t.typ)}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<span class="pd-empty-note">Keine Fahrten erfasst</span>`;
+  }
+  html += `</div></div>`;
+  html += pdFooter();
+  html += `</div>`;
+  return html;
+}
+
+async function printCurrent(){
+  showToast('Bereite PDF vor…');
+  let html = '';
+  if(currentPage === 'stunden'){
+    await tsSaveTimesheet();
+    html += buildTsPrintHtml();
+    if(ipHasSomeData()){
+      await ipSaveProtocol();
+      html += '<div class="pd-pagebreak"></div>' + buildIpPrintHtml();
+    }
+  } else if(currentPage === 'installation'){
+    await ipSaveProtocol();
+    html += buildIpPrintHtml();
+  } else {
+    html += buildFbPrintHtml();
+  }
+  document.getElementById('printArea').innerHTML = html;
+  setTimeout(() => window.print(), 80);
 }
 
 /* ================================================================
