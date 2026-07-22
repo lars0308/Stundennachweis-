@@ -632,7 +632,7 @@
           </div>
           <div class="field">
             <label>Vorlage</label>
-            <select id="ip_f_termin_art">
+            <select id="ip_f_termin_art" onchange="ipApplyTemplateFields()">
               <option>Montage</option>
               <option>Reparatur</option>
               <option>Wartung</option>
@@ -647,17 +647,17 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head"><span class="emoji">📝</span><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
+      <section class="card" id="ip_card_taetigkeiten">
+        <div class="card-head"><span class="emoji">📝</span><h2 id="ip_taetigkeiten_title">Tätigkeiten / Leistungsbeschreibung</h2></div>
         <textarea class="full" id="ip_f_taetigkeiten" rows="3" placeholder="Ausgeführte Arbeiten, sofern nicht durch die Geräteliste unten abgedeckt…"></textarea>
       </section>
 
-      <section class="card">
-        <div class="card-head"><span class="emoji">📋</span><h2>Positionen / Bauteile</h2></div>
+      <section class="card" id="ip_card_positionen">
+        <div class="card-head"><span class="emoji">📋</span><h2 id="ip_positionen_title">Positionen / Bauteile</h2></div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
+              <tr id="ip_dev_thead_row">
                 <th class="col-nr">Nr.</th>
                 <th>Einbauort / Raum</th>
                 <th>Hersteller / Typ</th>
@@ -674,7 +674,7 @@
         <button class="add-row" onclick="ipAddDeviceRow()">+ Zeile hinzufügen</button>
       </section>
 
-      <section class="card">
+      <section class="card" id="ip_card_material">
         <div class="card-head"><span class="emoji">📦</span><h2>Verwendetes Material</h2></div>
 
         <div class="combo-row">
@@ -703,16 +703,16 @@
 
       <section class="card">
         <div class="card-head"><span class="emoji">✅</span><h2>Hinweise / Bestätigung</h2></div>
-        <div class="checklist">
+        <div class="checklist" id="ip_standard_checks">
           <label class="check-item"><input type="checkbox" id="ip_c1">Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.</label>
           <label class="check-item"><input type="checkbox" id="ip_c2">Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).</label>
           <label class="check-item"><input type="checkbox" id="ip_c3">Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.</label>
           <label class="check-item"><input type="checkbox" id="ip_c4">Arbeitsbereich besenrein hinterlassen.</label>
         </div>
         <div class="checklist" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
-          <label class="check-item"><input type="checkbox" id="ip_funktion_geprueft">Funktion geprüft</label>
-          <label class="check-item"><input type="checkbox" id="ip_sichtpruefung">Sichtprüfung durchgeführt</label>
-          <label class="check-item"><input type="checkbox" id="ip_dichtigkeit">Dichtigkeit geprüft</label>
+          <label class="check-item" id="ip_check_funktion"><input type="checkbox" id="ip_funktion_geprueft">Funktion geprüft</label>
+          <label class="check-item" id="ip_check_sicht"><input type="checkbox" id="ip_sichtpruefung">Sichtprüfung durchgeführt</label>
+          <label class="check-item" id="ip_check_dicht"><input type="checkbox" id="ip_dichtigkeit">Dichtigkeit geprüft</label>
         </div>
         <div class="field" style="margin-top:14px;">
           <label>Besondere Vorkommnisse / Bemerkungen</label>
@@ -1573,6 +1573,79 @@ function ipRenderPhotos(){
   `).join('');
 }
 
+/* ---------- Vorlagen: pro Typ passende Felder/Bezeichnungen ---------- */
+const VORLAGE_CONFIG = {
+  Montage: {
+    positionenLabel: 'Installierte Positionen / Bauteile',
+    positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Einbaudatum','Test i.O.'],
+    showPositionen: true, showMaterial: true, showStandardChecks: true,
+    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    taetigkeitenLabel: 'Tätigkeiten / Leistungsbeschreibung',
+    taetigkeitenPlaceholder: 'Ausgeführte Montagearbeiten…'
+  },
+  Reparatur: {
+    positionenLabel: 'Reparierte Bauteile',
+    positionenCols: ['Bauteil / Ort','Hersteller / Typ','Seriennummer','Ersatzteil','Datum','Behoben'],
+    showPositionen: true, showMaterial: true, showStandardChecks: true,
+    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    taetigkeitenLabel: 'Beschreibung der Reparatur',
+    taetigkeitenPlaceholder: 'Fehlerbild, durchgeführte Reparatur…'
+  },
+  Wartung: {
+    positionenLabel: 'Gewartete Positionen / Bauteile',
+    positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Letzte Wartung','i.O.'],
+    showPositionen: true, showMaterial: true, showStandardChecks: true,
+    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    taetigkeitenLabel: 'Durchgeführte Wartungsarbeiten',
+    taetigkeitenPlaceholder: 'z. B. gereinigt, Batterie getauscht, Funktionstest…'
+  },
+  Besichtigung: {
+    positionenLabel: 'Begutachtete Bereiche',
+    positionenCols: ['Bereich / Raum','Zustand','Auffälligkeit','Anmerkung','Festgestellt am','i.O.'],
+    showPositionen: true, showMaterial: false, showStandardChecks: false,
+    checks: { funktion:false, sicht:true, dichtigkeit:false },
+    taetigkeitenLabel: 'Befund / Feststellungen',
+    taetigkeitenPlaceholder: 'Was wurde bei der Besichtigung festgestellt?'
+  },
+  Mängel: {
+    positionenLabel: 'Festgestellte Mängel',
+    positionenCols: ['Ort des Mangels','Beschreibung','Schweregrad','Empfohlene Maßnahme','Festgestellt am','Behoben'],
+    showPositionen: true, showMaterial: false, showStandardChecks: false,
+    checks: { funktion:false, sicht:true, dichtigkeit:false },
+    taetigkeitenLabel: 'Zusammenfassung / Weiteres Vorgehen',
+    taetigkeitenPlaceholder: 'Zusammenfassung der Mängel und empfohlenes weiteres Vorgehen…'
+  },
+  Sonstiges: {
+    positionenLabel: 'Positionen / Bauteile',
+    positionenCols: ['Einbauort / Raum','Hersteller / Typ','Seriennummer','Batterie / Versorgung','Datum','i.O.'],
+    showPositionen: true, showMaterial: true, showStandardChecks: true,
+    checks: { funktion:true, sicht:true, dichtigkeit:true },
+    taetigkeitenLabel: 'Tätigkeiten / Leistungsbeschreibung',
+    taetigkeitenPlaceholder: 'Ausgeführte Arbeiten…'
+  }
+};
+function getVorlageConfig(key){ return VORLAGE_CONFIG[key] || VORLAGE_CONFIG.Sonstiges; }
+
+function ipApplyTemplateFields(){
+  const key = document.getElementById('ip_f_termin_art').value;
+  const cfg = getVorlageConfig(key);
+
+  document.getElementById('ip_card_positionen').style.display = cfg.showPositionen ? '' : 'none';
+  document.getElementById('ip_positionen_title').textContent = cfg.positionenLabel;
+  const ths = document.querySelectorAll('#ip_dev_thead_row th');
+  cfg.positionenCols.forEach((label, i) => { if(ths[i+1]) ths[i+1].textContent = label; });
+
+  document.getElementById('ip_card_material').style.display = cfg.showMaterial ? '' : 'none';
+
+  document.getElementById('ip_taetigkeiten_title').textContent = cfg.taetigkeitenLabel;
+  document.getElementById('ip_f_taetigkeiten').placeholder = cfg.taetigkeitenPlaceholder;
+
+  document.getElementById('ip_standard_checks').style.display = cfg.showStandardChecks ? '' : 'none';
+  document.getElementById('ip_check_funktion').style.display = cfg.checks.funktion ? '' : 'none';
+  document.getElementById('ip_check_sicht').style.display = cfg.checks.sicht ? '' : 'none';
+  document.getElementById('ip_check_dicht').style.display = cfg.checks.dichtigkeit ? '' : 'none';
+}
+
 const ipFieldMap = {
   ip_f_nr:'nr', ip_f_kdnr:'kdnr', ip_f_auftragsnr:'auftragsnr', ip_f_datum:'datum',
   ip_f_auftraggeber:'auftraggeber', ip_f_rechnungsanschrift:'rechnungsanschrift', ip_f_objekt:'objekt',
@@ -1619,6 +1692,7 @@ function ipApplyRecord(rec){
   setSigData('ip_sigMonteur', rec.sig_monteur);
   setSigData('ip_sigKunde', rec.sig_kunde);
   ipCurrentId = rec.id;
+  ipApplyTemplateFields();
   updateSammelVisibility();
 }
 
@@ -1636,6 +1710,7 @@ async function ipNewProtocol(){
   document.getElementById('ip_f_datum_monteur').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_datum_kunde').value = new Date().toISOString().slice(0,10);
   document.getElementById('ip_f_termin_art').value = 'Montage';
+  ipApplyTemplateFields();
   clearSig('ip_sigMonteur'); clearSig('ip_sigKunde');
   ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow(); ipAddDeviceRow();
   ipAddMaterialRow(); ipAddMaterialRow();
@@ -2081,6 +2156,7 @@ function buildTsPrintHtml(){
 
 function buildIpPrintHtml(){
   const terminArt = pdVal('ip_f_termin_art') || 'Montage';
+  const cfg = getVorlageConfig(terminArt);
   const titleMap = { Montage:'Montageprotokoll', Reparatur:'Reparaturprotokoll', Wartung:'Wartungsprotokoll', Besichtigung:'Besichtigungsprotokoll', Mängel:'Mängelprotokoll' };
   const title = titleMap[terminArt] || 'Ausführungsprotokoll';
   const meta = [
@@ -2103,53 +2179,59 @@ function buildIpPrintHtml(){
   html += `</div></div>`;
 
   html += `<div class="pd-section"><div class="pd-section-head">Art des Termins</div><div class="pd-section-body">`;
-  html += `<div class="pd-line pd-line-split"><span>Installations-/Gewerkeart: <b>${escAttr(pdVal('ip_f_art'))||'–'}</b></span><span>Termin-Art: <b>${escAttr(terminArt)}</b></span></div>`;
+  html += `<div class="pd-line pd-line-split"><span>Installations-/Gewerkeart: <b>${escAttr(pdVal('ip_f_art'))||'–'}</b></span><span>Vorlage: <b>${escAttr(terminArt)}</b></span></div>`;
   html += `<div class="pd-line">Ausführender Techniker / Monteur: <b>${escAttr(pdVal('ip_f_monteur'))||'–'}</b></div>`;
   html += `</div></div>`;
 
   if(pdVal('ip_f_taetigkeiten')){
-    html += `<div class="pd-section"><div class="pd-section-head">Tätigkeiten / Leistungsbeschreibung</div><div class="pd-section-body"><div class="pd-freetext">${escAttr(pdVal('ip_f_taetigkeiten'))}</div></div></div>`;
+    html += `<div class="pd-section"><div class="pd-section-head">${escAttr(cfg.taetigkeitenLabel)}</div><div class="pd-section-body"><div class="pd-freetext">${escAttr(pdVal('ip_f_taetigkeiten'))}</div></div></div>`;
   }
 
-  const devRows = ipDeviceRows.filter(r => r.ort||r.typ||r.seriennr||r.datum);
-  html += `<div class="pd-section"><div class="pd-section-head">Installierte Geräte / Komponenten</div><div class="pd-section-body">`;
-  if(devRows.length){
-    html += `<table class="pd-table"><thead><tr><th>Nr.</th><th>Einbauort/Raum</th><th>Hersteller/Typ</th><th>Seriennummer</th><th>Batterie/Versorgung</th><th>Einbaudatum</th><th>Test i.O.</th></tr></thead><tbody>`;
-    devRows.forEach((r,i) => {
-      html += `<tr><td>${i+1}</td><td>${escAttr(r.ort)}</td><td>${escAttr(r.typ)}</td><td>${escAttr(r.seriennr)}</td><td>${escAttr(r.batterie)}</td><td>${fmtDate(r.datum)}</td><td>${r.ok?'✓':''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
-  } else {
-    html += `<span class="pd-empty-note">Keine Geräte erfasst</span>`;
+  if(cfg.showPositionen){
+    const devRows = ipDeviceRows.filter(r => r.ort||r.typ||r.seriennr||r.datum);
+    html += `<div class="pd-section"><div class="pd-section-head">${escAttr(cfg.positionenLabel)}</div><div class="pd-section-body">`;
+    if(devRows.length){
+      const [c1,c2,c3,c4,c5,c6] = cfg.positionenCols;
+      html += `<table class="pd-table"><thead><tr><th>Nr.</th><th>${escAttr(c1)}</th><th>${escAttr(c2)}</th><th>${escAttr(c3)}</th><th>${escAttr(c4)}</th><th>${escAttr(c5)}</th><th>${escAttr(c6)}</th></tr></thead><tbody>`;
+      devRows.forEach((r,i) => {
+        html += `<tr><td>${i+1}</td><td>${escAttr(r.ort)}</td><td>${escAttr(r.typ)}</td><td>${escAttr(r.seriennr)}</td><td>${escAttr(r.batterie)}</td><td>${fmtDate(r.datum)}</td><td>${r.ok?'✓':''}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+    } else {
+      html += `<span class="pd-empty-note">Keine Einträge erfasst</span>`;
+    }
+    html += `</div></div>`;
   }
-  html += `</div></div>`;
 
-  const matRows = ipMaterialRows.filter(r => r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis);
-  if(matRows.length){
-    html += `<div class="pd-section"><div class="pd-section-head">Verwendetes Material</div><div class="pd-section-body">`;
-    html += `<table class="pd-table"><thead><tr><th>Menge</th><th>Einheit</th><th>Artikelnummer</th><th>Artikelbezeichnung</th><th>Preis (optional)</th></tr></thead><tbody>`;
-    matRows.forEach(r => {
-      html += `<tr><td>${escAttr(r.menge)}</td><td>${escAttr(r.einheit)}</td><td>${escAttr(r.artikelnr)}</td><td>${escAttr(r.bezeichnung)}</td><td>${escAttr(r.preis)}</td></tr>`;
-    });
-    html += `</tbody></table></div></div>`;
+  if(cfg.showMaterial){
+    const matRows = ipMaterialRows.filter(r => r.menge||r.einheit||r.artikelnr||r.bezeichnung||r.preis);
+    if(matRows.length){
+      html += `<div class="pd-section"><div class="pd-section-head">Verwendetes Material</div><div class="pd-section-body">`;
+      html += `<table class="pd-table"><thead><tr><th>Menge</th><th>Einheit</th><th>Artikelnummer</th><th>Artikelbezeichnung</th><th>Preis (optional)</th></tr></thead><tbody>`;
+      matRows.forEach(r => {
+        html += `<tr><td>${escAttr(r.menge)}</td><td>${escAttr(r.einheit)}</td><td>${escAttr(r.artikelnr)}</td><td>${escAttr(r.bezeichnung)}</td><td>${escAttr(r.preis)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    }
   }
 
   html += `<div class="pd-section"><div class="pd-section-head">Hinweise / Bestätigung</div><div class="pd-section-body pd-checklist">`;
-  const checks = [
-    ['ip_c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
-    ['ip_c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
-    ['ip_c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
-    ['ip_c4','Arbeitsbereich besenrein hinterlassen.']
-  ];
-  checks.forEach(([id,label]) => {
-    const checked = document.getElementById(id).checked;
-    html += `<div>${checked?'☑':'☐'} ${label}</div>`;
-  });
-  const extraChecks = [
-    ['ip_funktion_geprueft','Funktion geprüft'],
-    ['ip_sichtpruefung','Sichtprüfung durchgeführt'],
-    ['ip_dichtigkeit','Dichtigkeit geprüft']
-  ];
+  if(cfg.showStandardChecks){
+    const checks = [
+      ['ip_c1','Installation gemäß Herstellervorgaben und geltender Normen (z. B. DIN 14676 bei Rauchwarnmeldern) durchgeführt.'],
+      ['ip_c2','Alle Geräte auf korrekten Sitz und Funktion geprüft (Funktions-/Testalarm).'],
+      ['ip_c3','Betreiber / Kunde in Bedienung, Test- und Prüffunktion eingewiesen.'],
+      ['ip_c4','Arbeitsbereich besenrein hinterlassen.']
+    ];
+    checks.forEach(([id,label]) => {
+      const checked = document.getElementById(id).checked;
+      html += `<div>${checked?'☑':'☐'} ${label}</div>`;
+    });
+  }
+  const extraChecks = [];
+  if(cfg.checks.funktion) extraChecks.push(['ip_funktion_geprueft','Funktion geprüft']);
+  if(cfg.checks.sicht) extraChecks.push(['ip_sichtpruefung','Sichtprüfung durchgeführt']);
+  if(cfg.checks.dichtigkeit) extraChecks.push(['ip_dichtigkeit','Dichtigkeit geprüft']);
   extraChecks.forEach(([id,label]) => {
     const checked = document.getElementById(id).checked;
     html += `<div>${checked?'☑':'☐'} ${label}</div>`;
@@ -2164,7 +2246,7 @@ function buildIpPrintHtml(){
   }
 
   html += pdSignatures('ip_sigMonteur','Unterschrift Monteur', pdVal('ip_f_datum_monteur'), 'ip_sigKunde','Unterschrift Kunde', pdVal('ip_f_datum_kunde'));
-  html += `<div class="pd-confirm">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Installationen vollständig ausgeführt, geprüft und ordnungsgemäß übergeben wurden.</div>`;
+  html += `<div class="pd-confirm">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Arbeiten vollständig ausgeführt, geprüft und ordnungsgemäß übergeben wurden.</div>`;
   html += pdFooter();
   html += `</div>`;
   return html;
