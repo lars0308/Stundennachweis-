@@ -680,6 +680,14 @@
         <button class="btn primary" onclick="applyCollectiveSignature()">Unterschrift übernehmen</button>
       </section>
 
+      <section class="card" id="ts_includeIpCard" style="display:none;">
+        <label class="check-item">
+          <input type="checkbox" id="ts_includeIp">
+          <span class="check-label-text">Ausführungsprotokoll mit einbeziehen (bei PDF erstellen &amp; E-Mail)</span>
+        </label>
+        <p style="font-size:11.5px;color:var(--muted);margin:8px 0 0;">Nur wenn ausgewählt, wird das Ausführungsprotokoll zusätzlich zum Stundennachweis gedruckt bzw. versendet.</p>
+      </section>
+
       <section class="card">
         <button class="complete-btn" onclick="tsCompleteOrder()">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Auftrag abschließen
@@ -1310,6 +1318,7 @@ function getSigData(canvasId){
 }
 function setSigData(canvasId, dataUrl){
   const canvas = document.getElementById(canvasId);
+  if(!sigCtx[canvasId]) initSig(canvasId);
   const ctx = sigCtx[canvasId];
   ctx.clearRect(0,0,canvas.width,canvas.height);
   sigEmpty[canvasId] = true;
@@ -1383,6 +1392,9 @@ async function switchPage(page){
   }
   if(page === 'material'){
     mtRenderList();
+  }
+  if(page === 'stunden'){
+    updateSammelVisibility();
   }
 }
 let fbInitialized = false;
@@ -2974,7 +2986,8 @@ async function printCurrent(){
   if(currentPage === 'stunden'){
     await tsSaveTimesheet();
     html += buildTsPrintHtml();
-    if(ipHasSomeData()){
+    const includeIp = document.getElementById('ts_includeIp');
+    if(ipHasSomeData() && includeIp && includeIp.checked){
       await ipSaveProtocol();
       html += '<div class="pd-pagebreak"></div>' + buildIpPrintHtml();
     }
@@ -3094,8 +3107,24 @@ wirePickerAutocomplete('ts_objektPicker', () => tsObjekte, o => o.name, (o) => {
    ================================================================ */
 function updateSammelVisibility(){
   const card = document.getElementById('sammelCard');
-  if(!card) return;
-  card.style.display = ipHasSomeData() ? '' : 'none';
+  const includeCard = document.getElementById('ts_includeIpCard');
+  const shouldShow = ipHasSomeData();
+  if(card){
+    const wasHidden = card.style.display === 'none';
+    card.style.display = shouldShow ? '' : 'none';
+    if(shouldShow && wasHidden){
+      const ipCheckbox = document.getElementById('sammel_apply_ip');
+      if(ipCheckbox) ipCheckbox.checked = true;
+    }
+  }
+  if(includeCard){
+    const wasHidden2 = includeCard.style.display === 'none';
+    includeCard.style.display = shouldShow ? '' : 'none';
+    if(shouldShow && wasHidden2){
+      const includeCb = document.getElementById('ts_includeIp');
+      if(includeCb) includeCb.checked = true;
+    }
+  }
 }
 
 (function wireAuftraggeberMirror(){
@@ -3115,8 +3144,9 @@ function updateSammelVisibility(){
 })();
 
 // Jede Änderung auf der Ausführungsprotokoll-Seite aktualisiert die Sichtbarkeit der Sammelunterschrift
-document.getElementById('page-installation').addEventListener('input', updateSammelVisibility);
-document.getElementById('page-installation').addEventListener('change', updateSammelVisibility);
+// Sichtbarkeit wird gezielt beim Seitenwechsel/Speichern aktualisiert (siehe switchPage),
+// nicht mehr bei jedem einzelnen Tastendruck - das führte zu ungewolltem Verschwinden
+// während des Tippens.
 
 /* ================================================================
    ================================================================
@@ -3282,15 +3312,26 @@ async function applyCollectiveSignature(){
   if(applyToIp && !ipHasSomeData()){ showToast('Ausführungsprotokoll ist noch leer — bitte erst ausfüllen'); return; }
   const today = new Date().toISOString().slice(0,10);
   const applied = [];
+  const failed = [];
   if(applyToTs){
     if(tsLocked){ showToast('Stundennachweis ist abgeschlossen — übersprungen'); }
-    else { setSigData('ts_sigKunde', data); document.getElementById('ts_f_datum_kunde').value = today; applied.push('Stundennachweis'); }
+    else {
+      try { setSigData('ts_sigKunde', data); document.getElementById('ts_f_datum_kunde').value = today; applied.push('Stundennachweis'); }
+      catch(e){ failed.push('Stundennachweis'); }
+    }
   }
   if(applyToIp){
     if(ipLocked){ showToast('Ausführungsprotokoll ist abgeschlossen — übersprungen'); }
-    else { setSigData('ip_sigKunde', data); document.getElementById('ip_f_datum_kunde').value = today; applied.push('Ausführungsprotokoll'); }
+    else {
+      try {
+        if(!ipSigsInitialized){ ipEnsureSigsInitialized(); }
+        setSigData('ip_sigKunde', data); document.getElementById('ip_f_datum_kunde').value = today; applied.push('Ausführungsprotokoll');
+      }
+      catch(e){ failed.push('Ausführungsprotokoll'); }
+    }
   }
-  showToast('Unterschrift übernommen: ' + applied.join(', '));
+  if(applied.length) showToast('Unterschrift übernommen: ' + applied.join(', '));
+  if(failed.length) showToast('Fehler bei: ' + failed.join(', ') + ' — bitte dort einmal den Tab öffnen und erneut versuchen');
 }
 
 /* E-Mail: Browser können keine PDF-Anhänge automatisch anfügen. Deshalb: zuerst
@@ -3331,7 +3372,8 @@ async function emailCurrent(){
     to = pdVal('ts_f_email');
     subject = `Stunden- & Materialnachweis ${nr} – ${kunde}`;
     body = `Guten Tag,\n\nanbei erhalten Sie den Stunden- & Materialnachweis ${nr}${kunde?(' für '+kunde):''}.\n\nBitte fügen Sie die soeben gespeicherte PDF-Datei als Anhang hinzu.\n\nMit freundlichen Grüßen\nObjekt- und Reparaturservice Battermann`;
-    if(ipHasSomeData()){
+    const includeIp = document.getElementById('ts_includeIp');
+    if(ipHasSomeData() && includeIp && includeIp.checked){
       await ipSaveProtocol();
       photosToSend = [...tsPhotos, ...ipPhotos];
     } else {
