@@ -13,6 +13,8 @@
 <title>Objekt- und Reparaturservice Battermann – Nachweise</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 
@@ -103,7 +105,10 @@
 
   /* Table */
   .table-wrap{overflow-x:auto;margin:0 -4px;}
-  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px;}
+  /* WICHTIG: min-width nur für die Bearbeiten-Tabellen (.table-wrap), NICHT global auf
+     "table" — sonst erbt auch die PDF-Tabelle (.pd-table) diese Mindestbreite und die
+     Stunden-Spalten laufen beim Drucken/PDF über den Blattrand hinaus. */
+  .table-wrap table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px;}
   thead th{
     text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;
     font-weight:600;padding:6px 6px;border-bottom:1px solid var(--border);white-space:nowrap;
@@ -294,7 +299,8 @@
   .pd-line b{ font-weight:700; }
   .pd-line-split{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px; }
   .pd-freetext{ white-space:pre-wrap; min-height:18px; }
-  .pd-table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  .pd-table{ width:100%; max-width:100%; border-collapse:collapse; font-size:11.5px; table-layout:fixed; }
+  .pd-table td, .pd-table th{ word-break:break-word; overflow-wrap:break-word; }
   .pd-table th{ background:#f7f9f5; color:#3a5521; text-align:left; font-weight:700; padding:6px 8px; border-bottom:1px solid #d7e0cc; }
   .pd-table td{ padding:6px 8px; border-bottom:1px solid #eee; }
   .pd-empty-note{ color:#999; font-size:11.5px; font-style:italic; }
@@ -699,6 +705,24 @@
       </section>
 
       <section class="card">
+        <div class="card-head"><h2>Abrechnungsart</h2></div>
+        <div class="toggle-row" style="gap:16px;">
+          <label class="check-item" style="margin:0;">
+            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_aufwand" value="aufwand" checked onchange="tsUpdateAbrechnungsart()">
+            <span class="check-label-text">Nach Aufwand (Stunden)</span>
+          </label>
+          <label class="check-item" style="margin:0;">
+            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_festpreis" value="festpreis" onchange="tsUpdateAbrechnungsart()">
+            <span class="check-label-text">Festpreis</span>
+          </label>
+        </div>
+        <div class="field" id="ts_festpreisWrap" style="display:none;max-width:260px;margin-top:8px;">
+          <label>Festpreis (€)</label>
+          <input type="text" id="ts_f_festpreis_betrag" inputmode="decimal" placeholder="z.B. 450,00">
+        </div>
+      </section>
+
+      <section class="card" id="ts_arbeitszeitenCard">
         <div class="card-head"><h2>Arbeitszeiten & Pause</h2></div>
         <datalist id="ts_employeeList"></datalist>
 
@@ -1297,6 +1321,7 @@
 
 <div class="preview-toolbar" id="previewToolbar">
   <button class="btn primary" onclick="window.print()">Drucken / Als PDF speichern</button>
+  <button class="btn" onclick="savePreviewToDrive()">In Google Drive speichern</button>
   <button class="btn" onclick="closePreview()">Schließen</button>
 </div>
 
@@ -1474,7 +1499,10 @@ let sigPadWired = false;
 
 function initSigPadCanvas(){
   const canvas = document.getElementById('sigPadModalCanvas');
-  const ratio = window.devicePixelRatio || 1;
+  // Auf 2x gedeckelt: auf modernen Handys ist devicePixelRatio oft 3, was die gespeicherte
+  // Unterschrift unnötig groß macht (mehrere hundert KB statt ca. 50 KB) und zusammen mit
+  // vielen Fotos die Speicher-Quota sprengen kann. 2x reicht für gestochen scharfe Unterschriften.
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * ratio;
   canvas.height = rect.height * ratio;
@@ -1585,7 +1613,11 @@ function initGoogleDrive(){
         showToast('Google Drive verbunden');
         if(gDrivePendingUpload){
           const p = gDrivePendingUpload; gDrivePendingUpload = null;
-          uploadPhotosToDrive(p.photos, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt, p.prefix);
+          if(p.pdfDataUrl){
+            uploadPdfToDrive(p.pdfDataUrl, p.pdfFilename, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt);
+          } else {
+            uploadPhotosToDrive(p.photos, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt, p.prefix);
+          }
         }
       }
     }
@@ -1675,6 +1707,83 @@ async function uploadPhotosToDrive(photos, customerName, kdnr, rechnungsanschrif
     showToast(photos.length + ' Foto(s) erfolgreich zu Google Drive hochgeladen');
   } catch(e){
     gDriveToken = null; // Token evtl. abgelaufen - beim nächsten Klick neu verbinden lassen
+    updateDriveStatus();
+    showToast('Fehler beim Hochladen zu Google Drive: ' + e.message + ' — bitte nochmal versuchen');
+  }
+}
+
+/* ---------- Aktuelle Vorschau als echte PDF-Datei direkt in Google Drive speichern ---------- */
+async function buildPdfDataUrlFromPrintArea(){
+  const area = document.getElementById('printArea');
+  const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const imgW = pageW;
+  const imgH = (canvas.height * imgW) / canvas.width;
+  let heightLeft = imgH;
+  let position = 0;
+  const imgData = canvas.toDataURL('image/jpeg', 0.85);
+  pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+  heightLeft -= pageH;
+  while(heightLeft > 0){
+    position = heightLeft - imgH;
+    pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+    heightLeft -= pageH;
+  }
+  return pdf.output('datauristring');
+}
+async function savePreviewToDrive(){
+  if(!window.html2canvas || !window.jspdf){ showToast('PDF-Bibliothek konnte nicht geladen werden — bitte Internetverbindung prüfen'); return; }
+  showToast('Erzeuge PDF…');
+  let dataUrl;
+  try {
+    dataUrl = await buildPdfDataUrlFromPrintArea();
+  } catch(e){
+    showToast('PDF konnte nicht erzeugt werden: ' + e.message);
+    return;
+  }
+  let filename, customerName, kdnr, rechnungsanschrift, objekt;
+  if(currentPage === 'stunden'){
+    filename = 'Stundennachweis-' + (pdVal('ts_f_berichtsnr') || 'ohne-nr') + '.pdf';
+    customerName = pdVal('ts_f_auftraggeber'); kdnr = pdVal('ts_f_kdnr');
+    rechnungsanschrift = pdVal('ts_f_rechnungsanschrift'); objekt = pdVal('ts_f_objekt');
+  } else if(currentPage === 'installation'){
+    filename = 'Ausfuehrungsprotokoll-' + (pdVal('ip_f_nr') || 'ohne-nr') + '.pdf';
+    customerName = pdVal('ip_f_auftraggeber'); kdnr = pdVal('ip_f_kdnr');
+    rechnungsanschrift = pdVal('ip_f_rechnungsanschrift'); objekt = pdVal('ip_f_objekt');
+  } else {
+    filename = 'Fahrtenbuch-' + new Date().toISOString().slice(0,10) + '.pdf';
+    customerName = 'Fahrtenbuch'; kdnr = ''; rechnungsanschrift = ''; objekt = '';
+  }
+  if(!gDriveToken){
+    gDrivePendingUpload = { pdfDataUrl: dataUrl, pdfFilename: filename, customerName, kdnr, rechnungsanschrift, objekt };
+    showToast('Bitte Google-Drive-Zugriff im Pop-up bestätigen…');
+    connectGoogleDrive();
+    return;
+  }
+  await uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt);
+}
+async function uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt){
+  showToast('Lade PDF zu Google Drive hoch…');
+  try {
+    const rootId = await driveFindOrCreateFolder('Kundenfotos', null);
+    let custFolderName = (customerName && customerName.trim()) ? customerName.trim() : 'Unbekannter Kunde';
+    if(kdnr && kdnr.trim()) custFolderName += ' Kdn: ' + kdnr.trim();
+    if(rechnungsanschrift && rechnungsanschrift.trim()) custFolderName += ' ' + rechnungsanschrift.trim();
+    const custFolderId = await driveFindOrCreateFolder(custFolderName, rootId);
+    let targetFolderId = custFolderId;
+    const objTrim = (objekt || '').trim();
+    const rechTrim = (rechnungsanschrift || '').trim();
+    if(objTrim && objTrim !== rechTrim){
+      targetFolderId = await driveFindOrCreateFolder(objTrim, custFolderId);
+    }
+    await driveUploadDataUrl(dataUrl, filename, targetFolderId);
+    showToast('PDF erfolgreich zu Google Drive hochgeladen');
+  } catch(e){
+    gDriveToken = null;
     updateDriveStatus();
     showToast('Fehler beim Hochladen zu Google Drive: ' + e.message + ' — bitte nochmal versuchen');
   }
@@ -2202,6 +2311,24 @@ function tsRenderPhotos(){
   `).join('');
 }
 
+/* ---------- Abrechnungsart: Aufwand (Stunden) oder Festpreis ---------- */
+function tsUpdateAbrechnungsart(){
+  const isFestpreis = document.getElementById('ts_f_abrechnungsart_festpreis').checked;
+  document.getElementById('ts_festpreisWrap').style.display = isFestpreis ? '' : 'none';
+  // Bei Festpreis wird die Stundenerfassung nicht gebraucht, daher ausblenden -
+  // die Zeilen bleiben aber im Hintergrund erhalten, falls doch zurückgewechselt wird.
+  document.getElementById('ts_arbeitszeitenCard').style.display = isFestpreis ? 'none' : '';
+}
+function tsGetAbrechnungsart(){
+  return document.getElementById('ts_f_abrechnungsart_festpreis').checked ? 'festpreis' : 'aufwand';
+}
+function tsSetAbrechnungsart(val){
+  const festpreis = val === 'festpreis';
+  document.getElementById('ts_f_abrechnungsart_festpreis').checked = festpreis;
+  document.getElementById('ts_f_abrechnungsart_aufwand').checked = !festpreis;
+  tsUpdateAbrechnungsart();
+}
+
 /* ---------- Formular <-> Datensatz ---------- */
 const tsFieldMap = {
   ts_f_berichtsnr:'berichtsnr', ts_f_kdnr:'kdnr', ts_f_auftragsnr:'auftragsnr', ts_f_einsatzdatum:'einsatzdatum',
@@ -2224,6 +2351,8 @@ function tsCollectRecord(){
   rec.fotos = tsPhotos;
   rec.sig_auftragnehmer = getSigData('ts_sigAuftragnehmer');
   rec.sig_kunde = getSigData('ts_sigKunde');
+  rec.abrechnungsart = tsGetAbrechnungsart();
+  rec.festpreis_betrag = document.getElementById('ts_f_festpreis_betrag').value || null;
   return rec;
 }
 function tsApplyRecord(rec){
@@ -2238,6 +2367,8 @@ function tsApplyRecord(rec){
   tsRenderPhotos();
   setSigData('ts_sigAuftragnehmer', rec.sig_auftragnehmer);
   setSigData('ts_sigKunde', rec.sig_kunde);
+  document.getElementById('ts_f_festpreis_betrag').value = rec.festpreis_betrag || '';
+  tsSetAbrechnungsart(rec.abrechnungsart || 'aufwand');
   tsCurrentId = rec.id;
   setLocked('stunden', rec.status === 'abgeschlossen');
 }
@@ -2254,6 +2385,8 @@ async function tsNewTimesheet(){
   document.getElementById('ts_f_datum_auftragnehmer').value = new Date().toISOString().slice(0,10);
   document.getElementById('ts_f_datum_kunde').value = new Date().toISOString().slice(0,10);
   clearSig('ts_sigAuftragnehmer'); clearSig('ts_sigKunde');
+  document.getElementById('ts_f_festpreis_betrag').value = '';
+  tsSetAbrechnungsart('aufwand');
   const alsoIp = document.getElementById('ts_sigAlsoIp');
   if(alsoIp) alsoIp.checked = false;
   tsAddMaterialRow(); tsAddMaterialRow();
@@ -3206,20 +3339,29 @@ function buildTsPrintHtml(){
 
   html += `<div class="pd-section"><div class="pd-section-head">Besondere Vorkommnisse</div><div class="pd-section-body"><div class="pd-freetext">${pdVal('ts_f_vorkommnisse') ? escAttr(pdVal('ts_f_vorkommnisse')) : '<span class="pd-empty-note">Keine</span>'}</div></div></div>`;
 
-  const workRows = tsWorkRows.filter(r => r.name||r.von||r.bis);
-  html += `<div class="pd-section"><div class="pd-section-head">Arbeitszeiten & Pause</div><div class="pd-section-body">`;
-  if(workRows.length){
-    html += `<table class="pd-table"><thead><tr><th>Name (Mitarbeiter)</th><th>Kennzeichen</th><th>Von Uhr</th><th>Bis Uhr</th><th>Pause Min.</th><th>Arbeitszeit Std.</th><th>Fahrzeit Std.</th><th>Gefahrene KM</th><th>Gesamt Std.</th></tr></thead><tbody>`;
-    workRows.forEach(r => {
-      const { arbeitszeitH, gesamtH } = tsComputeRow(r);
-      const fahrzeitH = r.fahrzeit ? (parseFloat(r.fahrzeit)/60) : null;
-      html += `<tr><td>${escAttr(r.name)}</td><td>${escAttr(r.kennzeichen)}</td><td>${escAttr(r.von)}</td><td>${escAttr(r.bis)}</td><td>${escAttr(r.pause)}</td><td>${arbeitszeitH!==null?arbeitszeitH.toFixed(2):''}</td><td>${fahrzeitH!==null?fahrzeitH.toFixed(2):''}</td><td>${escAttr(r.km)}</td><td>${gesamtH!==null?gesamtH.toFixed(2):''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+  const abrechnungsart = tsGetAbrechnungsart();
+  if(abrechnungsart === 'festpreis'){
+    const betrag = document.getElementById('ts_f_festpreis_betrag').value;
+    html += `<div class="pd-section"><div class="pd-section-head">Abrechnung</div><div class="pd-section-body">`;
+    html += `<div class="pd-line">Abrechnungsart: <b>Festpreis</b></div>`;
+    html += `<div class="pd-line">Vereinbarter Festpreis: <b>${betrag ? escAttr(betrag)+' €' : '–'}</b></div>`;
+    html += `</div></div>`;
   } else {
-    html += `<span class="pd-empty-note">Keine Arbeitszeiten erfasst</span>`;
+    const workRows = tsWorkRows.filter(r => r.name||r.von||r.bis);
+    html += `<div class="pd-section"><div class="pd-section-head">Arbeitszeiten & Pause</div><div class="pd-section-body">`;
+    if(workRows.length){
+      html += `<table class="pd-table"><thead><tr><th>Name (Mitarbeiter)</th><th>Kennzeichen</th><th>Von Uhr</th><th>Bis Uhr</th><th>Pause Min.</th><th>Arbeitszeit Std.</th><th>Fahrzeit Std.</th><th>Gefahrene KM</th><th>Gesamt Std.</th></tr></thead><tbody>`;
+      workRows.forEach(r => {
+        const { arbeitszeitH, gesamtH } = tsComputeRow(r);
+        const fahrzeitH = r.fahrzeit ? (parseFloat(r.fahrzeit)/60) : null;
+        html += `<tr><td>${escAttr(r.name)}</td><td>${escAttr(r.kennzeichen)}</td><td>${escAttr(r.von)}</td><td>${escAttr(r.bis)}</td><td>${escAttr(r.pause)}</td><td>${arbeitszeitH!==null?arbeitszeitH.toFixed(2):''}</td><td>${fahrzeitH!==null?fahrzeitH.toFixed(2):''}</td><td>${escAttr(r.km)}</td><td>${gesamtH!==null?gesamtH.toFixed(2):''}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+    } else {
+      html += `<span class="pd-empty-note">Keine Arbeitszeiten erfasst</span>`;
+    }
+    html += `</div></div>`;
   }
-  html += `</div></div>`;
 
   html += pdSignatures('ts_sigAuftragnehmer','Unterschrift Auftragnehmer', pdVal('ts_f_datum_auftragnehmer'), 'ts_sigKunde','Unterschrift Kunde / Ansprechpartner', pdVal('ts_f_datum_kunde'));
   html += `<div class="pd-confirm">Mit der Unterschrift bestätigen die Parteien, dass die oben aufgeführten Leistungen, Fahrzeiten und verwendeten Materialien vollständig erfasst und ordnungsgemäß ausgeführt wurden. Dieser Nachweis dient als Grundlage für die spätere Rechnung.</div>`;
@@ -3347,30 +3489,43 @@ function resolveIncludeIp(val){
   if(_includeIpResolve){ _includeIpResolve(val); _includeIpResolve = null; }
 }
 
+let printInProgress = false;
 async function printCurrent(){
-  showToast('Bereite Vorschau vor…');
-  let html = '';
-  if(currentPage === 'stunden'){
-    await tsSaveTimesheet();
-    html += buildTsPrintHtml();
-    if(ipHasSomeData()){
-      const include = await askIncludeIp();
-      if(include){
-        await ipSaveProtocol();
-        html += '<div class="pd-pagebreak"></div>' + buildIpPrintHtml();
+  // Schutz gegen Doppel-Tippen: ohne diese Sperre konnten zwei überlappende Aufrufe
+  // (z.B. bei kurzem Nachtippen auf dem Handy) gleichzeitig laufen. Beide teilten sich
+  // dieselbe "Ausführungsprotokoll mit übernehmen?"-Abfrage (_includeIpResolve) und
+  // schrieben anschließend beide in dieselbe Vorschau — je nachdem, welcher Aufruf
+  // zuletzt fertig wurde, landete dann nicht das PDF im Vorschaufenster, das man
+  // eigentlich gerade ausgewählt/gedrückt hatte.
+  if(printInProgress){ showToast('Bitte kurz warten — Vorschau wird bereits erstellt'); return; }
+  printInProgress = true;
+  try {
+    showToast('Bereite Vorschau vor…');
+    let html = '';
+    if(currentPage === 'stunden'){
+      await tsSaveTimesheet();
+      html += buildTsPrintHtml();
+      if(ipHasSomeData()){
+        const include = await askIncludeIp();
+        if(include){
+          await ipSaveProtocol();
+          html += '<div class="pd-pagebreak"></div>' + buildIpPrintHtml();
+        }
       }
+    } else if(currentPage === 'installation'){
+      await ipSaveProtocol();
+      html += buildIpPrintHtml();
+    } else {
+      html += buildFbPrintHtml();
     }
-  } else if(currentPage === 'installation'){
-    await ipSaveProtocol();
-    html += buildIpPrintHtml();
-  } else {
-    html += buildFbPrintHtml();
+    const area = document.getElementById('printArea');
+    area.innerHTML = html;
+    area.classList.add('preview-open');
+    document.getElementById('previewToolbar').classList.add('open');
+    area.scrollTop = 0;
+  } finally {
+    printInProgress = false;
   }
-  const area = document.getElementById('printArea');
-  area.innerHTML = html;
-  area.classList.add('preview-open');
-  document.getElementById('previewToolbar').classList.add('open');
-  area.scrollTop = 0;
 }
 function closePreview(){
   document.getElementById('printArea').classList.remove('preview-open');
@@ -3499,7 +3654,12 @@ function updateSammelVisibility(){ updateAlsoIpVisibility(); } // Rückwärtskom
 const CUSTOMER_FIELD_PAIRS = [
   ['ts_f_auftraggeber','ip_f_auftraggeber'], ['ts_f_kdnr','ip_f_kdnr'],
   ['ts_f_rechnungsanschrift','ip_f_rechnungsanschrift'], ['ts_f_objekt','ip_f_objekt'],
-  ['ts_f_ansprechpartner','ip_f_ansprechpartner'], ['ts_f_tel','ip_f_tel'], ['ts_f_email','ip_f_email']
+  ['ts_f_ansprechpartner','ip_f_ansprechpartner'], ['ts_f_tel','ip_f_tel'], ['ts_f_email','ip_f_email'],
+  /* Auftragsnummer MUSS mit übertragen werden, sonst bekommen Stundennachweis und
+     Ausführungsprotokoll zum selben Auftrag unterschiedliche Nummern (jede Seite zählt
+     bisher eine eigene, unabhängige Zählfolge hoch) und lassen sich nicht mehr als
+     "derselbe Auftrag" erkennen. */
+  ['ts_f_auftragsnr','ip_f_auftragsnr']
 ];
 function syncCustomerFieldsFromTs(){
   CUSTOMER_FIELD_PAIRS.forEach(([fromId,toId]) => {
@@ -3538,7 +3698,17 @@ function loadOfflineQueue(){
   catch(e){ return []; }
 }
 function saveOfflineQueueList(q){
-  try { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); } catch(e){ /* Speicher voll o.ä. */ }
+  // WICHTIG: Diese Funktion hat Fehler (z.B. voller Speicher / Quota überschritten durch
+  // viele Fotos + Unterschriften) bisher stillschweigend verschluckt. Dadurch wurde dem
+  // Nutzer "Offline gespeichert" angezeigt, obwohl NICHTS gespeichert wurde — das war eine
+  // Ursache für fehlende Unterschriften/Daten nach dem Speichern. Jetzt wird der Erfolg
+  // zurückgegeben, damit der Aufrufer im Fehlerfall wirklich warnen kann.
+  try {
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q));
+    return true;
+  } catch(e){
+    return false;
+  }
 }
 function uuid(){
   if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -3548,21 +3718,24 @@ function queueOfflineWrite(table, record){
   const q = loadOfflineQueue();
   if(!record.id) record.id = uuid();
   q.push({ table, record, ts: new Date().toISOString() });
-  saveOfflineQueueList(q);
+  const ok = saveOfflineQueueList(q);
   updateOfflineBadge();
-  return record.id;
+  return { id: record.id, ok };
 }
 async function trySupabaseUpsert(table, record){
   if(!navigator.onLine){
-    const id = queueOfflineWrite(table, record);
+    const { id, ok } = queueOfflineWrite(table, record);
+    if(!ok){
+      return { data: null, error: { message: 'Kein Speicherplatz mehr auf dem Gerät frei (zu viele Fotos/Unterschriften). Bitte Fotos reduzieren oder mit Internetverbindung erneut speichern.' }, offline: true };
+    }
     return { data: { ...record, id }, error: null, offline: true };
   }
   try {
     const { data, error } = await sb.from(table).upsert(record).select().single();
     if(error){
       // Die Anfrage kam beim Server an, wurde aber abgelehnt (z.B. fehlende Spalte,
-      // Berechtigung). Das ist KEIN Verbindungsproblem - nicht offline queuen,
-      // sondern den echten Fehler anzeigen, damit er behoben werden kann.
+      // Berechtigung, oder Datensatz zu groß). Das ist KEIN Verbindungsproblem - nicht
+      // offline queuen, sondern den echten Fehler anzeigen, damit er behoben werden kann.
       return { data: null, error, offline: false };
     }
     return { data, error: null, offline: false };
