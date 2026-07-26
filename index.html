@@ -176,6 +176,16 @@
   .modal-actions{display:flex;gap:6px;}
   .modal-close{margin-top:8px;width:100%;}
   .empty-note{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 0;}
+  .modal-group{margin-bottom:14px;}
+  .modal-group summary{
+    cursor:pointer;font-weight:700;font-size:13px;color:var(--green-dark);
+    padding:8px 4px;list-style:none;display:flex;align-items:center;gap:6px;
+    border-bottom:1px solid var(--border);margin-bottom:8px;
+  }
+  .modal-group summary::-webkit-details-marker{display:none;}
+  .modal-group summary::before{content:'▸';display:inline-block;transition:transform .15s;color:var(--muted);}
+  .modal-group[open] summary::before{transform:rotate(90deg);}
+  .modal-group-count{color:var(--muted);font-weight:500;font-size:11.5px;}
 
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -2433,6 +2443,17 @@ function fmtDateTime(iso){
   return d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
 }
 
+/* ---------- Gespeicherte Nachweise/Protokolle nach Kunde gruppieren (leichter zu finden) ---------- */
+function groupRecordsByCustomer(list){
+  const groups = {};
+  list.forEach(item => {
+    const key = (item.auftraggeber || '').trim() || 'Ohne Auftraggeber';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  });
+  return Object.keys(groups).sort((a,b) => a.localeCompare(b,'de')).map(name => ({ name, items: groups[name] }));
+}
+
 async function tsRenderModalList(){
   const wrap = document.getElementById('ts_modalList');
   wrap.innerHTML = '<div class="empty-note">Lade…</div>';
@@ -2448,25 +2469,49 @@ async function tsRenderModalList(){
   if(error && !list.length){ wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'</div>'; return; }
   if(!list.length){ wrap.innerHTML = '<div class="empty-note">Keine Nachweise gefunden.</div>'; return; }
   wrap.innerHTML = '';
-  list.forEach(t => {
-    const div = document.createElement('div');
-    div.className = 'modal-item';
-    const statusBadge = t._offline
-      ? '<span class="status-badge offline-item">Offline · wartet</span>'
-      : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
-    div.innerHTML = `
-      <div class="info">
-        <div class="name">${escAttr(t.berichtsnr || 'Ohne Nr.')} — ${escAttr(t.auftraggeber || 'Kein Auftraggeber')} ${statusBadge}</div>
-        <div class="sub">${escAttr(t.objekt || '')}${t.objekt ? ' · ' : ''}${fmtDateTime(t.created_at)}</div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn small" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
-        <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
-        <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
-      </div>
-    `;
-    wrap.appendChild(div);
+  groupRecordsByCustomer(list).forEach(group => {
+    const details = document.createElement('details');
+    details.className = 'modal-group';
+    details.open = true;
+    details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
+    group.items.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'modal-item';
+      const statusBadge = t._offline
+        ? '<span class="status-badge offline-item">Offline · wartet</span>'
+        : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
+      div.innerHTML = `
+        <div class="info">
+          <div class="name">${escAttr(t.berichtsnr || 'Ohne Nr.')} ${statusBadge}</div>
+          <div class="sub">${escAttr(t.objekt || '')}${t.objekt ? ' · ' : ''}${fmtDateTime(t.created_at)}</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn small" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
+          <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
+          <button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Als Vorlage</button>
+          <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
+        </div>
+      `;
+      details.appendChild(div);
+    });
+    wrap.appendChild(details);
   });
+}
+async function tsCopyAsNew(id){
+  const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await tsNewTimesheet();
+  Object.entries(tsFieldMap).forEach(([fieldId, col]) => {
+    // Auftrags-/Berichtsnummer NICHT übernehmen — die neue, frisch vergebene Nummer bleibt.
+    if(fieldId === 'ts_f_auftragsnr' || fieldId === 'ts_f_berichtsnr') return;
+    if(data[col]) document.getElementById(fieldId).value = data[col];
+  });
+  tsMaterialRows = (data.material && data.material.length) ? data.material.map(r => ({...r})) : [];
+  tsRenderMaterial();
+  tsSetAbrechnungsart(data.abrechnungsart || 'aufwand');
+  document.getElementById('ts_f_festpreis_betrag').value = data.festpreis_betrag || '';
+  tsCloseLoadModal();
+  showToast('Als Vorlage übernommen — Stunden, Fotos & Unterschriften bitte neu erfassen');
 }
 async function tsLoadTimesheet(id){
   const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
@@ -2938,25 +2983,44 @@ async function ipRenderModalList(){
   if(error && !list.length){ wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'</div>'; return; }
   if(!list.length){ wrap.innerHTML = '<div class="empty-note">Keine Protokolle gefunden.</div>'; return; }
   wrap.innerHTML = '';
-  list.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'modal-item';
-    const statusBadge = p._offline
-      ? '<span class="status-badge offline-item">Offline · wartet</span>'
-      : (p.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
-    div.innerHTML = `
-      <div class="info">
-        <div class="name">${escAttr(p.nr || 'Ohne Nr.')} — ${escAttr(p.auftraggeber || 'Kein Auftraggeber')} ${statusBadge}</div>
-        <div class="sub">${escAttr(p.objekt || '')}${p.objekt ? ' · ' : ''}${fmtDateTime(p.created_at)}</div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn small" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
-        <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
-        <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
-      </div>
-    `;
-    wrap.appendChild(div);
+  groupRecordsByCustomer(list).forEach(group => {
+    const details = document.createElement('details');
+    details.className = 'modal-group';
+    details.open = true;
+    details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
+    group.items.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'modal-item';
+      const statusBadge = p._offline
+        ? '<span class="status-badge offline-item">Offline · wartet</span>'
+        : (p.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
+      div.innerHTML = `
+        <div class="info">
+          <div class="name">${escAttr(p.nr || 'Ohne Nr.')} ${statusBadge}</div>
+          <div class="sub">${escAttr(p.objekt || '')}${p.objekt ? ' · ' : ''}${fmtDateTime(p.created_at)}</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn small" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
+          <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
+          <button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Als Vorlage</button>
+          <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
+        </div>
+      `;
+      details.appendChild(div);
+    });
+    wrap.appendChild(details);
   });
+}
+async function ipCopyAsNew(id){
+  const { data, error } = await sb.from('protocols').select('*').eq('id', id).single();
+  if(error){ showToast('Fehler: '+error.message); return; }
+  await ipNewProtocol();
+  Object.entries(ipFieldMap).forEach(([fieldId, col]) => {
+    if(fieldId === 'ip_f_auftragsnr' || fieldId === 'ip_f_nr') return;
+    if(data[col]) document.getElementById(fieldId).value = data[col];
+  });
+  ipCloseLoadModal();
+  showToast('Als Vorlage übernommen — Fotos & Unterschriften bitte neu erfassen');
 }
 async function ipLoadProtocol(id){
   const { data, error } = await sb.from('protocols').select('*').eq('id', id).single();
