@@ -358,6 +358,40 @@
   .kd-stats-value{font-size:20px;font-weight:700;color:var(--green-dark);}
   .kd-stats-label{font-size:11.5px;color:var(--muted);}
 
+  /* Startseite / Dashboard */
+  .start-hero{
+    background:linear-gradient(135deg, var(--green), var(--green-dark));
+    color:#fff;border-radius:16px;padding:20px 18px 44px;margin-bottom:-28px;position:relative;
+  }
+  .start-hero h1{font-size:19px;margin:0 0 4px;font-weight:700;}
+  .start-hero p{margin:0;font-size:13px;opacity:.92;}
+  .start-hero .start-date{margin-top:12px;font-size:11.5px;opacity:.85;}
+  .start-stats-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:2;padding:0 2px;
+  }
+  .start-stat-card{
+    background:#fff;border-radius:12px;padding:14px 12px;box-shadow:0 4px 14px rgba(0,0,0,.08);
+  }
+  .start-stat-value{font-size:21px;font-weight:800;color:var(--green-dark);}
+  .start-stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+  .start-section{margin-top:24px;}
+  .start-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .start-section-head h2{font-size:14.5px;margin:0;color:var(--text);}
+  .start-section-head a{font-size:12px;color:var(--green-dark);font-weight:700;cursor:pointer;}
+  .qa-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .qa-tile{
+    display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px 12px;
+    border:1px solid var(--border);border-radius:12px;background:#fff;
+    font-size:11px;font-weight:600;color:#374151;text-align:center;cursor:pointer;
+  }
+  .qa-tile:active{background:#f7f8f6;}
+  .qa-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .qa-icon svg{width:17px;height:17px;stroke:currentColor;}
+  .qa-green{background:#e6efe0;color:var(--green-dark);}
+  .qa-orange{background:#fdf1e0;color:#92620a;}
+  .qa-blue{background:#e8f0fb;color:#1d4ed8;}
+  .qa-purple{background:#f1e9fb;color:#6d28d9;}
+
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
     background:#1f2937;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;
@@ -460,9 +494,13 @@
      ============================================================ */
   #printArea{ display:none; }
   @media print{
+    @page{ size: A4 portrait; margin: 0; }
+    html, body{ width:210mm; margin:0; padding:0; }
     body *{ visibility:hidden !important; }
     #printArea, #printArea *{ visibility:visible !important; }
-    #printArea{ position:absolute; left:0; top:0; width:100%; display:block !important; }
+    #printArea{ position:absolute; left:0; top:0; width:210mm; display:block !important; }
+    .pd-page{ width:210mm !important; transform:none !important; }
+    .pd-page-scaler{ width:210mm !important; height:auto !important; overflow:visible !important; margin:0 !important; }
   }
 
   .pd-page{ width:210mm; padding:6mm 4mm; font-family: Arial, Helvetica, sans-serif; color:#111; box-sizing:border-box; }
@@ -548,6 +586,12 @@
   .status-badge.offen{ background:#fdf1e0; color:#92620a; }
   .status-badge.geplant{ background:#e8f0fb; color:#1d4ed8; }
   .status-badge.abgeschlossen{ background:#e6efe0; color:var(--green-dark); }
+  .status-badge.entwurf{ background:#f1f2f4; color:#4b5563; }
+  .status-badge.versendet{ background:#e8f0fb; color:#1d4ed8; }
+  .status-badge.angenommen{ background:#e6efe0; color:var(--green-dark); }
+  .status-badge.bezahlt{ background:#e6efe0; color:var(--green-dark); }
+  .status-badge.abgelehnt{ background:#fdeaea; color:#b91c1c; }
+  .status-badge.ueberfaellig{ background:#fdeaea; color:#b91c1c; }
   .status-badge.offline-item{ background:#fdeaea; color:#b91c1c; }
 
   /* Liste-Suche */
@@ -1403,6 +1447,27 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- SEITE 5b: ANGEBOTE & RECHNUNGEN                                -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-angebote">
+
+      <section class="card">
+        <div class="kd-subtabs">
+          <button class="kd-subtab active" data-tab="angebote" onclick="agSwitchType('angebote')">Angebote</button>
+          <button class="kd-subtab" data-tab="rechnungen" onclick="agSwitchType('rechnungen')">Rechnungen</button>
+        </div>
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" id="ag_newBtn" onclick="agOpenModal(null)">+ Neues Angebot</button>
+        </div>
+        <div class="kd-filter-chips" id="ag_filter">
+          <button class="kd-chip active" data-status="alle" onclick="agSetFilter('alle')">Alle</button>
+        </div>
+        <div id="ag_list"><div class="empty-note">Lädt…</div></div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================ -->
     <!-- SEITE 6: TERMINE                                              -->
     <!-- ============================================================ -->
     <div class="page" id="page-termine">
@@ -1466,45 +1531,77 @@
     <!-- ============================================================ -->
     <div class="page" id="page-start">
 
-      <section class="card">
-        <div class="kd-stats-grid" id="st_statsGrid">
-          <div><span class="kd-stats-value" id="st_offeneAuftraege">–</span><span class="kd-stats-label">Offene Aufträge</span></div>
-          <div><span class="kd-stats-value" id="st_anstehendeTermine">–</span><span class="kd-stats-label">Anstehende Termine</span></div>
+      <div class="start-hero">
+        <h1 id="st_greeting">Guten Tag!</h1>
+        <p>Willkommen zurück bei <b>Battermann</b></p>
+        <div class="start-date" id="st_dateLine"></div>
+      </div>
+
+      <div class="start-stats-grid">
+        <div class="start-stat-card">
+          <div class="start-stat-value" id="st_heuteTermine">–</div>
+          <div class="start-stat-label">Heute Termine</div>
+        </div>
+        <div class="start-stat-card">
+          <div class="start-stat-value" id="st_offeneAuftraege">–</div>
+          <div class="start-stat-label">Offene Aufträge</div>
+        </div>
+        <div class="start-stat-card">
+          <div class="start-stat-value" id="st_anstehendeTermine">–</div>
+          <div class="start-stat-label">Anstehende Termine</div>
+        </div>
+        <div class="start-stat-card">
+          <div class="start-stat-value" id="st_kundenGesamt">–</div>
+          <div class="start-stat-label">Kunden gesamt</div>
+        </div>
+      </div>
+
+      <section class="start-section">
+        <div class="start-section-head"><h2>Schnellaktionen</h2></div>
+        <div class="qa-grid">
+          <button class="qa-tile" onclick="kdOpenModal(null, true)">
+            <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg></span>
+            <span>Neuer Kunde</span>
+          </button>
+          <button class="qa-tile" onclick="atOpenModal(null)">
+            <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+            <span>Neuer Auftrag</span>
+          </button>
+          <button class="qa-tile" onclick="tsGoToChooser()">
+            <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+            <span>Stunden starten</span>
+          </button>
+          <button class="qa-tile" onclick="switchPage('installation')">
+            <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
+            <span>Bericht erstellen</span>
+          </button>
+          <button class="qa-tile" onclick="switchPage('fahrtenbuch')">
+            <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
+            <span>Fahrtenbuch</span>
+          </button>
+          <button class="qa-tile" onclick="switchPage('material')">
+            <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+            <span>Material</span>
+          </button>
+          <button class="qa-tile" onclick="stQuickOpenAg('angebote')">
+            <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h1"></path></svg></span>
+            <span>Angebot erstellen</span>
+          </button>
+          <button class="qa-tile" onclick="stQuickOpenAg('rechnungen')">
+            <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M10 13h4"></path><path d="M10 17h4"></path></svg></span>
+            <span>Rechnung erstellen</span>
+          </button>
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head"><h2>Bereiche</h2></div>
-        <div class="kd-tiles" style="grid-template-columns:1fr 1fr;">
-          <button class="kd-tile" onclick="switchPage('kunden')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-            <span>Kunden</span>
-          </button>
-          <button class="kd-tile" onclick="tsGoToChooser()">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
-            <span>Stunden</span>
-          </button>
-          <button class="kd-tile" onclick="switchPage('installation')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
-            <span>Protokoll</span>
-          </button>
-          <button class="kd-tile" onclick="switchPage('termine')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></span>
-            <span>Termine</span>
-          </button>
-          <button class="kd-tile" onclick="switchPage('auftraege')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
-            <span>Aufträge</span>
-          </button>
-          <button class="kd-tile" onclick="switchPage('fahrtenbuch')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
-            <span>Fahrtenbuch</span>
-          </button>
-          <button class="kd-tile" onclick="switchPage('material')">
-            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
-            <span>Material</span>
-          </button>
-        </div>
+      <section class="start-section">
+        <div class="start-section-head"><h2>Nächste Termine</h2><a onclick="switchPage('termine')">Alle anzeigen</a></div>
+        <div id="st_nextTermine"><div class="empty-note">Lädt…</div></div>
+      </section>
+
+      <section class="start-section">
+        <div class="start-section-head"><h2>Offene Aufträge</h2><a onclick="switchPage('auftraege')">Alle anzeigen</a></div>
+        <div id="st_openAuftraege"><div class="empty-note">Lädt…</div></div>
       </section>
 
     </div>
@@ -1516,7 +1613,13 @@
     <div class="modal">
       <button class="modal-x" onclick="atCloseModal()">✕</button>
       <h3 id="at_editTitle">Neuer Auftrag</h3>
-      <div class="field"><label>Kunde</label><input id="at_f_kunde" list="ts_customerList" placeholder="Kunde eingeben oder auswählen…" onchange="atCustomerPicked()"></div>
+      <div class="field">
+        <label>Kunde</label>
+        <div class="picker-with-arrow">
+          <input id="at_f_kunde" placeholder="Kunde eingeben oder auswählen…">
+          <button type="button" class="picker-arrow-btn" id="at_f_kunde_arrow" title="Liste öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+        </div>
+      </div>
       <div class="field"><label>Auftrag</label><input id="at_f_beschreibung" placeholder="z.B. Rauchmelder installieren"></div>
       <div class="field"><label>Datum</label><input id="at_f_datum" type="date"></div>
       <div class="field"><label>Telefon</label><input id="at_f_tel" type="tel"></div>
@@ -1533,6 +1636,36 @@
       <div class="btn-row" style="margin-top:10px;">
         <button class="btn primary" onclick="atSaveAuftrag()">Speichern</button>
         <button class="btn danger" id="at_deleteBtn" onclick="atDeleteAuftrag()" style="display:none;">Löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Angebot/Rechnung anlegen/bearbeiten -->
+  <div class="modal-overlay" id="ag_editModal">
+    <div class="modal">
+      <button class="modal-x" onclick="agCloseModal()">✕</button>
+      <h3 id="ag_editTitle">Neues Angebot</h3>
+      <div class="field"><label id="ag_f_nr_label">Nummer</label><input id="ag_f_nr" readonly></div>
+      <div class="field">
+        <label>Kunde</label>
+        <div class="picker-with-arrow">
+          <input id="ag_f_kunde" placeholder="Kunde eingeben oder auswählen…">
+          <button type="button" class="picker-arrow-btn" id="ag_f_kunde_arrow" title="Liste öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+        </div>
+      </div>
+      <div class="field"><label>Titel / Beschreibung</label><input id="ag_f_titel" placeholder="z.B. Sanitärarbeiten Badezimmer"></div>
+      <div class="field"><label>Betrag (netto, €)</label><input id="ag_f_betrag" type="number" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="field"><label id="ag_f_datum_label">Datum</label><input id="ag_f_datum" type="date"></div>
+      <div class="field" id="ag_f_faelligkeit_wrap" style="display:none;"><label>Fällig am</label><input id="ag_f_faelligkeit" type="date"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ag_f_status"></select>
+      </div>
+      <div class="field"><label>Notiz</label><textarea id="ag_f_notiz" rows="3"></textarea></div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn primary" onclick="agSaveItem()">Speichern</button>
+        <button class="btn" onclick="agCreatePdf()">PDF erstellen</button>
+        <button class="btn danger" id="ag_deleteBtn" onclick="agDeleteItem()" style="display:none;">Löschen</button>
       </div>
     </div>
   </div>
@@ -1617,6 +1750,10 @@
         <button class="sheet-row" onclick="closeMehrMenu();switchPage('material')">
           <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
           <span class="row-text">Material</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();switchPage('angebote')">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h1"></path></svg></span>
+          <span class="row-text">Angebote &amp; Rechnungen</span>
         </button>
 
         <div class="sheet-divider"></div>
@@ -2380,9 +2517,10 @@ async function switchPage(page){
   document.getElementById('page-material').classList.toggle('active', page === 'material');
   document.getElementById('page-termine').classList.toggle('active', page === 'termine');
   document.getElementById('page-auftraege').classList.toggle('active', page === 'auftraege');
+  document.getElementById('page-angebote').classList.toggle('active', page === 'angebote');
   document.getElementById('page-start').classList.toggle('active', page === 'start');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-  const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine', auftraege:'Aufträge', start:'Battermann' };
+  const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine', auftraege:'Aufträge', angebote:'Angebote & Rechnungen', start:'Battermann' };
   const titleEl = document.getElementById('pageTitle');
   const inKdDetail = (page === 'kunden' && kdDetailCustomer);
   if(titleEl) titleEl.textContent = inKdDetail ? (kdDetailCustomer.name || 'Kunde') : (titles[page] || 'Battermann');
@@ -2413,6 +2551,10 @@ async function switchPage(page){
   if(page === 'auftraege'){
     atLoadList();
   }
+  if(page === 'angebote' && !agInitialized){
+    agInitialized = true;
+    agSwitchType('angebote');
+  }
   if(page === 'start'){
     stRenderDashboard();
   }
@@ -2421,6 +2563,7 @@ async function switchPage(page){
   }
 }
 let fbInitialized = false;
+let agInitialized = false;
 
 /* ---------- Generische Toolbar-Aktionen (delegieren an aktive Seite) ---------- */
 async function newItem(){
@@ -3584,7 +3727,6 @@ async function ipNewProtocol(){
   document.getElementById('ip_typeSelector').style.display = '';
   document.getElementById('ip_formContent').style.display = 'none';
   syncCustomerFieldsFromTs();
-  showToast('Neues Protokoll — bitte Vorlage wählen');
 }
 async function ipSaveProtocol(){
   if(ipLocked){ showToast('Dieses Protokoll ist abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
@@ -4381,6 +4523,13 @@ wirePickerAutocomplete('ip_materialPicker', () => tsMaterialsMaster, m => m.beze
   ipAddMaterialRow({ menge:'1', einheit:m.einheit||'', artikelnr:m.artikelnr||'', bezeichnung:m.bezeichnung||'', preis:m.preis!=null?m.preis:'' });
   document.getElementById('ip_materialPicker').value = '';
   showToast('Material eingefügt');
+});
+wirePickerAutocomplete('at_f_kunde', () => tsCustomers, c => c.name, (c) => {
+  document.getElementById('at_f_kunde').value = c.name || '';
+  atCustomerPicked();
+});
+wirePickerAutocomplete('ag_f_kunde', () => tsCustomers, c => c.name, (c) => {
+  document.getElementById('ag_f_kunde').value = c.name || '';
 });
 wirePickerAutocomplete('ts_objektPicker', () => tsObjekte, o => o.name, (o) => {
   pickObjekt(o);
@@ -5312,18 +5461,285 @@ async function atDeleteAuftrag(){
 }
 
 /* ================================================================
+   ANGEBOTE & RECHNUNGEN (Präfix ag…)
+   ================================================================ */
+let agType = 'angebote';
+let agFilter = 'alle';
+let agItems = [];
+let agEditingId = null;
+
+const AG_STATUS = {
+  angebote: { entwurf:'Entwurf', versendet:'Versendet', angenommen:'Angenommen', abgelehnt:'Abgelehnt' },
+  rechnungen: { offen:'Offen', bezahlt:'Bezahlt', ueberfaellig:'Überfällig' }
+};
+function agLabel(){ return agType === 'angebote' ? 'Angebot' : 'Rechnung'; }
+function agPrefix(){ return agType === 'angebote' ? 'AN' : 'RE'; }
+function fmtMoney(n){
+  const v = Number(n);
+  return (isNaN(v) ? 0 : v).toFixed(2).replace('.',',') + ' €';
+}
+function agSwitchType(type){
+  agType = type;
+  agFilter = 'alle';
+  document.querySelectorAll('.kd-subtabs .kd-subtab').forEach(b => {
+    if(b.closest('#page-angebote')) b.classList.toggle('active', b.dataset.tab === type);
+  });
+  document.getElementById('ag_newBtn').textContent = '+ Neues ' + agLabel();
+  const filterWrap = document.getElementById('ag_filter');
+  const statuses = AG_STATUS[agType];
+  filterWrap.innerHTML = `<button class="kd-chip active" data-status="alle" onclick="agSetFilter('alle')">Alle</button>` +
+    Object.entries(statuses).map(([key,label]) => `<button class="kd-chip" data-status="${key}" onclick="agSetFilter('${key}')">${label}</button>`).join('');
+  agLoadList();
+}
+function agSetFilter(f){
+  agFilter = f;
+  document.querySelectorAll('#ag_filter .kd-chip').forEach(b => b.classList.toggle('active', b.dataset.status === f));
+  agRenderList();
+}
+async function agLoadList(){
+  const wrap = document.getElementById('ag_list');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  const { data, error } = await sb.from(agType).select('*').order('datum', { ascending: false, nullsFirst: false });
+  if(error){
+    wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'<br>(Falls die Tabelle "'+agType+'" noch fehlt, bitte in Supabase anlegen — siehe Hinweis im Chat.)</div>';
+    return;
+  }
+  agItems = data || [];
+  agRenderList();
+}
+function agRenderList(){
+  const wrap = document.getElementById('ag_list');
+  const items = agFilter === 'alle' ? agItems : agItems.filter(a => a.status === agFilter);
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Keine Einträge in dieser Ansicht.</div>'; return; }
+  const statuses = AG_STATUS[agType];
+  wrap.innerHTML = items.map(a => `
+    <div class="at-list-row" onclick="agOpenModal('${a.id}')">
+      <div class="at-list-body">
+        <div class="at-title">${escAttr(a.nr || agLabel())}${a.titel ? ' · '+escAttr(a.titel) : ''}</div>
+        <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
+        ${a.datum ? `<div class="at-sub">${escAttr(fmtDate(a.datum))}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div style="font-weight:700;font-size:13px;color:var(--text);">${fmtMoney(a.betrag)}</div>
+        <span class="status-badge ${a.status}">${statuses[a.status]||a.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+function agCustomerPicked(){
+  const name = document.getElementById('ag_f_kunde').value.trim();
+  // aktuell keine weiteren Felder abhängig vom Kunden — Platzhalter für spätere Erweiterung
+}
+async function agOpenModal(id){
+  agEditingId = id;
+  const deleteBtn = document.getElementById('ag_deleteBtn');
+  const statusSel = document.getElementById('ag_f_status');
+  statusSel.innerHTML = Object.entries(AG_STATUS[agType]).map(([key,label]) => `<option value="${key}">${label}</option>`).join('');
+  document.getElementById('ag_f_datum_label').textContent = agType === 'angebote' ? 'Angebotsdatum' : 'Rechnungsdatum';
+  document.getElementById('ag_f_faelligkeit_wrap').style.display = agType === 'rechnungen' ? '' : 'none';
+  if(id){
+    const a = agItems.find(x => x.id === id);
+    if(!a) return;
+    document.getElementById('ag_editTitle').textContent = agLabel() + ' bearbeiten';
+    document.getElementById('ag_f_nr').value = a.nr || '';
+    document.getElementById('ag_f_kunde').value = a.auftraggeber || '';
+    document.getElementById('ag_f_titel').value = a.titel || '';
+    document.getElementById('ag_f_betrag').value = a.betrag != null ? a.betrag : '';
+    document.getElementById('ag_f_datum').value = a.datum || '';
+    document.getElementById('ag_f_faelligkeit').value = a.faelligkeit || '';
+    document.getElementById('ag_f_status').value = a.status || Object.keys(AG_STATUS[agType])[0];
+    document.getElementById('ag_f_notiz').value = a.notiz || '';
+    deleteBtn.style.display = '';
+  } else {
+    document.getElementById('ag_editTitle').textContent = 'Neues ' + agLabel();
+    document.getElementById('ag_f_nr').value = 'wird vergeben…';
+    document.getElementById('ag_f_kunde').value = '';
+    document.getElementById('ag_f_titel').value = '';
+    document.getElementById('ag_f_betrag').value = '';
+    document.getElementById('ag_f_datum').value = new Date().toISOString().slice(0,10);
+    document.getElementById('ag_f_faelligkeit').value = '';
+    document.getElementById('ag_f_status').value = Object.keys(AG_STATUS[agType])[0];
+    document.getElementById('ag_f_notiz').value = '';
+    deleteBtn.style.display = 'none';
+    nextNumber(agType, 'nr', agPrefix()).then(nr => { if(!agEditingId) document.getElementById('ag_f_nr').value = nr; });
+  }
+  document.getElementById('ag_editModal').classList.add('open');
+}
+function agCloseModal(){
+  document.getElementById('ag_editModal').classList.remove('open');
+}
+async function agSaveItem(){
+  const rec = {
+    nr: document.getElementById('ag_f_nr').value.trim(),
+    auftraggeber: document.getElementById('ag_f_kunde').value.trim(),
+    titel: document.getElementById('ag_f_titel').value.trim(),
+    betrag: parseFloat((document.getElementById('ag_f_betrag').value || '0').toString().replace(',','.')) || 0,
+    datum: document.getElementById('ag_f_datum').value || null,
+    faelligkeit: agType === 'rechnungen' ? (document.getElementById('ag_f_faelligkeit').value || null) : null,
+    status: document.getElementById('ag_f_status').value,
+    notiz: document.getElementById('ag_f_notiz').value.trim()
+  };
+  if(!rec.titel){ showToast('Bitte einen Titel eingeben'); return; }
+  if(!rec.nr || rec.nr === 'wird vergeben…'){ rec.nr = await nextNumber(agType, 'nr', agPrefix()); }
+  let error;
+  if(agEditingId){
+    ({ error } = await sb.from(agType).update(rec).eq('id', agEditingId));
+  } else {
+    ({ error } = await sb.from(agType).insert(rec));
+  }
+  if(error){ showToast('Fehler: '+error.message); return; }
+  showToast(agLabel() + ' gespeichert');
+  agCloseModal();
+  agLoadList();
+}
+async function agDeleteItem(){
+  if(!agEditingId) return;
+  if(!confirm('Diesen Eintrag wirklich löschen?')) return;
+  const { error } = await sb.from(agType).delete().eq('id', agEditingId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  showToast(agLabel() + ' gelöscht');
+  agCloseModal();
+  agLoadList();
+}
+function buildAgPrintHtml(){
+  const nr = document.getElementById('ag_f_nr').value.trim();
+  const kunde = document.getElementById('ag_f_kunde').value.trim();
+  const titel = document.getElementById('ag_f_titel').value.trim();
+  const betrag = parseFloat((document.getElementById('ag_f_betrag').value || '0').toString().replace(',','.')) || 0;
+  const datum = document.getElementById('ag_f_datum').value;
+  const faelligkeit = document.getElementById('ag_f_faelligkeit').value;
+  const notiz = document.getElementById('ag_f_notiz').value.trim();
+  const label = agLabel();
+  const metaRows = [['Nr.', nr], ['Datum', fmtDate(datum)]];
+  if(agType === 'rechnungen' && faelligkeit) metaRows.push(['Fällig am', fmtDate(faelligkeit)]);
+  let html = `<div class="pd-page">`;
+  html += pdHeader(label.toUpperCase(), metaRows);
+  html += `<div class="pd-section"><div class="pd-section-head">${agType === 'rechnungen' ? 'Rechnungsempfänger' : 'Angebot an'}</div><div class="pd-section-body">${escAttr(kunde || '–')}</div></div>`;
+  html += `<div class="pd-section"><div class="pd-section-head">Leistung</div>
+    <table class="pd-table"><thead><tr><th>Beschreibung</th><th style="text-align:right;width:120px;">Betrag</th></tr></thead>
+    <tbody><tr><td>${escAttr(titel || '–')}</td><td style="text-align:right;">${fmtMoney(betrag)}</td></tr></tbody>
+    <tfoot><tr><td style="text-align:right;font-weight:700;">Gesamt (netto)</td><td style="text-align:right;font-weight:700;">${fmtMoney(betrag)}</td></tr></tfoot>
+    </table></div>`;
+  if(notiz) html += `<div class="pd-section"><div class="pd-section-head">Notiz</div><div class="pd-section-body pd-freetext">${escAttr(notiz)}</div></div>`;
+  html += `<div class="pd-confirm">${agType === 'rechnungen' ? 'Zahlbar innerhalb von 14 Tagen nach Erhalt ohne Abzug.' : 'Dieses Angebot ist freibleibend und 30 Tage gültig.'}</div>`;
+  html += pdFooter();
+  html += `</div>`;
+  return html;
+}
+async function agCreatePdf(){
+  if(printInProgress){ showToast('Bitte kurz warten — Vorschau wird bereits erstellt'); return; }
+  printInProgress = true;
+  try {
+    showToast('Bereite Vorschau vor…');
+    const html = buildAgPrintHtml();
+    const area = document.getElementById('printArea');
+    area.innerHTML = html;
+    area.classList.add('preview-open');
+    document.getElementById('previewToolbar').classList.add('open');
+    area.scrollTop = 0;
+    scalePreviewPages();
+  } finally {
+    printInProgress = false;
+  }
+}
+
+/* ================================================================
    STARTSEITE: kurze Übersicht (echte Zahlen aus Aufträgen & Terminen)
    ================================================================ */
+async function stQuickOpenAg(type){
+  await switchPage('angebote');
+  agSwitchType(type);
+  agOpenModal(null);
+}
+function stGreetingName(){
+  const first = (tsEmployees && tsEmployees[0] && tsEmployees[0].name) ? tsEmployees[0].name.trim().split(/\s+/) : [];
+  // Anrede-Wörter wie "Herr"/"Frau" überspringen, falls vorhanden, und den ersten echten Vornamen nehmen
+  const skip = new Set(['herr','frau']);
+  const name = first.find(w => !skip.has(w.toLowerCase()));
+  return name || '';
+}
+function stFormatDateLine(d){
+  const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
 async function stRenderDashboard(){
   const offeneEl = document.getElementById('st_offeneAuftraege');
-  const termineEl = document.getElementById('st_anstehendeTermine');
-  if(!offeneEl || !termineEl) return;
-  const [atRes, ipRes] = await Promise.all([
+  if(!offeneEl) return;
+
+  const now = new Date();
+  const hour = now.getHours();
+  const greetWord = hour < 12 ? 'Guten Morgen' : (hour < 18 ? 'Guten Tag' : 'Guten Abend');
+  const name = stGreetingName();
+  document.getElementById('st_greeting').textContent = greetWord + (name ? ', ' + name + '!' : '!');
+  document.getElementById('st_dateLine').textContent = stFormatDateLine(now);
+
+  const todayStr = now.toISOString().slice(0,10);
+  const [atOpenRes, protTermRes, atTodayRes, protTodayRes, atNextRes, protNextRes] = await Promise.all([
     sb.from('auftraege').select('id,status').neq('status', 'abgeschlossen'),
-    sb.from('protocols').select('id').not('naechster_termin', 'is', null)
+    sb.from('protocols').select('id').not('naechster_termin', 'is', null),
+    sb.from('auftraege').select('id').eq('datum', todayStr).neq('status', 'abgeschlossen'),
+    sb.from('protocols').select('id').eq('naechster_termin', todayStr),
+    sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,status').not('datum', 'is', null).neq('status', 'abgeschlossen').order('datum', { ascending: true }).limit(5),
+    sb.from('protocols').select('id,nr,auftraggeber,objekt,naechster_termin').not('naechster_termin', 'is', null).order('naechster_termin', { ascending: true }).limit(5)
   ]);
-  offeneEl.textContent = atRes.error ? '–' : String((atRes.data||[]).length);
-  termineEl.textContent = ipRes.error ? '–' : String((ipRes.data||[]).length);
+
+  const offeneCount = atOpenRes.error ? null : (atOpenRes.data||[]).length;
+  document.getElementById('st_offeneAuftraege').textContent = offeneCount === null ? '–' : String(offeneCount);
+  const anstehendCount = protTermRes.error ? null : (protTermRes.data||[]).length;
+  document.getElementById('st_anstehendeTermine').textContent = anstehendCount === null ? '–' : String(anstehendCount);
+  const heuteCount = (atTodayRes.error || protTodayRes.error) ? null : ((atTodayRes.data||[]).length + (protTodayRes.data||[]).length);
+  document.getElementById('st_heuteTermine').textContent = heuteCount === null ? '–' : String(heuteCount);
+  document.getElementById('st_kundenGesamt').textContent = String((tsCustomers||[]).length);
+
+  // Nächste Termine: Aufträge mit Datum + Prüf-/Austauschtermine zusammengeführt, chronologisch, die 3 nächsten
+  const nextItems = [
+    ...(atNextRes.data||[]).map(r => ({ type:'at', id:r.id, datum:r.datum, kunde:r.auftraggeber, label:r.beschreibung||'Auftrag' })),
+    ...(protNextRes.data||[]).map(r => ({ type:'ip', id:r.id, datum:r.naechster_termin, kunde:r.auftraggeber, label:'Prüf-/Austauschtermin'+(r.nr?' · '+r.nr:'') }))
+  ].sort((a,b) => (a.datum||'').localeCompare(b.datum||'')).slice(0,3);
+  const nextWrap = document.getElementById('st_nextTermine');
+  if(nextWrap){
+    if(!nextItems.length){
+      nextWrap.innerHTML = '<div class="empty-note">Keine anstehenden Termine.</div>';
+    } else {
+      nextWrap.innerHTML = nextItems.map(r => {
+        const openFn = r.type === 'at'
+          ? `(async()=>{ await switchPage('auftraege'); await atLoadList(); atOpenModal('${r.id}'); })()`
+          : `(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()`;
+        return `
+          <div class="kd-list-row" onclick="${openFn}">
+            <div class="kd-list-body">
+              <div class="name">${escAttr(r.kunde || 'Ohne Kunde')}</div>
+              <div class="sub-line">${escAttr(r.label)} · ${escAttr(fmtDate(r.datum))}</div>
+            </div>
+            <span class="kd-list-chevron">›</span>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // Offene Aufträge: die 3 dringendsten (mit Datum zuerst, dann ohne Datum)
+  const openWrap = document.getElementById('st_openAuftraege');
+  if(openWrap){
+    const { data: openData, error: openErr } = await sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,status').neq('status', 'abgeschlossen').order('datum', { ascending: true, nullsFirst: false }).limit(3);
+    if(openErr){
+      openWrap.innerHTML = '<div class="empty-note">Fehler beim Laden.</div>';
+    } else if(!openData || !openData.length){
+      openWrap.innerHTML = '<div class="empty-note">Keine offenen Aufträge.</div>';
+    } else {
+      const badgeText = { offen:'Offen', geplant:'Geplant' };
+      openWrap.innerHTML = openData.map(a => `
+        <div class="at-list-row" onclick="(async()=>{ await switchPage('auftraege'); await atLoadList(); atOpenModal('${a.id}'); })()">
+          <div class="at-list-body">
+            <div class="at-title">${escAttr(a.beschreibung || 'Ohne Titel')}</div>
+            <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
+            ${a.datum ? `<div class="at-sub">${escAttr(fmtDate(a.datum))}</div>` : ''}
+          </div>
+          <span class="status-badge ${a.status === 'geplant' ? 'geplant' : 'offen'}">${badgeText[a.status]||'Offen'}</span>
+        </div>
+      `).join('');
+    }
+  }
 }
 
 /* ================================================================
@@ -5442,29 +5858,36 @@ function tmRenderDayList(){
 async function tmLoadTermine(){
   const wrap = document.getElementById('tm_list');
   wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
-  const { data, error } = await sb.from('protocols')
-    .select('id,nr,auftraggeber,objekt,naechster_termin')
-    .not('naechster_termin', 'is', null)
-    .order('naechster_termin', { ascending: true });
-  if(error){ wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'</div>'; return; }
-  if(!data || !data.length){ wrap.innerHTML = '<div class="empty-note">Keine anstehenden Termine hinterlegt.</div>'; return; }
+  const [protRes, atRes] = await Promise.all([
+    sb.from('protocols').select('id,nr,auftraggeber,objekt,naechster_termin').not('naechster_termin', 'is', null).order('naechster_termin', { ascending: true }),
+    sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,status').not('datum', 'is', null).neq('status', 'abgeschlossen').order('datum', { ascending: true })
+  ]);
+  if(protRes.error){ wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(protRes.error.message)+'</div>'; return; }
+  const items = [
+    ...(protRes.data||[]).map(r => ({ type:'ip', id:r.id, datum:r.naechster_termin, kunde:r.auftraggeber, sub: r.objekt || '', nr: r.nr || '', label:'Prüf-/Austauschtermin' })),
+    ...(atRes.data||[]).map(r => ({ type:'at', id:r.id, datum:r.datum, kunde:r.auftraggeber, sub: r.beschreibung || '', nr:'', label:'Auftrag' }))
+  ].sort((a,b) => (a.datum||'').localeCompare(b.datum||''));
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Keine anstehenden Termine hinterlegt.</div>'; return; }
   const todayStr = new Date().toISOString().slice(0,10);
-  wrap.innerHTML = data.map(r => {
-    const days = Math.round((new Date(r.naechster_termin) - new Date(todayStr)) / 86400000);
+  wrap.innerHTML = items.map(r => {
+    const days = Math.round((new Date(r.datum) - new Date(todayStr)) / 86400000);
     let dueLabel, dueClass;
     if(days < 0){ dueLabel = `überfällig seit ${Math.abs(days)} Tagen`; dueClass = 'offen'; }
     else if(days === 0){ dueLabel = 'heute fällig'; dueClass = 'offen'; }
     else if(days <= 14){ dueLabel = `in ${days} Tagen`; dueClass = 'offen'; }
     else { dueLabel = `in ${days} Tagen`; dueClass = 'abgeschlossen'; }
+    const openFn = r.type === 'at'
+      ? `(async()=>{ await switchPage('auftraege'); await atLoadList(); atOpenModal('${r.id}'); })()`
+      : `(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()`;
     return `
       <div class="modal-item">
-        <div class="info" style="cursor:pointer;" onclick="(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()">
-          <div class="name">${escAttr(r.auftraggeber || 'Ohne Kunde')} <span class="status-badge ${dueClass}">${escAttr(fmtDate(r.naechster_termin))} · ${escAttr(dueLabel)}</span></div>
-          <div class="sub">${escAttr(r.objekt || '')}${r.objekt ? ' · ' : ''}${escAttr(r.nr || '')}</div>
+        <div class="info" style="cursor:pointer;" onclick="${openFn}">
+          <div class="name">${escAttr(r.kunde || 'Ohne Kunde')} <span class="status-badge ${dueClass}">${escAttr(fmtDate(r.datum))} · ${escAttr(dueLabel)}</span></div>
+          <div class="sub">${escAttr(r.label)}${r.sub ? ' · '+escAttr(r.sub) : ''}${r.nr ? ' · '+escAttr(r.nr) : ''}</div>
         </div>
         <div class="modal-actions">
-          <button class="btn small" onclick='tmAddToCalendar(${JSON.stringify((r.auftraggeber||"Termin") + (r.objekt ? " – "+r.objekt : ""))}, ${JSON.stringify(r.naechster_termin)}, ${JSON.stringify("Nächster Prüf-/Austauschtermin, "+(r.nr||""))})'>In Kalender speichern</button>
-          <button class="btn small" onclick="tmMarkDone('${r.id}')">Erledigt</button>
+          <button class="btn small" onclick='tmAddToCalendar(${JSON.stringify((r.kunde||"Termin") + (r.sub ? " – "+r.sub : ""))}, ${JSON.stringify(r.datum)}, ${JSON.stringify(r.label+(r.nr?", "+r.nr:""))})'>In Kalender speichern</button>
+          <button class="btn small" onclick="tmMarkDone('${r.id}','${r.type}')">Erledigt</button>
         </div>
       </div>
     `;
@@ -5487,13 +5910,16 @@ function tmAddToCalendar(title, dateStr, notes){
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
-async function tmMarkDone(id){
+async function tmMarkDone(id, type){
   if(!confirm('Termin als erledigt markieren? Er verschwindet dann aus dieser Liste.')) return;
-  const { error } = await sb.from('protocols').update({ naechster_termin: null }).eq('id', id);
+  const error = type === 'at'
+    ? (await sb.from('auftraege').update({ status: 'abgeschlossen' }).eq('id', id)).error
+    : (await sb.from('protocols').update({ naechster_termin: null }).eq('id', id)).error;
   if(error){ showToast('Fehler: '+error.message); return; }
   showToast('Termin erledigt');
   tmLoadTermine();
   tmRenderCalendar();
+  if(typeof atLoadList === 'function') atLoadList();
 }
 
 function mtRenderList(){
