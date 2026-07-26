@@ -1514,7 +1514,11 @@ function getSigData(id){
   return null;
 }
 function setSigData(id, dataUrl){ sigData[id] = dataUrl || null; renderSigPreview(id); }
-function clearSig(id){ setSigData(id, null); }
+function clearSig(id){
+  const isLocked = id.startsWith('ts_') ? tsLocked : (id.startsWith('ip_') ? ipLocked : false);
+  if(isLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
+  setSigData(id, null);
+}
 
 /* ---------- Zeichenfläche im Pop-up ---------- */
 let sigPadCtx = null;
@@ -1571,6 +1575,8 @@ function initSigPadCanvas(){
   }
 }
 function openSigPad(targetId, title){
+  const isLocked = targetId.startsWith('ts_') ? tsLocked : (targetId.startsWith('ip_') ? ipLocked : false);
+  if(isLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   sigPadTarget = targetId;
   document.getElementById('sigPadModalTitle').textContent = title || 'Unterschrift';
   document.getElementById('sigPadModal').classList.add('open');
@@ -2410,6 +2416,7 @@ function tsApplyRecord(rec){
 
 /* ---------- Aktionen ---------- */
 async function tsNewTimesheet(){
+  setLocked('stunden', false);
   tsCurrentId = null;
   tsMaterialRows = [];
   tsWorkRows = [];
@@ -2428,7 +2435,6 @@ async function tsNewTimesheet(){
   tsAddWorkRow({ name:'Battermann', kennzeichen:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   document.getElementById('ts_f_berichtsnr').value = await nextNumber('timesheets','berichtsnr','AB');
   document.getElementById('ts_f_auftragsnr').value = await nextNumber('timesheets','auftragsnr','AUF');
-  setLocked('stunden', false);
   showToast('Neuer Nachweis angelegt');
 }
 async function tsSaveTimesheet(){
@@ -2610,6 +2616,7 @@ function ipUpdateMaterialSum(){
 }
 
 function ipAddDeviceRow(data){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   const art = (document.getElementById('ip_f_art')?.value || '').trim();
   const defaultBatterie = art === 'Rauchwarnmelder' ? '10-Jahres-Batterie' : '';
   const row = data || { ort:'', typ:'', seriennr:'', batterie:defaultBatterie, datum:'', ok:false };
@@ -2617,6 +2624,7 @@ function ipAddDeviceRow(data){
   ipRenderDevices();
 }
 function ipRemoveDeviceRow(idx){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   ipDeviceRows.splice(idx,1);
   ipRenderDevices();
 }
@@ -2943,6 +2951,7 @@ function ipApplyRecord(rec){
 }
 
 async function ipNewProtocol(){
+  setLocked('installation', false);
   ipCurrentId = null;
   ipDeviceRows = [];
   ipMaterialRows = [];
@@ -2963,7 +2972,6 @@ async function ipNewProtocol(){
   updateSammelVisibility();
   document.getElementById('ip_f_nr').value = await nextNumber('protocols','nr','IP');
   document.getElementById('ip_f_auftragsnr').value = await nextNumber('protocols','auftragsnr','AUF');
-  setLocked('installation', false);
   document.getElementById('ip_typeSelector').style.display = '';
   document.getElementById('ip_formContent').style.display = 'none';
   syncCustomerFieldsFromTs();
