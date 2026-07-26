@@ -1547,6 +1547,14 @@
           <div class="start-stat-label">Offene Aufträge</div>
         </div>
         <div class="start-stat-card">
+          <div class="start-stat-value" id="st_rechnungenOffen">–</div>
+          <div class="start-stat-label">Rechnungen offen</div>
+        </div>
+        <div class="start-stat-card">
+          <div class="start-stat-value" id="st_angeboteOffen">–</div>
+          <div class="start-stat-label">Angebote offen</div>
+        </div>
+        <div class="start-stat-card">
           <div class="start-stat-value" id="st_anstehendeTermine">–</div>
           <div class="start-stat-label">Anstehende Termine</div>
         </div>
@@ -1757,10 +1765,44 @@
         </button>
 
         <div class="sheet-divider"></div>
+        <div class="sheet-section-label">Einstellungen</div>
+        <button class="sheet-row" onclick="closeMehrMenu();openSevdeskSettings()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+          <div class="row-text">sevDesk<span class="row-sub" id="ag_sevdeskStatusLabel">Nicht verbunden</span></div>
+        </button>
+
+        <div class="sheet-divider"></div>
         <button class="sheet-row danger" onclick="closeMehrMenu();logout()">
           <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span>
           <span class="row-text">Abmelden</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: sevDesk API-Verbindung -->
+  <div class="modal-overlay" id="sevdeskModal">
+    <div class="modal">
+      <button class="modal-x" onclick="closeSevdeskSettings()">✕</button>
+      <h3>sevDesk verbinden</h3>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-6px;">
+        Verbindet die App mit deinem sevDesk-Konto, damit "Rechnungen offen" und "Angebote offen" auf der Startseite
+        die echten Werte aus sevDesk zeigen. Den API-Token findest du in sevDesk unter
+        <b>Einstellungen → Benutzer → dein Benutzer</b>.
+      </p>
+      <div class="field">
+        <label>API-Token</label>
+        <input id="sevdesk_f_token" type="password" placeholder="32-stelliger Token" autocomplete="off">
+      </div>
+      <div style="background:#fdf1e0;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#7a5c10;line-height:1.5;margin-bottom:10px;">
+        ⚠️ Der Token wird nur auf diesem Gerät gespeichert (nicht in der Cloud), ist im Browser aber technisch auslesbar.
+        Bitte nur auf vertrauenswürdigen Geräten verwenden. Falls Verbindungen aus dem Browser von sevDesk blockiert
+        werden (CORS), meldet sich die App mit einer Fehlermeldung — sag in dem Fall Bescheid.
+      </div>
+      <div id="sevdesk_status" style="font-size:12.5px;margin-bottom:10px;"></div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="saveSevdeskToken()">Speichern &amp; testen</button>
+        <button class="btn danger" onclick="disconnectSevdesk()">Trennen</button>
       </div>
     </div>
   </div>
@@ -2493,6 +2535,7 @@ async function enterApp(){
   if(addBtn) addBtn.style.display = '';
   const headerLogo = document.getElementById('headerLogo');
   if(headerLogo) headerLogo.src = logoSrc();
+  updateSevdeskStatusLabel();
   await switchPage('start');
 }
 sb.auth.onAuthStateChange((event) => {
@@ -5461,6 +5504,80 @@ async function atDeleteAuftrag(){
 }
 
 /* ================================================================
+   SEVDESK API-ANBINDUNG
+   Optional: liefert echte Rechnungs-/Angebotszahlen aus sevDesk statt
+   der lokal in Supabase gepflegten Angebote/Rechnungen. Der Token wird
+   nur lokal auf diesem Gerät gespeichert (localStorage) und nie an
+   Supabase gesendet.
+   HINWEIS: Ob sevDesk direkte Browser-Aufrufe (CORS) erlaubt, konnte
+   hier nicht gegen einen echten Account getestet werden. Schlägt die
+   Verbindung wegen CORS fehl, bräuchte es einen kleinen Server-Proxy
+   (z.B. eine Cloudflare-Worker-Funktion) statt des direkten Aufrufs.
+   ================================================================ */
+const SEVDESK_BASE = 'https://my.sevdesk.de/api/v1';
+function sevdeskToken(){ return localStorage.getItem('sevdeskToken') || ''; }
+function sevdeskConnected(){ return !!sevdeskToken(); }
+async function sevdeskFetch(path){
+  const token = sevdeskToken();
+  if(!token) throw new Error('Kein sevDesk-Token hinterlegt');
+  const res = await fetch(SEVDESK_BASE + path, {
+    headers: { 'Authorization': token, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error('sevDesk-Anfrage fehlgeschlagen (HTTP '+res.status+')');
+  const json = await res.json();
+  return json.objects || [];
+}
+function openSevdeskSettings(){
+  document.getElementById('sevdesk_f_token').value = sevdeskToken();
+  document.getElementById('sevdesk_status').textContent = sevdeskConnected() ? 'Verbunden.' : 'Nicht verbunden.';
+  document.getElementById('sevdeskModal').classList.add('open');
+}
+function closeSevdeskSettings(){
+  document.getElementById('sevdeskModal').classList.remove('open');
+}
+async function saveSevdeskToken(){
+  const token = document.getElementById('sevdesk_f_token').value.trim();
+  const statusEl = document.getElementById('sevdesk_status');
+  if(!token){ showToast('Bitte einen Token eingeben'); return; }
+  localStorage.setItem('sevdeskToken', token);
+  statusEl.textContent = 'Teste Verbindung…';
+  try {
+    await sevdeskFetch('/Invoice?limit=1');
+    statusEl.textContent = '✓ Verbindung erfolgreich.';
+    showToast('Mit sevDesk verbunden');
+    updateSevdeskStatusLabel();
+    stRenderDashboard();
+  } catch(e){
+    statusEl.textContent = '✗ Verbindung fehlgeschlagen: ' + e.message + ' — läuft die App evtl. über CORS blockiert? Bitte melden.';
+  }
+}
+function disconnectSevdesk(){
+  localStorage.removeItem('sevdeskToken');
+  document.getElementById('sevdesk_f_token').value = '';
+  document.getElementById('sevdesk_status').textContent = 'Getrennt.';
+  showToast('sevDesk getrennt');
+  updateSevdeskStatusLabel();
+  stRenderDashboard();
+}
+function updateSevdeskStatusLabel(){
+  const el = document.getElementById('ag_sevdeskStatusLabel');
+  if(el) el.textContent = sevdeskConnected() ? 'Verbunden' : 'Nicht verbunden';
+}
+// sevDesk-Statuscodes: Invoice 100=Entwurf, 200=Offen/Fällig, 750=Teilw. bezahlt, 1000=Bezahlt.
+// Order (orderType AN = Angebot) 100=Entwurf, 200=Versendet, 1000=vermutlich abgeschlossen/angenommen —
+// diese Zuordnung ist nicht an einem echten Konto verifiziert, bitte nach dem ersten Test kurz prüfen.
+async function sevdeskGetOpenRechnungenSum(){
+  const invoices = await sevdeskFetch('/Invoice?status=200');
+  const partial = await sevdeskFetch('/Invoice?status=750');
+  return [...invoices, ...partial].reduce((s,i) => s + (Number(i.sumGross)||0), 0);
+}
+async function sevdeskGetOpenAngeboteSum(){
+  const drafts = await sevdeskFetch('/Order?orderType=AN&status=100');
+  const sent = await sevdeskFetch('/Order?orderType=AN&status=200');
+  return [...drafts, ...sent].reduce((s,o) => s + (Number(o.sumGross)||0), 0);
+}
+
+/* ================================================================
    ANGEBOTE & RECHNUNGEN (Präfix ag…)
    ================================================================ */
 let agType = 'angebote';
@@ -5484,7 +5601,14 @@ function agSwitchType(type){
   document.querySelectorAll('.kd-subtabs .kd-subtab').forEach(b => {
     if(b.closest('#page-angebote')) b.classList.toggle('active', b.dataset.tab === type);
   });
-  document.getElementById('ag_newBtn').textContent = '+ Neues ' + agLabel();
+  const newBtn = document.getElementById('ag_newBtn');
+  if(sevdeskConnected()){
+    newBtn.textContent = 'In sevDesk öffnen ↗';
+    newBtn.onclick = () => window.open('https://my.sevdesk.de', '_blank');
+  } else {
+    newBtn.textContent = '+ Neues ' + agLabel();
+    newBtn.onclick = () => agOpenModal(null);
+  }
   const filterWrap = document.getElementById('ag_filter');
   const statuses = AG_STATUS[agType];
   filterWrap.innerHTML = `<button class="kd-chip active" data-status="alle" onclick="agSetFilter('alle')">Alle</button>` +
@@ -5496,9 +5620,60 @@ function agSetFilter(f){
   document.querySelectorAll('#ag_filter .kd-chip').forEach(b => b.classList.toggle('active', b.dataset.status === f));
   agRenderList();
 }
+// Best-effort Zuordnung sevDesk-Statuscode → eigene Badge-Klasse (siehe Hinweis oben, nicht live verifiziert)
+function sevdeskStatusMap(code){
+  if(agType === 'rechnungen'){
+    if(code === 100) return { key:'entwurf', label:'Entwurf' };
+    if(code === 1000) return { key:'bezahlt', label:'Bezahlt' };
+    return { key:'offen', label:'Offen' };
+  }
+  if(code === 100) return { key:'entwurf', label:'Entwurf' };
+  if(code === 1000) return { key:'angenommen', label:'Abgeschlossen' };
+  return { key:'versendet', label:'Versendet' };
+}
+function sevdeskContactName(contact){
+  if(!contact) return '';
+  return contact.name || [contact.surename, contact.familyname].filter(Boolean).join(' ') || '';
+}
+function sevdeskParseDate(val){
+  if(!val) return null;
+  if(/^\d+$/.test(String(val))) return new Date(Number(val) * 1000).toISOString().slice(0,10);
+  const d = new Date(val);
+  return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+async function agLoadListFromSevdesk(){
+  const wrap = document.getElementById('ag_list');
+  const path = agType === 'rechnungen'
+    ? '/Invoice?embed=contact'
+    : '/Order?orderType=AN&embed=contact';
+  const raw = await sevdeskFetch(path);
+  return raw.map(r => {
+    const st = sevdeskStatusMap(Number(r.status));
+    return {
+      id: r.id,
+      nr: agType === 'rechnungen' ? r.invoiceNumber : r.orderNumber,
+      auftraggeber: sevdeskContactName(r.contact),
+      titel: r.header || '',
+      betrag: Number(r.sumGross) || 0,
+      datum: sevdeskParseDate(agType === 'rechnungen' ? r.invoiceDate : r.orderDate),
+      status: st.key,
+      _sevdeskLabel: st.label
+    };
+  });
+}
 async function agLoadList(){
   const wrap = document.getElementById('ag_list');
   wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  if(sevdeskConnected()){
+    try {
+      agItems = await agLoadListFromSevdesk();
+      agItems.sort((a,b) => (b.datum||'').localeCompare(a.datum||''));
+      agRenderList();
+    } catch(e){
+      wrap.innerHTML = '<div class="empty-note">sevDesk-Anfrage fehlgeschlagen: '+escAttr(e.message)+'<br>(Prüfe den Token unter Mehr → sevDesk, oder trenne die Verbindung um wieder die lokale Liste zu nutzen.)</div>';
+    }
+    return;
+  }
   const { data, error } = await sb.from(agType).select('*').order('datum', { ascending: false, nullsFirst: false });
   if(error){
     wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'<br>(Falls die Tabelle "'+agType+'" noch fehlt, bitte in Supabase anlegen — siehe Hinweis im Chat.)</div>';
@@ -5512,8 +5687,9 @@ function agRenderList(){
   const items = agFilter === 'alle' ? agItems : agItems.filter(a => a.status === agFilter);
   if(!items.length){ wrap.innerHTML = '<div class="empty-note">Keine Einträge in dieser Ansicht.</div>'; return; }
   const statuses = AG_STATUS[agType];
+  const readonly = sevdeskConnected();
   wrap.innerHTML = items.map(a => `
-    <div class="at-list-row" onclick="agOpenModal('${a.id}')">
+    <div class="at-list-row" ${readonly ? '' : `onclick="agOpenModal('${a.id}')"`}>
       <div class="at-list-body">
         <div class="at-title">${escAttr(a.nr || agLabel())}${a.titel ? ' · '+escAttr(a.titel) : ''}</div>
         <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
@@ -5521,7 +5697,7 @@ function agRenderList(){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
         <div style="font-weight:700;font-size:13px;color:var(--text);">${fmtMoney(a.betrag)}</div>
-        <span class="status-badge ${a.status}">${statuses[a.status]||a.status}</span>
+        <span class="status-badge ${a.status}">${a._sevdeskLabel || statuses[a.status] || a.status}</span>
       </div>
     </div>
   `).join('');
@@ -5690,6 +5866,32 @@ async function stRenderDashboard(){
   document.getElementById('st_anstehendeTermine').textContent = anstehendCount === null ? '–' : String(anstehendCount);
   const heuteCount = (atTodayRes.error || protTodayRes.error) ? null : ((atTodayRes.data||[]).length + (protTodayRes.data||[]).length);
   document.getElementById('st_heuteTermine').textContent = heuteCount === null ? '–' : String(heuteCount);
+
+  if(sevdeskConnected()){
+    try {
+      const rechSum = await sevdeskGetOpenRechnungenSum();
+      document.getElementById('st_rechnungenOffen').textContent = fmtMoney(rechSum);
+    } catch(e){
+      document.getElementById('st_rechnungenOffen').textContent = '–';
+      console.warn('sevDesk Rechnungen-Abfrage fehlgeschlagen:', e.message);
+    }
+    try {
+      const angSum = await sevdeskGetOpenAngeboteSum();
+      document.getElementById('st_angeboteOffen').textContent = fmtMoney(angSum);
+    } catch(e){
+      document.getElementById('st_angeboteOffen').textContent = '–';
+      console.warn('sevDesk Angebote-Abfrage fehlgeschlagen:', e.message);
+    }
+  } else {
+    const [rechOffenRes, angOffenRes] = await Promise.all([
+      sb.from('rechnungen').select('betrag,status').neq('status', 'bezahlt'),
+      sb.from('angebote').select('betrag,status').in('status', ['entwurf','versendet'])
+    ]);
+    const rechSum = rechOffenRes.error ? null : (rechOffenRes.data||[]).reduce((s,r) => s + (Number(r.betrag)||0), 0);
+    document.getElementById('st_rechnungenOffen').textContent = rechSum === null ? '–' : fmtMoney(rechSum);
+    const angSum = angOffenRes.error ? null : (angOffenRes.data||[]).reduce((s,r) => s + (Number(r.betrag)||0), 0);
+    document.getElementById('st_angeboteOffen').textContent = angSum === null ? '–' : fmtMoney(angSum);
+  }
   document.getElementById('st_kundenGesamt').textContent = String((tsCustomers||[]).length);
 
   // Nächste Termine: Aufträge mit Datum + Prüf-/Austauschtermine zusammengeführt, chronologisch, die 3 nächsten
