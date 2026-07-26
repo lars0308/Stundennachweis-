@@ -83,6 +83,8 @@
   .card-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;border-bottom:2px solid var(--green);padding-bottom:6px;}
   .card-head .emoji{color:var(--green);}
   .card-head h2{margin:0;font-size:13px;font-weight:700;color:var(--green-dark);text-transform:uppercase;letter-spacing:.04em;}
+  .card-head-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .card-head-icon svg{width:14px;height:14px;stroke:currentColor;}
 
   /* Top card: logo + company + meta */
   .top-row{display:flex;flex-direction:column;gap:16px;}
@@ -371,7 +373,9 @@
   }
   .start-stat-card{
     background:#fff;border-radius:12px;padding:14px 12px;box-shadow:0 4px 14px rgba(0,0,0,.08);
+    cursor:pointer;transition:transform .1s,box-shadow .1s;
   }
+  .start-stat-card:active{transform:scale(.97);box-shadow:0 2px 8px rgba(0,0,0,.08);}
   .start-stat-value{font-size:21px;font-weight:800;color:var(--green-dark);}
   .start-stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
   .start-section{margin-top:24px;}
@@ -635,14 +639,16 @@
   .type-btn-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   @media (min-width:500px){ .type-btn-grid{ grid-template-columns:1fr 1fr 1fr; } }
   .type-btn{
-    padding:20px 12px; border:2px solid var(--border); border-radius:12px; background:#fff;
+    padding:20px 12px; border:1px solid var(--border); border-radius:14px; background:#fff;
     font-size:14px; font-weight:700; color:var(--text); cursor:pointer; text-align:center;
-    display:flex; flex-direction:column; align-items:center; gap:8px;
+    display:flex; flex-direction:column; align-items:center; gap:10px; transition:border-color .15s,transform .1s;
   }
-  .type-btn:hover{ border-color:var(--green); background:var(--green-light); }
+  .type-btn:hover{ border-color:var(--green); }
+  .type-btn:active{ transform:scale(.97); background:var(--green-light); }
   .type-btn .icon{ font-size:26px; }
-  .type-btn-icon{width:40px;height:40px;}
-  .type-btn-icon svg{width:100%;height:100%;stroke:var(--green-dark);}
+  .type-btn-icon{width:44px;height:44px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .type-btn-icon svg{width:20px;height:20px;stroke:var(--green-dark);}
+  .type-btn-icon.qa-blue svg, .type-btn-icon.qa-orange svg, .type-btn-icon.qa-purple svg, .type-btn-icon.qa-green svg{ stroke:currentColor; }
   .type-btn-text{display:flex;flex-direction:column;gap:3px;}
   .type-btn-text small{font-weight:500;color:var(--muted);}
   .timer-display{
@@ -799,14 +805,14 @@
 
       <div id="ts_choiceScreen" class="type-btn-grid" style="margin-bottom:16px;">
         <button class="type-btn" onclick="tsShowFormChoice()">
-          <span class="type-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
+          <span class="type-btn-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
           <span class="type-btn-text">
             <b>Stundennachweis (Formular)</b>
             <small>Zeiten manuell eintragen, wie gewohnt</small>
           </span>
         </button>
         <button class="type-btn" onclick="tsShowTimerChoice()">
-          <span class="type-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+          <span class="type-btn-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
           <span class="type-btn-text">
             <b>Zeit stoppen (Timer)</b>
             <small>Jetzt starten, später Kunde &amp; Notizen ergänzen</small>
@@ -858,7 +864,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Auftraggeber</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
           <div style="flex:1;min-width:260px;">
@@ -914,7 +920,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Abrechnungsart</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></span><h2>Abrechnungsart</h2></div>
         <div class="segmented" role="radiogroup">
           <label class="segmented-opt">
             <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_aufwand" value="aufwand" checked onchange="tsUpdateAbrechnungsart()">
@@ -932,12 +938,12 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg></span><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
         <textarea class="full" id="ts_f_taetigkeiten" rows="4" placeholder="Ausgeführte Arbeiten…"></textarea>
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Materialnachweis</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span><h2>Materialnachweis</h2></div>
 
         <div class="combo-row">
           <div class="picker-with-arrow" style="flex:1;">
@@ -967,12 +973,12 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Besondere Vorkommnisse</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span><h2>Besondere Vorkommnisse</h2></div>
         <textarea class="full" id="ts_f_vorkommnisse" rows="3" placeholder="Auffälligkeiten, Absprachen, Nacharbeiten…"></textarea>
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Fotodokumentation</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"></path><circle cx="12" cy="13" r="3"></circle></svg></span><h2>Fotodokumentation</h2></div>
         <div class="photo-grid" id="ts_photoGrid"></div>
         <div class="btn-row" style="margin-top:10px;align-items:center;">
           <label class="photo-add-label">
@@ -985,7 +991,7 @@
       </section>
 
       <section class="card" id="ts_arbeitszeitenCard">
-        <div class="card-head"><h2>Arbeitszeiten & Pause</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span><h2>Arbeitszeiten & Pause</h2></div>
         <datalist id="ts_employeeList"></datalist>
 
         <div class="table-wrap">
@@ -1071,12 +1077,30 @@
       <section class="card" id="ip_typeSelector">
         <div class="card-head"><h2>Was für ein Protokoll möchten Sie erstellen?</h2></div>
         <div class="type-btn-grid">
-          <button class="type-btn" onclick="ipChooseTemplate('Montage')">Montage</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Reparatur')">Reparatur</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Wartung')">Wartung</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Besichtigung')">Besichtigung</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Mängel')">Mängel</button>
-          <button class="type-btn" onclick="ipChooseTemplate('Sonstiges')">Sonstiges</button>
+          <button class="type-btn" onclick="ipChooseTemplate('Montage')">
+            <span class="type-btn-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span>
+            Montage
+          </button>
+          <button class="type-btn" onclick="ipChooseTemplate('Reparatur')">
+            <span class="type-btn-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span>
+            Reparatur
+          </button>
+          <button class="type-btn" onclick="ipChooseTemplate('Wartung')">
+            <span class="type-btn-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg></span>
+            Wartung
+          </button>
+          <button class="type-btn" onclick="ipChooseTemplate('Besichtigung')">
+            <span class="type-btn-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+            Besichtigung
+          </button>
+          <button class="type-btn" onclick="ipChooseTemplate('Mängel')">
+            <span class="type-btn-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
+            Mängel
+          </button>
+          <button class="type-btn" onclick="ipChooseTemplate('Sonstiges')">
+            <span class="type-btn-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+            Sonstiges
+          </button>
         </div>
       </section>
 
@@ -1108,7 +1132,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Auftraggeber</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span><h2>Auftraggeber</h2></div>
 
         <div class="combo-row">
           <div style="flex:1;min-width:260px;">
@@ -1152,7 +1176,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Art des Termins</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></span><h2>Art des Termins</h2></div>
         <div class="field">
           <label>Installations-/Gewerkeart (frei wählbar)</label>
           <input id="ip_f_art" list="ip_artList" placeholder="z. B. Rauchwarnmelder, Elektro, Sanitär…">
@@ -1208,7 +1232,7 @@
       </section>
 
       <section class="card" id="ip_card_material">
-        <div class="card-head"><h2>Verwendetes Material</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span><h2>Verwendetes Material</h2></div>
 
         <div class="combo-row">
           <div class="picker-with-arrow" style="flex:1;">
@@ -1238,7 +1262,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Hinweise / Bestätigung</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span><h2>Hinweise / Bestätigung</h2></div>
         <p style="font-size:11px;color:var(--muted);margin:0 0 8px;">Text antippen = als "nicht zutreffend" durchstreichen.</p>
         <div id="ip_checksList"></div>
         <button class="add-row" onclick="ipOpenCheckPicker()">+ Hinweis hinzufügen</button>
@@ -1254,7 +1278,7 @@
       </section>
 
       <section class="card">
-        <div class="card-head"><h2>Fotodokumentation</h2></div>
+        <div class="card-head"><span class="card-head-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"></path><circle cx="12" cy="13" r="3"></circle></svg></span><h2>Fotodokumentation</h2></div>
         <div class="photo-grid" id="ip_photoGrid"></div>
         <div class="btn-row" style="margin-top:10px;align-items:center;">
           <label class="photo-add-label">
@@ -1538,27 +1562,27 @@
       </div>
 
       <div class="start-stats-grid">
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="switchPage('termine')">
           <div class="start-stat-value" id="st_heuteTermine">–</div>
           <div class="start-stat-label">Heute Termine</div>
         </div>
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="switchPage('auftraege')">
           <div class="start-stat-value" id="st_offeneAuftraege">–</div>
           <div class="start-stat-label">Offene Aufträge</div>
         </div>
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('rechnungen'); })()">
           <div class="start-stat-value" id="st_rechnungenOffen">–</div>
           <div class="start-stat-label">Rechnungen offen</div>
         </div>
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('angebote'); })()">
           <div class="start-stat-value" id="st_angeboteOffen">–</div>
           <div class="start-stat-label">Angebote offen</div>
         </div>
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="switchPage('termine')">
           <div class="start-stat-value" id="st_anstehendeTermine">–</div>
           <div class="start-stat-label">Anstehende Termine</div>
         </div>
-        <div class="start-stat-card">
+        <div class="start-stat-card" onclick="switchPage('kunden')">
           <div class="start-stat-value" id="st_kundenGesamt">–</div>
           <div class="start-stat-label">Kunden gesamt</div>
         </div>
