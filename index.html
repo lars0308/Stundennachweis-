@@ -230,6 +230,11 @@
   .kd-photo-cell{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .kd-photo-cell img{width:100%;height:130px;object-fit:cover;display:block;}
   .kd-photo-cell span{display:block;font-size:11px;color:var(--muted);padding:4px 6px;}
+  .kd-list-info{display:flex;align-items:center;gap:10px;}
+  .kd-list-avatar{
+    width:36px;height:36px;border-radius:50%;background:#e6efe0;color:var(--green-dark);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
+  }
   .kd-subtabs{display:flex;gap:4px;margin:12px 0;border-bottom:1px solid var(--border);}
   .kd-subtab{
     flex:1;background:none;border:none;padding:10px 4px;font-size:13px;font-weight:600;
@@ -271,19 +276,24 @@
   .app{display:none;}
   .app.ready{display:block;}
 
-  /* Tab-Navigation zwischen den Seiten */
+  /* Tab-Navigation zwischen den Seiten: fixierte Bottom-Nav mit Icon über Label */
   .topbar{position:sticky;top:0;z-index:60;}
   .pagebar{
-    display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--border);
-    padding:0 12px;overflow-x:auto;
+    position:fixed;left:0;right:0;bottom:0;z-index:70;
+    display:flex;background:#fff;border-top:1px solid var(--border);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    box-shadow:0 -2px 10px rgba(0,0,0,.05);
   }
   .tab-btn{
-    border:none;background:none;padding:10px 14px;font-size:13px;font-weight:600;
-    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;
-    display:flex;align-items:center;gap:6px;white-space:nowrap;
+    flex:1;border:none;background:none;padding:6px 2px;font-size:10.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;
   }
-  .tab-btn.active{color:var(--green-dark);border-bottom-color:var(--green);}
+  .tab-icon{font-size:19px;line-height:1;}
+  .tab-btn.active{color:var(--green-dark);}
   .tab-btn:hover{color:var(--green-dark);}
+  main{padding-bottom:70px;}
+  footer{margin-bottom:70px;}
 
   .page{display:none;}
   .page.active{display:block;}
@@ -615,14 +625,6 @@
         </button>
       </div>
     </header>
-    <nav class="pagebar">
-      <button class="tab-btn active" data-page="kunden" onclick="switchPage('kunden')"><span>Kunden</span></button>
-      <button class="tab-btn" data-page="stunden" onclick="switchPage('stunden')"><span>Stunden & Material</span></button>
-      <button class="tab-btn" data-page="installation" onclick="switchPage('installation')"><span>Ausführungsprotokoll</span></button>
-      <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')"><span>Fahrtenbuch</span></button>
-      <button class="tab-btn" data-page="material" onclick="switchPage('material')"><span>Material</span></button>
-      <button class="tab-btn" data-page="termine" onclick="switchPage('termine')"><span>Termine</span></button>
-    </nav>
   </div>
 
   <main>
@@ -1263,6 +1265,26 @@
     </div>
     <div style="text-align:center;font-size:9.5px;color:#c2c5ca;margin-top:10px;">Version 2026-07-23 v31</div>
   </footer>
+
+  <nav class="pagebar">
+    <button class="tab-btn active" data-page="kunden" onclick="switchPage('kunden')"><span class="tab-icon">👥</span><span>Kunden</span></button>
+    <button class="tab-btn" data-page="stunden" onclick="switchPage('stunden')"><span class="tab-icon">⏱️</span><span>Stunden</span></button>
+    <button class="tab-btn" data-page="installation" onclick="switchPage('installation')"><span class="tab-icon">📋</span><span>Protokoll</span></button>
+    <button class="tab-btn" data-page="termine" onclick="switchPage('termine')"><span class="tab-icon">📅</span><span>Termine</span></button>
+    <button class="tab-btn" data-page="mehr" onclick="openMehrMenu()"><span class="tab-icon">⋯</span><span>Mehr</span></button>
+  </nav>
+
+  <div class="modal-overlay" id="mehrMenu">
+    <div class="modal">
+      <button class="modal-x" onclick="closeMehrMenu()">✕</button>
+      <h3>Mehr</h3>
+      <div class="btn-row" style="flex-direction:column;">
+        <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')">🚐 Fahrtenbuch</button>
+        <button class="btn" onclick="closeMehrMenu();switchPage('material')">📦 Material</button>
+        <button class="btn" onclick="closeMehrMenu();logout()">🚪 Abmelden</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -1934,6 +1956,8 @@ async function login(){
   if(error){ errEl.textContent = 'Anmeldung fehlgeschlagen: ' + error.message; return; }
   await enterApp();
 }
+function openMehrMenu(){ document.getElementById('mehrMenu').classList.add('open'); }
+function closeMehrMenu(){ document.getElementById('mehrMenu').classList.remove('open'); }
 async function logout(){
   await sb.auth.signOut();
   document.getElementById('appRoot').classList.remove('ready');
@@ -4180,9 +4204,12 @@ function kdRenderList(){
     const div = document.createElement('div');
     div.className = 'modal-item kd-list-item';
     div.innerHTML = `
-      <div class="info" onclick="kdOpenCustomerDetail('${c.id}')" style="cursor:pointer;">
-        <div class="name">${escAttr(c.name || 'Ohne Namen')}</div>
-        <div class="sub">${escAttr(c.objekt || '')} ${c.tel ? '· '+escAttr(c.tel) : ''}</div>
+      <div class="info kd-list-info" onclick="kdOpenCustomerDetail('${c.id}')" style="cursor:pointer;">
+        <div class="kd-list-avatar">${escAttr(kdInitials(c.name))}</div>
+        <div>
+          <div class="name">${escAttr(c.name || 'Ohne Namen')}</div>
+          <div class="sub">${escAttr(c.objekt || '')} ${c.tel ? '· '+escAttr(c.tel) : ''}</div>
+        </div>
       </div>
       <div class="modal-actions" style="grid-template-columns:1fr 1fr;">
         <button class="btn small primary" onclick="kdOpenCustomerDetail('${c.id}')">Öffnen</button>
