@@ -222,6 +222,13 @@
   .kd-photo-cell{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .kd-photo-cell img{width:100%;height:130px;object-fit:cover;display:block;}
   .kd-photo-cell span{display:block;font-size:11px;color:var(--muted);padding:4px 6px;}
+  .kd-subtabs{display:flex;gap:4px;margin:12px 0;border-bottom:1px solid var(--border);}
+  .kd-subtab{
+    flex:1;background:none;border:none;padding:10px 4px;font-size:13px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .kd-subtab.active{color:var(--green-dark);border-bottom-color:var(--green);}
+  #kd_inlineNotizen{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;}
 
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -1155,12 +1162,38 @@
           <!-- wird per JS befüllt: Name, Adresse, Kontaktzeilen, Anrufen/E-Mail/Navigation -->
         </section>
 
-        <section class="card">
-          <div class="card-head"><h2>Was möchtest du tun?</h2></div>
-          <div class="kd-tiles" id="kd_detailTiles">
-            <!-- wird per JS befüllt -->
-          </div>
-        </section>
+        <div class="kd-subtabs">
+          <button class="kd-subtab active" data-tab="uebersicht" onclick="kdSwitchTab('uebersicht')">Übersicht</button>
+          <button class="kd-subtab" data-tab="berichte" onclick="kdSwitchTab('berichte')">Berichte</button>
+          <button class="kd-subtab" data-tab="fotos" onclick="kdSwitchTab('fotos')">Fotos</button>
+        </div>
+
+        <div id="kd_tab_uebersicht" class="kd-tabpane">
+          <section class="card">
+            <div class="card-head"><h2>Schnellaktionen</h2></div>
+            <div class="kd-tiles" id="kd_detailTiles">
+              <!-- wird per JS befüllt -->
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-head"><h2>Notizen</h2></div>
+            <textarea id="kd_inlineNotizen" rows="3" placeholder="z.B. Zugang, Besonderheiten, offene Punkte…" onchange="kdSaveNoteInline()"></textarea>
+          </section>
+        </div>
+
+        <div id="kd_tab_berichte" class="kd-tabpane" style="display:none;">
+          <section class="card">
+            <div class="card-head"><h2>Stundennachweise & Protokolle</h2></div>
+            <div id="kd_berichteList"><div class="empty-note">Lädt…</div></div>
+          </section>
+        </div>
+
+        <div id="kd_tab_fotos" class="kd-tabpane" style="display:none;">
+          <section class="card">
+            <div class="card-head"><h2>Fotos</h2></div>
+            <div class="kd-photos-grid" id="kd_tabPhotosGrid"><div class="empty-note">Lädt…</div></div>
+          </section>
+        </div>
       </div>
 
     </div>
@@ -1223,14 +1256,6 @@
 </div>
 
 <!-- Modal: Kunde anlegen/bearbeiten -->
-<!-- Modal: Alle Fotos eines Kunden (aus Nachweisen & Protokollen) -->
-<div class="modal-overlay" id="kd_photosModal">
-  <div class="modal">
-    <button class="modal-x" onclick="kdClosePhotosModal()">✕</button>
-    <h3>Fotos</h3>
-    <div class="kd-photos-grid" id="kd_photosGrid"></div>
-  </div>
-</div>
 <!-- Modal: Unterschriften-Pop-up (groß, damit der Handballen beim Signieren nicht stört) -->
 <div class="modal-overlay" id="sigPadModal">
   <div class="modal">
@@ -4136,14 +4161,22 @@ function kdRenderList(){
 /* ---------- Kunden-Detailansicht (Header + Aktions-Kacheln) ---------- */
 let kdDetailCustomer = null;
 
+let kdActiveTab = 'uebersicht';
+let kdBerichteLoaded = false;
+let kdFotosLoaded = false;
+
 function kdOpenCustomerDetail(id){
   const c = tsCustomers.find(x => x.id === id);
   if(!c) return;
   kdDetailCustomer = c;
+  kdBerichteLoaded = false;
+  kdFotosLoaded = false;
   document.getElementById('kd_listWrap').style.display = 'none';
   document.getElementById('kd_detailWrap').style.display = '';
   kdRenderDetailHeader(c);
   kdRenderDetailTiles(c);
+  document.getElementById('kd_inlineNotizen').value = c.notizen || '';
+  kdSwitchTab('uebersicht');
   window.scrollTo(0,0);
 }
 function kdBackToList(){
@@ -4151,13 +4184,21 @@ function kdBackToList(){
   document.getElementById('kd_detailWrap').style.display = 'none';
   document.getElementById('kd_listWrap').style.display = '';
 }
+function kdSwitchTab(tab){
+  kdActiveTab = tab;
+  ['uebersicht','berichte','fotos'].forEach(t => {
+    document.getElementById('kd_tab_'+t).style.display = (t === tab) ? '' : 'none';
+  });
+  document.querySelectorAll('.kd-subtab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if(tab === 'berichte' && !kdBerichteLoaded) kdLoadBerichte();
+  if(tab === 'fotos' && !kdFotosLoaded) kdLoadFotos();
+}
 function kdRenderDetailHeader(c){
   const adresse = c.objekt || c.rechnungsanschrift || '';
   document.getElementById('kd_detailHeader').innerHTML = `
     <div class="kd-header-name">${escAttr(c.name || 'Ohne Namen')}</div>
     ${c.ansprechpartner ? `<div class="kd-header-line">${escAttr(c.ansprechpartner)}</div>` : ''}
     ${adresse ? `<div class="kd-header-line">${escAttr(adresse)}</div>` : ''}
-    ${c.notizen ? `<div class="kd-header-note">Hinweis: ${escAttr(c.notizen)}</div>` : ''}
     <div class="kd-header-actions">
       <button class="btn small" ${c.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(c.tel||'')}')">📞 Anrufen</button>
       <button class="btn small" ${c.email ? '' : 'disabled'} onclick="kdMailTo('${escAttr(c.email||'')}')">✉️ E-Mail</button>
@@ -4167,23 +4208,17 @@ function kdRenderDetailHeader(c){
 }
 function kdRenderDetailTiles(c){
   document.getElementById('kd_detailTiles').innerHTML = `
-    <button class="kd-tile" onclick="kdShowRecords('${c.id}')">
-      <span class="kd-tile-icon">📄</span><span>Stundennachweise</span>
-    </button>
-    <button class="kd-tile" onclick="kdShowProtocols('${c.id}')">
-      <span class="kd-tile-icon">📋</span><span>Protokolle</span>
-    </button>
-    <button class="kd-tile" onclick="kdShowPhotos('${c.id}')">
-      <span class="kd-tile-icon">📷</span><span>Fotos</span>
-    </button>
     <button class="kd-tile" onclick="kdStartTimesheet('${c.id}')">
       <span class="kd-tile-icon">⏱️</span><span>Stundennachweis erstellen</span>
     </button>
     <button class="kd-tile" onclick="kdStartProtocol('${c.id}')">
       <span class="kd-tile-icon">🛠️</span><span>Protokoll erstellen</span>
     </button>
+    <button class="kd-tile" onclick="kdSwitchTab('fotos')">
+      <span class="kd-tile-icon">📷</span><span>Fotos ansehen</span>
+    </button>
     <button class="kd-tile" onclick="kdOpenModal('${c.id}')">
-      <span class="kd-tile-icon">📝</span><span>Kundendaten & Notizen</span>
+      <span class="kd-tile-icon">📝</span><span>Kundendaten bearbeiten</span>
     </button>
   `;
 }
@@ -4199,6 +4234,16 @@ function kdOpenMapsAddr(adresse){
   if(!adresse) return;
   window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(adresse), '_blank');
 }
+async function kdSaveNoteInline(){
+  if(!kdDetailCustomer) return;
+  const val = document.getElementById('kd_inlineNotizen').value;
+  const { error } = await sb.from('customers').update({ notizen: val }).eq('id', kdDetailCustomer.id);
+  if(error){ showToast('Fehler beim Speichern der Notiz: '+error.message); return; }
+  kdDetailCustomer.notizen = val;
+  const cached = tsCustomers.find(x => x.id === kdDetailCustomer.id);
+  if(cached) cached.notizen = val;
+  showToast('Notiz gespeichert');
+}
 async function kdStartTimesheet(id){
   const c = tsCustomers.find(x => x.id === id);
   if(!c) return;
@@ -4213,24 +4258,46 @@ async function kdStartProtocol(id){
   applyCustomerEverywhere(c);
   switchPage('installation');
 }
-async function kdShowRecords(id){
-  const c = tsCustomers.find(x => x.id === id);
-  if(!c) return;
-  await tsOpenLoadModal();
-  const tsSearch = document.getElementById('ts_modalSearch');
-  if(tsSearch){ tsSearch.value = c.name || ''; tsRenderModalList(); }
+/* ---------- Tab "Berichte": Stundennachweise + Protokolle dieses Kunden gemeinsam, chronologisch ---------- */
+async function kdLoadBerichte(){
+  const c = kdDetailCustomer;
+  if(!c || !c.name) return;
+  const wrap = document.getElementById('kd_berichteList');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  const [tsRes, ipRes] = await Promise.all([
+    sb.from('timesheets').select('id,berichtsnr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}),
+    sb.from('protocols').select('id,nr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
+  ]);
+  const items = [
+    ...((tsRes.data||[]).map(r => ({ ...r, _type:'ts', nrLabel:r.berichtsnr }))),
+    ...((ipRes.data||[]).map(r => ({ ...r, _type:'ip', nrLabel:r.nr })))
+  ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  kdBerichteLoaded = true;
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch keine Nachweise oder Protokolle zu diesem Kunden.</div>'; return; }
+  wrap.innerHTML = items.map(r => {
+    const badge = r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>';
+    const typeLabel = r._type === 'ts' ? 'Stundennachweis' : 'Protokoll';
+    const openFn = r._type === 'ts' ? `tsOpenAndPrint('${r.id}')` : `ipOpenAndPrint('${r.id}')`;
+    return `
+      <div class="modal-item">
+        <div class="info">
+          <div class="name">${escAttr(typeLabel)} ${escAttr(r.nrLabel||'')} ${badge}</div>
+          <div class="sub">${escAttr(r.objekt||'')}${r.objekt?' · ':''}${fmtDateTime(r.created_at)}</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn small" onclick="${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`};switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}')">Öffnen</button>
+          <button class="btn small" onclick="${openFn}">PDF</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
-async function kdShowProtocols(id){
-  const c = tsCustomers.find(x => x.id === id);
-  if(!c) return;
-  await ipOpenLoadModal();
-  const ipSearch = document.getElementById('ip_modalSearch');
-  if(ipSearch){ ipSearch.value = c.name || ''; ipRenderModalList(); }
-}
-async function kdShowPhotos(id){
-  const c = tsCustomers.find(x => x.id === id);
-  if(!c || !c.name) { showToast('Kein Auftraggeber-Name hinterlegt'); return; }
-  showToast('Lade Fotos…');
+/* ---------- Tab "Fotos": alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
+async function kdLoadFotos(){
+  const c = kdDetailCustomer;
+  if(!c || !c.name) return;
+  const grid = document.getElementById('kd_tabPhotosGrid');
+  grid.innerHTML = '<div class="empty-note">Lädt…</div>';
   const [tsRes, ipRes] = await Promise.all([
     sb.from('timesheets').select('berichtsnr,fotos,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}),
     sb.from('protocols').select('nr,fotos,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
@@ -4238,18 +4305,14 @@ async function kdShowPhotos(id){
   const photos = [];
   (tsRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.berichtsnr})));
   (ipRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.nr})));
-  const modal = document.getElementById('kd_photosModal');
-  const grid = document.getElementById('kd_photosGrid');
+  kdFotosLoaded = true;
   if(!photos.length){
     grid.innerHTML = '<div class="empty-note">Keine Fotos zu diesem Kunden gefunden.</div>';
   } else {
     grid.innerHTML = photos.map(p => `<div class="kd-photo-cell"><img src="${p.src}" loading="lazy"><span>${escAttr(p.label||'')}</span></div>`).join('');
   }
-  modal.classList.add('open');
 }
-function kdClosePhotosModal(){
-  document.getElementById('kd_photosModal').classList.remove('open');
-}
+
 
 function kdClearForm(){
   ['kd_f_name','kd_f_kdnr','kd_f_auftragsnr','kd_f_rechnungsanschrift','kd_f_objekt','kd_f_ansprechpartner','kd_f_tel','kd_f_email','kd_f_notizen']
