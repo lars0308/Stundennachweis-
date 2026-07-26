@@ -118,6 +118,9 @@
     width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:12.5px;font-family:inherit;
   }
   tbody input:focus, tbody select:focus{outline:none;border-color:var(--green);}
+  input:disabled, textarea:disabled, select:disabled{
+    background:#f0f1ee !important;color:#8a8f85;cursor:not-allowed;
+  }
   .col-nr{width:32px;color:var(--muted);}
   .col-check{width:70px;text-align:center;}
   .col-del{width:30px;text-align:center;}
@@ -1908,6 +1911,7 @@ async function openList(){
 
 /* ---------- Kunde auf BEIDEN Seiten übernehmen ---------- */
 function applyCustomerEverywhere(c){
+  if(tsLocked || ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   const map = {
     ts_f_auftraggeber: c.name, ts_f_kdnr: c.kdnr, ts_f_rechnungsanschrift: c.rechnungsanschrift,
     ts_f_objekt: c.objekt, ts_f_ansprechpartner: c.ansprechpartner, ts_f_tel: c.tel, ts_f_email: c.email,
@@ -1944,6 +1948,7 @@ async function loadObjekteForCustomer(customerId){
   if(wrap) wrap.style.display = tsObjekte.length >= 1 ? '' : 'none';
 }
 function pickObjekt(o){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   document.getElementById('ts_f_objekt').value = o.adresse || '';
   if(o.ansprechpartner) document.getElementById('ts_f_ansprechpartner').value = o.ansprechpartner;
   if(o.tel) document.getElementById('ts_f_tel').value = o.tel;
@@ -2193,10 +2198,12 @@ async function tsDeleteEmployeeMaster(){
 
 /* ---------- Material-Zeilen (aktueller Nachweis) ---------- */
 function tsAddMaterialRow(data){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   tsMaterialRows.push(data || { menge:'', einheit:'', artikelnr:'', bezeichnung:'', preis:'' });
   tsRenderMaterial();
 }
 function tsRemoveMaterialRow(idx){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   tsMaterialRows.splice(idx,1);
   tsRenderMaterial();
 }
@@ -2230,10 +2237,12 @@ function tsUpdateMaterialSum(){
 
 /* ---------- Arbeitszeit-Zeilen ---------- */
 function tsAddWorkRow(data){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   tsWorkRows.push(data || { name:'', kennzeichen:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   tsRenderWork();
 }
 function tsRemoveWorkRow(idx){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   tsWorkRows.splice(idx,1);
   tsRenderWork();
 }
@@ -2283,6 +2292,7 @@ function tsRenderWork(){
 
 /* ---------- Fotodokumentation (Stundennachweis) ---------- */
 function tsAddPhotos(fileList){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   const files = Array.from(fileList || []);
   if(!files.length) return;
   files.forEach(file => {
@@ -2319,6 +2329,7 @@ function tsAddPhotos(fileList){
   });
 }
 function tsRemovePhoto(idx){
+  if(tsLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   tsPhotos.splice(idx,1);
   tsRenderPhotos();
 }
@@ -2486,7 +2497,7 @@ async function tsRenderModalList(){
   groupRecordsByCustomer(list).forEach(group => {
     const details = document.createElement('details');
     details.className = 'modal-group';
-    details.open = true;
+    details.open = !!q;
     details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
     group.items.forEach(t => {
       const div = document.createElement('div');
@@ -2561,10 +2572,12 @@ function ipInsertMaterialRow(){
   showToast('Material eingefügt');
 }
 function ipAddMaterialRow(data){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   ipMaterialRows.push(data || { menge:'', einheit:'', artikelnr:'', bezeichnung:'', preis:'' });
   ipRenderMaterial();
 }
 function ipRemoveMaterialRow(idx){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   ipMaterialRows.splice(idx,1);
   ipRenderMaterial();
 }
@@ -2628,6 +2641,7 @@ function ipRenderDevices(){
 
 /* ---------- Fotodokumentation ---------- */
 function ipAddPhotos(fileList){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   const files = Array.from(fileList || []);
   if(!files.length) return;
   let pending = files.length;
@@ -2666,6 +2680,7 @@ function ipAddPhotos(fileList){
   });
 }
 function ipRemovePhoto(idx){
+  if(ipLocked){ showToast('Abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
   ipPhotos.splice(idx,1);
   ipRenderPhotos();
 }
@@ -3000,7 +3015,7 @@ async function ipRenderModalList(){
   groupRecordsByCustomer(list).forEach(group => {
     const details = document.createElement('details');
     details.className = 'modal-group';
-    details.open = true;
+    details.open = !!q;
     details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
     group.items.forEach(p => {
       const div = document.createElement('div');
