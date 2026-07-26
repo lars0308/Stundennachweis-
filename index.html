@@ -238,6 +238,26 @@
     width:38px;height:38px;border-radius:50%;background:#e6efe0;color:var(--green-dark);
     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
   }
+  .kd-photo-cell{cursor:pointer;}
+  .kd-lightbox{
+    display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);
+    flex-direction:column;align-items:center;justify-content:center;padding:16px;
+  }
+  .kd-lightbox.open{display:flex;}
+  .kd-lightbox img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:6px;}
+  .kd-lightbox-close{
+    position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);color:#fff;border:none;
+    width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;
+  }
+  .kd-lightbox-nav{
+    position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);color:#fff;
+    border:none;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;line-height:1;
+  }
+  .kd-lightbox-prev{left:10px;}
+  .kd-lightbox-next{right:10px;}
+  .kd-lightbox-footer{
+    margin-top:14px;color:#fff;text-align:center;display:flex;flex-direction:column;gap:4px;font-size:12.5px;opacity:.9;
+  }
   .kd-subtabs{display:flex;gap:4px;margin:14px 0;background:#eef1ea;border-radius:10px;padding:4px;}
   .kd-subtab{
     flex:1;background:none;border:none;padding:9px 4px;font-size:12.5px;font-weight:600;
@@ -1268,6 +1288,17 @@
         <button class="btn" onclick="closeMehrMenu();switchPage('material')">📦 Material</button>
         <button class="btn" onclick="closeMehrMenu();logout()">🚪 Abmelden</button>
       </div>
+    </div>
+  </div>
+
+  <div class="kd-lightbox" id="kd_lightbox">
+    <button class="kd-lightbox-close" onclick="kdCloseLightbox()">✕</button>
+    <button class="kd-lightbox-nav kd-lightbox-prev" id="kd_lightboxPrev" onclick="kdLightboxPrev()">‹</button>
+    <img id="kd_lightboxImg" src="" alt="Foto">
+    <button class="kd-lightbox-nav kd-lightbox-next" id="kd_lightboxNext" onclick="kdLightboxNext()">›</button>
+    <div class="kd-lightbox-footer">
+      <span id="kd_lightboxCaption"></span>
+      <span id="kd_lightboxCounter"></span>
     </div>
   </div>
 
@@ -4414,6 +4445,7 @@ async function kdLoadBerichte(){
   }).join('');
 }
 /* ---------- Tab "Fotos": alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
+let kdFotoList = [];
 async function kdLoadFotos(){
   const c = kdDetailCustomer;
   if(!c || !c.name) return;
@@ -4424,15 +4456,37 @@ async function kdLoadFotos(){
     sb.from('protocols').select('nr,fotos,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
   ]);
   const photos = [];
-  (tsRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.berichtsnr})));
-  (ipRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.nr})));
+  (tsRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.berichtsnr, date:r.created_at})));
+  (ipRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.nr, date:r.created_at})));
   kdFotosLoaded = true;
+  kdFotoList = photos;
   if(!photos.length){
     grid.innerHTML = '<div class="empty-note">Keine Fotos zu diesem Kunden gefunden.</div>';
   } else {
-    grid.innerHTML = photos.map(p => `<div class="kd-photo-cell"><img src="${p.src}" loading="lazy"><span>${escAttr(p.label||'')}</span></div>`).join('');
+    grid.innerHTML = photos.map((p,i) => `<div class="kd-photo-cell" onclick="kdOpenLightbox(${i})"><img src="${p.src}" loading="lazy"><span>${escAttr(p.label||'')}</span></div>`).join('');
   }
 }
+
+/* ---------- Foto-Vollbildansicht ---------- */
+let kdLightboxIndex = 0;
+function kdOpenLightbox(i){
+  kdLightboxIndex = i;
+  kdRenderLightbox();
+  document.getElementById('kd_lightbox').classList.add('open');
+}
+function kdRenderLightbox(){
+  const p = kdFotoList[kdLightboxIndex];
+  if(!p) return;
+  document.getElementById('kd_lightboxImg').src = p.src;
+  document.getElementById('kd_lightboxCaption').textContent = `${p.label || ''} · ${fmtDateTime(p.date)}`;
+  document.getElementById('kd_lightboxCounter').textContent = `${kdLightboxIndex + 1} / ${kdFotoList.length}`;
+  document.getElementById('kd_lightboxPrev').style.visibility = kdLightboxIndex > 0 ? 'visible' : 'hidden';
+  document.getElementById('kd_lightboxNext').style.visibility = kdLightboxIndex < kdFotoList.length - 1 ? 'visible' : 'hidden';
+}
+function kdLightboxPrev(){ if(kdLightboxIndex > 0){ kdLightboxIndex--; kdRenderLightbox(); } }
+function kdLightboxNext(){ if(kdLightboxIndex < kdFotoList.length - 1){ kdLightboxIndex++; kdRenderLightbox(); } }
+function kdCloseLightbox(){ document.getElementById('kd_lightbox').classList.remove('open'); }
+
 
 
 function kdClearForm(){
