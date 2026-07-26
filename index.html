@@ -217,6 +217,8 @@
   .kd-panel-card{padding:18px;}
   .kd-header-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
   .kd-header-actions .btn{font-size:11px;line-height:1.6;padding:8px 2px;}
+  .kd-action-btn{flex-direction:column;gap:2px;}
+  .kd-action-btn svg{width:16px;height:16px;}
   .kd-header-actions .btn:disabled{opacity:.35;}
   .kd-info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;border-top:1px solid var(--border);padding-top:12px;}
   .kd-info-grid > div{display:flex;flex-direction:column;gap:2px;font-size:12.5px;font-weight:600;overflow-wrap:break-word;}
@@ -231,9 +233,10 @@
   .kd-tile:hover{border-color:var(--green);}
   .kd-tile:active{background:#e6efe0;}
   .kd-tile-icon{
-    font-size:19px;width:38px;height:38px;border-radius:50%;background:#eef1ea;
+    width:38px;height:38px;border-radius:50%;background:#eef1ea;color:var(--green-dark);
     display:flex;align-items:center;justify-content:center;
   }
+  .kd-tile-icon svg{width:18px;height:18px;}
   .kd-photos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
   .kd-photo-cell{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .kd-photo-cell img{width:100%;height:130px;object-fit:cover;display:block;}
@@ -261,6 +264,12 @@
   }
   .kd-csv-link:hover{color:var(--green-dark);}
   .kd-csv-sep{color:var(--border);font-size:11.5px;}
+  .kd-filter-chips{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;}
+  .kd-chip{
+    flex-shrink:0;background:#eef1ea;border:none;border-radius:999px;padding:7px 14px;
+    font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;
+  }
+  .kd-chip.active{background:var(--green-dark);color:#fff;}
   .kd-lightbox{
     display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);
     flex-direction:column;align-items:center;justify-content:center;padding:16px;
@@ -338,7 +347,7 @@
     color:var(--muted);cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;
   }
-  .tab-icon{font-size:19px;line-height:1;}
+  .tab-icon-svg{width:21px;height:21px;stroke:currentColor;}
   .tab-btn.active{color:var(--green-dark);}
   .tab-btn:hover{color:var(--green-dark);}
   main{padding-bottom:70px;}
@@ -529,6 +538,29 @@
   }
   .type-btn:hover{ border-color:var(--green); background:var(--green-light); }
   .type-btn .icon{ font-size:26px; }
+  .type-btn-icon{width:40px;height:40px;}
+  .type-btn-icon svg{width:100%;height:100%;stroke:var(--green-dark);}
+  .type-btn-text{display:flex;flex-direction:column;gap:3px;}
+  .type-btn-text small{font-weight:500;color:var(--muted);}
+  .timer-display{
+    font-size:44px;font-weight:700;text-align:center;color:var(--green-dark);
+    font-variant-numeric:tabular-nums;margin:18px 0;
+  }
+  .tm-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .tm-cal-title{font-weight:700;font-size:14px;color:var(--green-dark);text-transform:capitalize;}
+  .tm-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+  .tm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .tm-cal-day{
+    aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border-radius:8px;font-size:12.5px;cursor:pointer;position:relative;color:var(--text);background:none;border:none;
+  }
+  .tm-cal-day:hover{background:#f0f1ee;}
+  .tm-cal-day.empty{cursor:default;}
+  .tm-cal-day.today{font-weight:700;color:var(--green-dark);}
+  .tm-cal-day.selected{background:var(--green-dark);color:#fff;}
+  .tm-cal-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin-top:2px;}
+  .tm-cal-day.selected .tm-cal-dot{background:#fff;}
+  .tm-cal-day.overdue-dot .tm-cal-dot{background:#c0392b;}
   .vorlage-current{
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
     background:var(--green-light); border-radius:8px; padding:8px 12px; margin-bottom:14px; font-size:13px; color:var(--green-dark); font-weight:600;
@@ -637,8 +669,11 @@
 
   <div class="topbar">
     <header class="slim-header">
-      <button class="icon-btn" onclick="openMehrMenu()" aria-label="Menü">
+      <button class="icon-btn" id="headerMenuBtn" onclick="openMehrMenu()" aria-label="Menü">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>
+      </button>
+      <button class="icon-btn" id="headerBackBtn" onclick="kdBackToList()" aria-label="Zurück" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
       </button>
       <span class="slim-header-title" id="pageTitle">Kunden</span>
       <button class="icon-btn" id="headerAddBtn" onclick="kdOpenModal(null, true)" aria-label="Neuer Kunde" style="display:none;">
@@ -654,6 +689,41 @@
     <!-- SEITE 1: STUNDEN- & MATERIALNACHWEIS                          -->
     <!-- ============================================================ -->
     <div class="page" id="page-stunden">
+
+      <div id="ts_choiceScreen" class="type-btn-grid" style="margin-bottom:16px;">
+        <button class="type-btn" onclick="tsShowFormChoice()">
+          <span class="type-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
+          <span class="type-btn-text">
+            <b>Stundennachweis (Formular)</b>
+            <small>Zeiten manuell eintragen, wie gewohnt</small>
+          </span>
+        </button>
+        <button class="type-btn" onclick="tsShowTimerChoice()">
+          <span class="type-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+          <span class="type-btn-text">
+            <b>Zeit stoppen (Timer)</b>
+            <small>Jetzt starten, später Kunde &amp; Notizen ergänzen</small>
+          </span>
+        </button>
+      </div>
+
+      <div id="ts_timerScreen" style="display:none;">
+        <section class="card">
+          <div class="card-head"><h2>Zeit stoppen</h2></div>
+          <div class="field">
+            <label>Kunde</label>
+            <input id="ts_timerCustomerPicker" list="ts_customerList" placeholder="Kunde eingeben oder auswählen…">
+          </div>
+          <div class="timer-display" id="ts_timerDisplay">00:00:00</div>
+          <div class="btn-row" style="justify-content:center;">
+            <button class="btn primary" id="ts_timerStartBtn" onclick="tsTimerStart()">Start</button>
+            <button class="btn danger" id="ts_timerStopBtn" onclick="tsTimerStop()" style="display:none;">Stopp &amp; weiter zum Nachweis</button>
+          </div>
+          <button class="btn small" style="margin-top:14px;" onclick="tsBackToChoice()">‹ Zurück</button>
+        </section>
+      </div>
+
+      <div id="ts_formContent">
 
       <div class="lock-banner" id="ts_lockBanner" style="display:none;">
         <span>Dieser Nachweis ist abgeschlossen und schreibgeschützt.</span>
@@ -876,6 +946,8 @@
         <p style="font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 0;">Speichert den Nachweis endgültig (inkl. Ausführungsprotokoll, falls ausgefüllt) und markiert ihn als abgeschlossen.
         </p>
       </section>
+
+      </div>
 
     </div>
 
@@ -1187,8 +1259,6 @@
       </div>
 
       <div id="kd_detailWrap" style="display:none;">
-        <button class="btn small" style="margin-bottom:12px;" onclick="kdBackToList()">‹ Zurück zu Kunden</button>
-
         <section class="card kd-merged-card">
           <div class="kd-header-card" id="kd_detailHeader">
             <!-- wird per JS befüllt: Avatar, Name, Adresse -->
@@ -1231,7 +1301,11 @@
 
         <div id="kd_tab_berichte" class="kd-tabpane" style="display:none;">
           <section class="card">
-            <div class="card-head"><h2>Stundennachweise & Protokolle</h2></div>
+            <div class="kd-filter-chips" id="kd_berichteFilter">
+              <button class="kd-chip active" data-filter="alle" onclick="kdSetBerichteFilter('alle')">Alle</button>
+              <button class="kd-chip" data-filter="ts" onclick="kdSetBerichteFilter('ts')">Stundennachweise</button>
+              <button class="kd-chip" data-filter="ip" onclick="kdSetBerichteFilter('ip')">Protokolle</button>
+            </div>
             <div id="kd_berichteList"><div class="empty-note">Lädt…</div></div>
           </section>
         </div>
@@ -1271,7 +1345,28 @@
     <div class="page" id="page-termine">
 
       <section class="card">
-        <div class="card-head"><h2>Anstehende Termine</h2></div>
+        <div class="tm-cal-header">
+          <button class="icon-btn" onclick="tmPrevMonth()" aria-label="Vorheriger Monat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          </button>
+          <span class="tm-cal-title" id="tm_calTitle">Monat</span>
+          <button class="icon-btn" onclick="tmNextMonth()" aria-label="Nächster Monat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </button>
+        </div>
+        <div class="tm-cal-weekdays">
+          <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+        </div>
+        <div class="tm-cal-grid" id="tm_calGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2 id="tm_dayTitle">Termine an diesem Tag</h2></div>
+        <div id="tm_dayList"><div class="empty-note">Tag im Kalender antippen, um Termine zu sehen.</div></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Alle offenen Termine</h2></div>
         <div class="empty-note" style="text-align:left;margin-bottom:10px;padding:0;">
           Zeigt alle im Ausführungsprotokoll hinterlegten nächsten Prüf-/Austauschtermine (z.B. Rauchwarnmelder-Batteriewechsel, Wartung).
         </div>
@@ -1297,11 +1392,26 @@
   </footer>
 
   <nav class="pagebar">
-    <button class="tab-btn active" data-page="kunden" onclick="switchPage('kunden')"><span class="tab-icon">👥</span><span>Kunden</span></button>
-    <button class="tab-btn" data-page="stunden" onclick="switchPage('stunden')"><span class="tab-icon">⏱️</span><span>Stunden</span></button>
-    <button class="tab-btn" data-page="installation" onclick="switchPage('installation')"><span class="tab-icon">📋</span><span>Protokoll</span></button>
-    <button class="tab-btn" data-page="termine" onclick="switchPage('termine')"><span class="tab-icon">📅</span><span>Termine</span></button>
-    <button class="tab-btn" data-page="mehr" onclick="openMehrMenu()"><span class="tab-icon">⋯</span><span>Mehr</span></button>
+    <button class="tab-btn active" data-page="kunden" onclick="switchPage('kunden')">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <span>Kunden</span>
+    </button>
+    <button class="tab-btn" data-page="stunden" onclick="tsGoToChooser()">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+      <span>Stunden</span>
+    </button>
+    <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg>
+      <span>Protokoll</span>
+    </button>
+    <button class="tab-btn" data-page="termine" onclick="switchPage('termine')">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+      <span>Termine</span>
+    </button>
+    <button class="tab-btn" data-page="mehr" onclick="openMehrMenu()">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
+      <span>Mehr</span>
+    </button>
   </nav>
 
   <div class="modal-overlay" id="mehrMenu">
@@ -1309,13 +1419,13 @@
       <button class="modal-x" onclick="closeMehrMenu()">✕</button>
       <h3>Mehr</h3>
       <div class="btn-row" style="flex-direction:column;">
-        <button class="btn" onclick="closeMehrMenu();newItem()">➕ Neu (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();saveItem()">💾 Speichern (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();printCurrent()">🖨️ PDF erstellen (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();emailCurrent()">✉️ Per E-Mail senden (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')">🚐 Fahrtenbuch</button>
-        <button class="btn" onclick="closeMehrMenu();switchPage('material')">📦 Material</button>
-        <button class="btn" onclick="closeMehrMenu();logout()">🚪 Abmelden</button>
+        <button class="btn" onclick="closeMehrMenu();newItem()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Neu (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();saveItem()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path></svg> Speichern (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();printCurrent()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> PDF erstellen (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();emailCurrent()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg> Per E-Mail senden (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg> Fahrtenbuch</button>
+        <button class="btn" onclick="closeMehrMenu();switchPage('material')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg> Material</button>
+        <button class="btn" onclick="closeMehrMenu();logout()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Abmelden</button>
       </div>
     </div>
   </div>
@@ -1812,7 +1922,7 @@ function initGoogleDrive(){
         if(gDrivePendingUpload){
           const p = gDrivePendingUpload; gDrivePendingUpload = null;
           if(p.pdfDataUrl){
-            uploadPdfToDrive(p.pdfDataUrl, p.pdfFilename, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt);
+            uploadPdfToDrive(p.pdfDataUrl, p.pdfFilename, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt, p.docType);
           } else {
             uploadPhotosToDrive(p.photos, p.customerName, p.kdnr, p.rechnungsanschrift, p.objekt, p.prefix);
           }
@@ -1943,28 +2053,31 @@ async function savePreviewToDrive(){
     showToast('PDF konnte nicht erzeugt werden: ' + e.message);
     return;
   }
-  let filename, customerName, kdnr, rechnungsanschrift, objekt;
+  let filename, customerName, kdnr, rechnungsanschrift, objekt, docType;
   if(currentPage === 'stunden'){
     filename = 'Stundennachweis-' + (pdVal('ts_f_berichtsnr') || 'ohne-nr') + '.pdf';
     customerName = pdVal('ts_f_auftraggeber'); kdnr = pdVal('ts_f_kdnr');
     rechnungsanschrift = pdVal('ts_f_rechnungsanschrift'); objekt = pdVal('ts_f_objekt');
+    docType = 'Stundennachweis';
   } else if(currentPage === 'installation'){
     filename = 'Ausfuehrungsprotokoll-' + (pdVal('ip_f_nr') || 'ohne-nr') + '.pdf';
     customerName = pdVal('ip_f_auftraggeber'); kdnr = pdVal('ip_f_kdnr');
     rechnungsanschrift = pdVal('ip_f_rechnungsanschrift'); objekt = pdVal('ip_f_objekt');
+    docType = 'Ausführungsprotokoll';
   } else {
     filename = 'Fahrtenbuch-' + new Date().toISOString().slice(0,10) + '.pdf';
     customerName = 'Fahrtenbuch'; kdnr = ''; rechnungsanschrift = ''; objekt = '';
+    docType = 'Fahrtenbuch';
   }
   if(!gDriveToken){
-    gDrivePendingUpload = { pdfDataUrl: dataUrl, pdfFilename: filename, customerName, kdnr, rechnungsanschrift, objekt };
+    gDrivePendingUpload = { pdfDataUrl: dataUrl, pdfFilename: filename, customerName, kdnr, rechnungsanschrift, objekt, docType };
     showToast('Bitte Google-Drive-Zugriff im Pop-up bestätigen…');
     connectGoogleDrive();
     return;
   }
-  await uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt);
+  await uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt, docType);
 }
-async function uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt){
+async function uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungsanschrift, objekt, docType){
   showToast('Lade PDF zu Google Drive hoch…');
   try {
     const rootId = await driveFindOrCreateFolder('Kundenfotos', null);
@@ -1977,6 +2090,11 @@ async function uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungs
     const rechTrim = (rechnungsanschrift || '').trim();
     if(objTrim && objTrim !== rechTrim){
       targetFolderId = await driveFindOrCreateFolder(objTrim, custFolderId);
+    }
+    // Eigener Unterordner je Dokumenttyp (z.B. "Stundennachweis"), damit PDFs nicht
+    // lose im Kundenordner zwischen den Fotos landen.
+    if(docType && docType.trim()){
+      targetFolderId = await driveFindOrCreateFolder(docType.trim(), targetFolderId);
     }
     await driveUploadDataUrl(dataUrl, filename, targetFolderId);
     showToast('PDF erfolgreich zu Google Drive hochgeladen');
@@ -2046,9 +2164,12 @@ async function switchPage(page){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine' };
   const titleEl = document.getElementById('pageTitle');
-  if(titleEl) titleEl.textContent = titles[page] || 'Battermann';
+  const inKdDetail = (page === 'kunden' && kdDetailCustomer);
+  if(titleEl) titleEl.textContent = inKdDetail ? (kdDetailCustomer.name || 'Kunde') : (titles[page] || 'Battermann');
   const addBtn = document.getElementById('headerAddBtn');
   if(addBtn) addBtn.style.display = (page === 'kunden' && !kdDetailCustomer) ? '' : 'none';
+  document.getElementById('headerMenuBtn').style.display = inKdDetail ? 'none' : '';
+  document.getElementById('headerBackBtn').style.display = inKdDetail ? '' : 'none';
   window.scrollTo(0, tabScrollPositions[page] || 0); // eigene gemerkte Position, neue Seite startet oben
 
   if(page === 'installation' && !ipInitialized){
@@ -2067,6 +2188,7 @@ async function switchPage(page){
   }
   if(page === 'termine'){
     tmLoadTermine();
+    tmRenderCalendar();
   }
   if(page === 'stunden'){
     updateSammelVisibility();
@@ -2597,6 +2719,81 @@ function tsApplyRecord(rec){
   tsSetAbrechnungsart(rec.abrechnungsart || 'aufwand');
   tsCurrentId = rec.id;
   setLocked('stunden', rec.status === 'abgeschlossen');
+  tsShowFormChoice();
+}
+
+/* ---------- Vorauswahl: Formular oder Timer ---------- */
+function tsGoToChooser(){
+  switchPage('stunden');
+  document.getElementById('ts_choiceScreen').style.display = '';
+  document.getElementById('ts_timerScreen').style.display = 'none';
+  document.getElementById('ts_formContent').style.display = 'none';
+  tsTimerReset();
+}
+function tsShowFormChoice(){
+  const choice = document.getElementById('ts_choiceScreen');
+  const timer = document.getElementById('ts_timerScreen');
+  const form = document.getElementById('ts_formContent');
+  if(choice) choice.style.display = 'none';
+  if(timer) timer.style.display = 'none';
+  if(form) form.style.display = '';
+}
+function tsShowTimerChoice(){
+  document.getElementById('ts_choiceScreen').style.display = 'none';
+  document.getElementById('ts_timerScreen').style.display = '';
+  document.getElementById('ts_formContent').style.display = 'none';
+}
+function tsBackToChoice(){
+  tsTimerReset();
+  document.getElementById('ts_choiceScreen').style.display = '';
+  document.getElementById('ts_timerScreen').style.display = 'none';
+}
+
+/* ---------- Timer: Start/Stopp, übergibt die Zeiten anschließend ins Formular ---------- */
+let tsTimerStartAt = null;
+let tsTimerInterval = null;
+function tsTimerReset(){
+  if(tsTimerInterval){ clearInterval(tsTimerInterval); tsTimerInterval = null; }
+  tsTimerStartAt = null;
+  document.getElementById('ts_timerDisplay').textContent = '00:00:00';
+  document.getElementById('ts_timerStartBtn').style.display = '';
+  document.getElementById('ts_timerStopBtn').style.display = 'none';
+}
+function tsTimerTick(){
+  const diffMs = Date.now() - tsTimerStartAt.getTime();
+  const totalSec = Math.floor(diffMs / 1000);
+  const h = String(Math.floor(totalSec / 3600)).padStart(2,'0');
+  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2,'0');
+  const s = String(totalSec % 60).padStart(2,'0');
+  document.getElementById('ts_timerDisplay').textContent = `${h}:${m}:${s}`;
+}
+function tsTimerStart(){
+  tsTimerStartAt = new Date();
+  tsTimerInterval = setInterval(tsTimerTick, 1000);
+  tsTimerTick();
+  document.getElementById('ts_timerStartBtn').style.display = 'none';
+  document.getElementById('ts_timerStopBtn').style.display = '';
+}
+async function tsTimerStop(){
+  if(!tsTimerStartAt) return;
+  const start = tsTimerStartAt;
+  const stop = new Date();
+  if(tsTimerInterval){ clearInterval(tsTimerInterval); tsTimerInterval = null; }
+  const pad = n => String(n).padStart(2,'0');
+  const vonStr = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  const bisStr = `${pad(stop.getHours())}:${pad(stop.getMinutes())}`;
+  const kundeName = document.getElementById('ts_timerCustomerPicker').value.trim();
+  await tsNewTimesheet();
+  const customer = tsCustomers.find(c => c.name === kundeName);
+  if(customer){
+    applyCustomerEverywhere(customer);
+  } else if(kundeName){
+    document.getElementById('ts_f_auftraggeber').value = kundeName;
+  }
+  tsWorkRows = [{ name:'Battermann', kennzeichen:'', von:vonStr, bis:bisStr, pause:'', fahrzeit:'', km:'' }];
+  tsRenderWork();
+  showToast('Zeit übernommen — bitte Tätigkeit & Nachweis prüfen');
+  tsShowFormChoice();
 }
 
 /* ---------- Aktionen ---------- */
@@ -2621,6 +2818,7 @@ async function tsNewTimesheet(){
   document.getElementById('ts_f_berichtsnr').value = await nextNumber('timesheets','berichtsnr','AB');
   document.getElementById('ts_f_auftragsnr').value = await nextNumber('timesheets','auftragsnr','AUF');
   showToast('Neuer Nachweis angelegt');
+  tsShowFormChoice();
 }
 async function tsSaveTimesheet(){
   if(tsLocked){ showToast('Dieser Nachweis ist abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
@@ -4323,6 +4521,8 @@ function kdOpenCustomerDetail(id){
   if(titleEl) titleEl.textContent = c.name || 'Kunde';
   const addBtn = document.getElementById('headerAddBtn');
   if(addBtn) addBtn.style.display = 'none';
+  document.getElementById('headerMenuBtn').style.display = 'none';
+  document.getElementById('headerBackBtn').style.display = '';
   window.scrollTo(0,0);
 }
 function kdBackToList(){
@@ -4333,6 +4533,8 @@ function kdBackToList(){
   if(titleEl) titleEl.textContent = 'Kunden';
   const addBtn = document.getElementById('headerAddBtn');
   if(addBtn) addBtn.style.display = '';
+  document.getElementById('headerMenuBtn').style.display = '';
+  document.getElementById('headerBackBtn').style.display = 'none';
   kdLoadLastOrderMap();
 }
 function kdSwitchTab(tab){
@@ -4369,10 +4571,10 @@ function kdRenderDetailPanel(c){
   const adresse = c.objekt || c.rechnungsanschrift || '';
   document.getElementById('kd_detailPanel').innerHTML = `
     <div class="kd-header-actions">
-      <button class="btn small" ${c.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(c.tel||'')}')">📞<br>Anrufen</button>
-      <button class="btn small" ${c.email ? '' : 'disabled'} onclick="kdMailTo('${escAttr(c.email||'')}')">✉️<br>E-Mail</button>
-      <button class="btn small" ${adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escAttr(adresse)}')">📍<br>Navigation</button>
-      <button class="btn small" onclick="kdSwitchTab('uebersicht');document.getElementById('kd_inlineNotizen').focus()">📝<br>Notiz</button>
+      <button class="btn small kd-action-btn" ${c.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(c.tel||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.804 1.6l-.469.351a1 1 0 0 0-.291 1.233 14 14 0 0 0 6.397 6.384"></path></svg><br>Anrufen</button>
+      <button class="btn small kd-action-btn" ${c.email ? '' : 'disabled'} onclick="kdMailTo('${escAttr(c.email||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg><br>E-Mail</button>
+      <button class="btn small kd-action-btn" ${adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escAttr(adresse)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg><br>Navigation</button>
+      <button class="btn small kd-action-btn" onclick="kdSwitchTab('uebersicht');document.getElementById('kd_inlineNotizen').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><br>Notiz</button>
     </div>
     <div class="kd-info-grid">
       <div><span class="kd-info-label">Kundennummer</span><span>${escAttr(c.kdnr || '–')}</span></div>
@@ -4405,7 +4607,7 @@ async function kdLoadOffeneAufgaben(c){
           <div class="sub">Termin: ${escAttr(fmtDate(r.naechster_termin))} · ${escAttr(r.nr||'')}</div>
         </div>
         <div class="modal-actions" style="grid-template-columns:1fr;">
-          <button class="btn small" onclick="ipLoadProtocol('${r.id}');switchPage('installation')">Öffnen</button>
+          <button class="btn small" onclick="(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()">Öffnen</button>
         </div>
       </div>
     `;
@@ -4441,7 +4643,7 @@ async function kdLoadLetzterAuftrag(c){
         <div class="sub">${escAttr(r.nrLabel||'')} · ${fmtDateTime(r.created_at)}</div>
       </div>
       <div class="modal-actions" style="grid-template-columns:1fr;">
-        <button class="btn small" onclick="${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`};switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}')">Öffnen</button>
+        <button class="btn small" onclick="(async()=>{ await switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}'); await ${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`}; })()">Öffnen</button>
       </div>
     </div>
   `;
@@ -4460,16 +4662,20 @@ async function kdLoadLetzterAuftrag(c){
 function kdRenderDetailTiles(c){
   document.getElementById('kd_detailTiles').innerHTML = `
     <button class="kd-tile" onclick="kdStartTimesheet('${c.id}')">
-      <span class="kd-tile-icon">⏱️</span><span>Stundennachweis erstellen</span>
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+      <span>Stundennachweis erstellen</span>
     </button>
     <button class="kd-tile" onclick="kdStartProtocol('${c.id}')">
-      <span class="kd-tile-icon">🛠️</span><span>Protokoll erstellen</span>
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg></span>
+      <span>Protokoll erstellen</span>
     </button>
     <button class="kd-tile" onclick="kdSwitchTab('fotos')">
-      <span class="kd-tile-icon">📷</span><span>Fotos ansehen</span>
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg></span>
+      <span>Fotos ansehen</span>
     </button>
     <button class="kd-tile" onclick="kdOpenModal('${c.id}')">
-      <span class="kd-tile-icon">📝</span><span>Kundendaten bearbeiten</span>
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></span>
+      <span>Kundendaten bearbeiten</span>
     </button>
   `;
 }
@@ -4510,21 +4716,17 @@ async function kdStartProtocol(id){
   switchPage('installation');
 }
 /* ---------- Tab "Berichte": Stundennachweise + Protokolle dieses Kunden gemeinsam, chronologisch ---------- */
-async function kdLoadBerichte(){
-  const c = kdDetailCustomer;
-  if(!c || !c.name) return;
+let kdBerichteItems = [];
+let kdBerichteFilter = 'alle';
+function kdSetBerichteFilter(f){
+  kdBerichteFilter = f;
+  document.querySelectorAll('#kd_berichteFilter .kd-chip').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  kdRenderBerichteList();
+}
+function kdRenderBerichteList(){
   const wrap = document.getElementById('kd_berichteList');
-  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
-  const [tsRes, ipRes] = await Promise.all([
-    sb.from('timesheets').select('id,berichtsnr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}),
-    sb.from('protocols').select('id,nr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
-  ]);
-  const items = [
-    ...((tsRes.data||[]).map(r => ({ ...r, _type:'ts', nrLabel:r.berichtsnr }))),
-    ...((ipRes.data||[]).map(r => ({ ...r, _type:'ip', nrLabel:r.nr })))
-  ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-  kdBerichteLoaded = true;
-  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch keine Nachweise oder Protokolle zu diesem Kunden.</div>'; return; }
+  const items = kdBerichteFilter === 'alle' ? kdBerichteItems : kdBerichteItems.filter(r => r._type === kdBerichteFilter);
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Nichts in dieser Ansicht.</div>'; return; }
   wrap.innerHTML = items.map(r => {
     const badge = r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>';
     const typeLabel = r._type === 'ts' ? 'Stundennachweis' : 'Protokoll';
@@ -4536,12 +4738,32 @@ async function kdLoadBerichte(){
           <div class="sub">${escAttr(r.objekt||'')}${r.objekt?' · ':''}${fmtDateTime(r.created_at)}</div>
         </div>
         <div class="modal-actions">
-          <button class="btn small" onclick="${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`};switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}')">Öffnen</button>
+          <button class="btn small" onclick="(async()=>{ await switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}'); await ${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`}; })()">Öffnen</button>
           <button class="btn small" onclick="${openFn}">PDF</button>
         </div>
       </div>
     `;
   }).join('');
+}
+async function kdLoadBerichte(){
+  const c = kdDetailCustomer;
+  if(!c || !c.name) return;
+  const wrap = document.getElementById('kd_berichteList');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  kdBerichteFilter = 'alle';
+  document.querySelectorAll('#kd_berichteFilter .kd-chip').forEach(b => b.classList.toggle('active', b.dataset.filter === 'alle'));
+  const [tsRes, ipRes] = await Promise.all([
+    sb.from('timesheets').select('id,berichtsnr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}),
+    sb.from('protocols').select('id,nr,objekt,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
+  ]);
+  const items = [
+    ...((tsRes.data||[]).map(r => ({ ...r, _type:'ts', nrLabel:r.berichtsnr }))),
+    ...((ipRes.data||[]).map(r => ({ ...r, _type:'ip', nrLabel:r.nr })))
+  ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  kdBerichteLoaded = true;
+  kdBerichteItems = items;
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch keine Nachweise oder Protokolle zu diesem Kunden.</div>'; return; }
+  kdRenderBerichteList();
 }
 /* ---------- Tab "Fotos": alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
 let kdFotoList = [];
@@ -4720,6 +4942,101 @@ let mtEditingId = null;
 /* ================================================================
    TERMINE (aus "nächster Prüf-/Austauschtermin" der Ausführungsprotokolle)
    ================================================================ */
+/* ================================================================
+   KALENDER: Monatsansicht mit echten Terminen (Einsatzdaten + nächste Prüftermine)
+   ================================================================ */
+let tmCalDate = new Date();
+let tmSelectedDay = null;
+let tmEventsByDate = {};
+
+function tmPrevMonth(){
+  tmCalDate = new Date(tmCalDate.getFullYear(), tmCalDate.getMonth() - 1, 1);
+  tmRenderCalendar();
+}
+function tmNextMonth(){
+  tmCalDate = new Date(tmCalDate.getFullYear(), tmCalDate.getMonth() + 1, 1);
+  tmRenderCalendar();
+}
+function tmDateKey(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+async function tmRenderCalendar(){
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  document.getElementById('tm_calTitle').textContent = `${monthNames[tmCalDate.getMonth()]} ${tmCalDate.getFullYear()}`;
+  await tmLoadCalendarEvents();
+  tmRenderCalendarGrid();
+  if(tmSelectedDay) tmRenderDayList();
+}
+function tmRenderCalendarGrid(){
+  const year = tmCalDate.getFullYear();
+  const month = tmCalDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startOffset = (firstDay.getDay() + 6) % 7; // Montag = 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = tmDateKey(new Date());
+
+  let html = '';
+  for(let i = 0; i < startOffset; i++) html += `<div class="tm-cal-day empty"></div>`;
+  for(let day = 1; day <= daysInMonth; day++){
+    const d = new Date(year, month, day);
+    const key = tmDateKey(d);
+    const events = tmEventsByDate[key] || [];
+    const hasOverdue = events.some(e => e.overdue);
+    const classes = ['tm-cal-day'];
+    if(key === todayKey) classes.push('today');
+    if(key === tmSelectedDay) classes.push('selected');
+    if(events.length && hasOverdue) classes.push('overdue-dot');
+    html += `<button class="${classes.join(' ')}" onclick="tmSelectDay('${key}')">${day}${events.length ? '<span class="tm-cal-dot"></span>' : ''}</button>`;
+  }
+  document.getElementById('tm_calGrid').innerHTML = html;
+}
+async function tmLoadCalendarEvents(){
+  const year = tmCalDate.getFullYear();
+  const month = tmCalDate.getMonth();
+  const rangeStart = new Date(year, month, 1).toISOString().slice(0,10);
+  const rangeEnd = new Date(year, month + 1, 0).toISOString().slice(0,10);
+  const [tsRes, ipRes, ipTerminRes] = await Promise.all([
+    sb.from('timesheets').select('id,berichtsnr,auftraggeber,einsatzdatum').gte('einsatzdatum', rangeStart).lte('einsatzdatum', rangeEnd),
+    sb.from('protocols').select('id,nr,auftraggeber,datum').gte('datum', rangeStart).lte('datum', rangeEnd),
+    sb.from('protocols').select('id,nr,auftraggeber,naechster_termin').gte('naechster_termin', rangeStart).lte('naechster_termin', rangeEnd)
+  ]);
+  const map = {};
+  const push = (dateStr, ev) => {
+    if(!dateStr) return;
+    const key = dateStr.slice(0,10);
+    if(!map[key]) map[key] = [];
+    map[key].push(ev);
+  };
+  const todayStr = new Date().toISOString().slice(0,10);
+  (tsRes.data||[]).forEach(r => push(r.einsatzdatum, { type:'ts', id:r.id, label:'Stundennachweis', nr:r.berichtsnr, kunde:r.auftraggeber, overdue:false }));
+  (ipRes.data||[]).forEach(r => push(r.datum, { type:'ip', id:r.id, label:'Ausführungsprotokoll', nr:r.nr, kunde:r.auftraggeber, overdue:false }));
+  (ipTerminRes.data||[]).forEach(r => push(r.naechster_termin, { type:'ip', id:r.id, label:'Prüf-/Austauschtermin', nr:r.nr, kunde:r.auftraggeber, overdue:r.naechster_termin < todayStr }));
+  tmEventsByDate = map;
+}
+function tmSelectDay(key){
+  tmSelectedDay = key;
+  tmRenderCalendarGrid();
+  tmRenderDayList();
+}
+function tmRenderDayList(){
+  const [y,m,d] = tmSelectedDay.split('-');
+  document.getElementById('tm_dayTitle').textContent = `Termine am ${d}.${m}.${y}`;
+  const wrap = document.getElementById('tm_dayList');
+  const events = tmEventsByDate[tmSelectedDay] || [];
+  if(!events.length){ wrap.innerHTML = '<div class="empty-note">Keine Termine an diesem Tag.</div>'; return; }
+  wrap.innerHTML = events.map(e => `
+    <div class="modal-item">
+      <div class="info">
+        <div class="name">${escAttr(e.kunde || 'Ohne Kunde')} ${e.overdue ? '<span class="status-badge offen">Überfällig</span>' : ''}</div>
+        <div class="sub">${escAttr(e.label)} · ${escAttr(e.nr || '')}</div>
+      </div>
+      <div class="modal-actions" style="grid-template-columns:1fr;">
+        <button class="btn small" onclick="(async()=>{ await switchPage('${e.type === 'ts' ? 'stunden' : 'installation'}'); await ${e.type === 'ts' ? `tsLoadTimesheet('${e.id}')` : `ipLoadProtocol('${e.id}')`}; })()">Öffnen</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 async function tmLoadTermine(){
   const wrap = document.getElementById('tm_list');
   wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
@@ -4744,12 +5061,30 @@ async function tmLoadTermine(){
           <div class="sub">${escAttr(r.objekt || '')}${r.objekt ? ' · ' : ''}${escAttr(r.nr || '')}</div>
         </div>
         <div class="modal-actions">
-          <button class="btn small" onclick="ipLoadProtocol('${r.id}');switchPage('installation')">Öffnen</button>
+          <button class="btn small" onclick="(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()">Öffnen</button>
+          <button class="btn small" onclick='tmAddToCalendar(${JSON.stringify((r.auftraggeber||"Termin") + (r.objekt ? " – "+r.objekt : ""))}, ${JSON.stringify(r.naechster_termin)}, ${JSON.stringify("Nächster Prüf-/Austauschtermin, "+(r.nr||""))})'>In Kalender speichern</button>
           <button class="btn small" onclick="tmMarkDone('${r.id}')">Erledigt</button>
         </div>
       </div>
     `;
   }).join('');
+}
+/* ---------- Termin als .ics-Datei speichern (Handy bietet dann "Zum Kalender hinzufügen" an) ---------- */
+function tmAddToCalendar(title, dateStr, notes){
+  if(!dateStr) return;
+  const dt = dateStr.slice(0,10).replace(/-/g,'');
+  const now = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const uid = 'termin-' + dt + '-' + Math.random().toString(36).slice(2,10) + '@service-battermann.de';
+  const esc = s => String(s||'').replace(/[\\,;]/g, m => '\\'+m).replace(/\n/g,'\\n');
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Battermann//Nachweise//DE','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+now,'DTSTART;VALUE=DATE:'+dt,'DTEND;VALUE=DATE:'+dt,
+    'SUMMARY:'+esc(title),'DESCRIPTION:'+esc(notes),'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 async function tmMarkDone(id){
   if(!confirm('Termin als erledigt markieren? Er verschwindet dann aus dieser Liste.')) return;
@@ -4757,6 +5092,7 @@ async function tmMarkDone(id){
   if(error){ showToast('Fehler: '+error.message); return; }
   showToast('Termin erledigt');
   tmLoadTermine();
+  tmRenderCalendar();
 }
 
 function mtRenderList(){
