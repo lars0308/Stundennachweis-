@@ -200,15 +200,16 @@
   .modal-group-count{color:var(--muted);font-weight:500;font-size:11.5px;}
 
   /* Kunden-Detailansicht */
-  .kd-header-card{background:var(--green-dark);color:#fff;border-radius:14px;padding:18px 16px;}
+  .kd-merged-card{padding:0;overflow:hidden;}
+  .kd-header-card{background:var(--green-dark);color:#fff;padding:20px 18px;}
   .kd-header-top{display:flex;align-items:center;gap:12px;}
   .kd-avatar{
-    width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.18);
-    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;
+    width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;
   }
-  .kd-header-name{font-size:17px;font-weight:700;margin-bottom:2px;}
-  .kd-header-line{font-size:12.5px;opacity:.92;}
-  .kd-panel-card{margin-top:-6px;padding-top:16px;}
+  .kd-header-name{font-size:18px;font-weight:700;margin-bottom:2px;}
+  .kd-header-line{font-size:12.5px;opacity:.9;}
+  .kd-panel-card{padding:18px;}
   .kd-header-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
   .kd-header-actions .btn{font-size:11px;line-height:1.6;padding:8px 2px;}
   .kd-header-actions .btn:disabled{opacity:.35;}
@@ -217,27 +218,32 @@
   .kd-info-label{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;}
   .kd-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .kd-tile{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    padding:18px 8px;border:1px solid var(--border);border-radius:12px;background:#f7f8f6;
-    color:var(--green-dark);font-size:12.5px;font-weight:600;text-align:center;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:16px 8px;border:1px solid var(--border);border-radius:12px;background:#fff;
+    color:#374151;font-size:12px;font-weight:600;text-align:center;cursor:pointer;
+    transition:border-color .15s,background .15s;
   }
+  .kd-tile:hover{border-color:var(--green);}
   .kd-tile:active{background:#e6efe0;}
-  .kd-tile-icon{font-size:22px;}
+  .kd-tile-icon{
+    font-size:19px;width:38px;height:38px;border-radius:50%;background:#eef1ea;
+    display:flex;align-items:center;justify-content:center;
+  }
   .kd-photos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
   .kd-photo-cell{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .kd-photo-cell img{width:100%;height:130px;object-fit:cover;display:block;}
   .kd-photo-cell span{display:block;font-size:11px;color:var(--muted);padding:4px 6px;}
   .kd-list-info{display:flex;align-items:center;gap:10px;}
   .kd-list-avatar{
-    width:36px;height:36px;border-radius:50%;background:#e6efe0;color:var(--green-dark);
+    width:38px;height:38px;border-radius:50%;background:#e6efe0;color:var(--green-dark);
     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
   }
-  .kd-subtabs{display:flex;gap:4px;margin:12px 0;border-bottom:1px solid var(--border);}
+  .kd-subtabs{display:flex;gap:4px;margin:14px 0;background:#eef1ea;border-radius:10px;padding:4px;}
   .kd-subtab{
-    flex:1;background:none;border:none;padding:10px 4px;font-size:13px;font-weight:600;
-    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+    flex:1;background:none;border:none;padding:9px 4px;font-size:12.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-radius:7px;transition:background .15s,color .15s;
   }
-  .kd-subtab.active{color:var(--green-dark);border-bottom-color:var(--green);}
+  .kd-subtab.active{color:var(--green-dark);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);}
   #kd_inlineNotizen{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;}
   .kd-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .kd-stats-grid > div{display:flex;flex-direction:column;gap:2px;}
@@ -1138,11 +1144,13 @@
       <div id="kd_detailWrap" style="display:none;">
         <button class="btn small" style="margin-bottom:12px;" onclick="kdBackToList()">‹ Zurück zu Kunden</button>
 
-        <section class="card kd-header-card" id="kd_detailHeader">
-          <!-- wird per JS befüllt: Avatar, Name, Adresse -->
-        </section>
-        <section class="card kd-panel-card" id="kd_detailPanel">
-          <!-- wird per JS befüllt: Anrufen/E-Mail/Navigation/Notiz + Kundennummer/Telefon/E-Mail -->
+        <section class="card kd-merged-card">
+          <div class="kd-header-card" id="kd_detailHeader">
+            <!-- wird per JS befüllt: Avatar, Name, Adresse -->
+          </div>
+          <div class="kd-panel-card" id="kd_detailPanel">
+            <!-- wird per JS befüllt: Anrufen/E-Mail/Navigation/Notiz + Kundennummer/Telefon/E-Mail -->
+          </div>
         </section>
 
         <div class="kd-subtabs">
