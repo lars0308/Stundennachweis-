@@ -59,6 +59,8 @@
   .status-dot.ok{background:var(--green);}
   .status-dot.offline{background:#e6a23c;}
   .status-dot.err{background:#c0392b;}
+  .header-logo-btn{background:none;border:none;padding:0;margin-left:8px;flex-shrink:0;cursor:pointer;}
+  .header-logo-btn img{height:34px;width:auto;display:block;border-radius:6px;}
   .btn{
     display:inline-flex;align-items:center;gap:6px;
     padding:7px 11px;border-radius:8px;border:1px solid var(--border);
@@ -680,6 +682,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
       </button>
       <span class="status-dot" id="statusDot" title="Verbinde…"></span>
+      <button class="header-logo-btn" onclick="switchPage('start')" aria-label="Startseite">
+        <img id="headerLogo" alt="Logo">
+      </button>
     </header>
   </div>
 
@@ -1375,7 +1380,101 @@
 
     </div>
 
+    <!-- ============================================================ -->
+    <!-- SEITE 7: AUFTRÄGE                                             -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-auftraege">
+
+      <section class="card">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" onclick="atOpenModal(null)">+ Neuer Auftrag</button>
+        </div>
+        <div class="kd-filter-chips" id="at_filter">
+          <button class="kd-chip active" data-status="alle" onclick="atSetFilter('alle')">Alle</button>
+          <button class="kd-chip" data-status="offen" onclick="atSetFilter('offen')">Offen</button>
+          <button class="kd-chip" data-status="geplant" onclick="atSetFilter('geplant')">Geplant</button>
+          <button class="kd-chip" data-status="abgeschlossen" onclick="atSetFilter('abgeschlossen')">Abgeschlossen</button>
+        </div>
+        <div id="at_list"><div class="empty-note">Lädt…</div></div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SEITE 8: STARTSEITE / ÜBERSICHT                               -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-start">
+
+      <section class="card">
+        <div class="kd-stats-grid" id="st_statsGrid">
+          <div><span class="kd-stats-value" id="st_offeneAuftraege">–</span><span class="kd-stats-label">Offene Aufträge</span></div>
+          <div><span class="kd-stats-value" id="st_anstehendeTermine">–</span><span class="kd-stats-label">Anstehende Termine</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Bereiche</h2></div>
+        <div class="kd-tiles" style="grid-template-columns:1fr 1fr;">
+          <button class="kd-tile" onclick="switchPage('kunden')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+            <span>Kunden</span>
+          </button>
+          <button class="kd-tile" onclick="tsGoToChooser()">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+            <span>Stunden</span>
+          </button>
+          <button class="kd-tile" onclick="switchPage('installation')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
+            <span>Protokoll</span>
+          </button>
+          <button class="kd-tile" onclick="switchPage('termine')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></span>
+            <span>Termine</span>
+          </button>
+          <button class="kd-tile" onclick="switchPage('auftraege')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+            <span>Aufträge</span>
+          </button>
+          <button class="kd-tile" onclick="switchPage('fahrtenbuch')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
+            <span>Fahrtenbuch</span>
+          </button>
+          <button class="kd-tile" onclick="switchPage('material')">
+            <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+            <span>Material</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+
   </main>
+
+  <!-- Modal: Auftrag anlegen/bearbeiten -->
+  <div class="modal-overlay" id="at_editModal">
+    <div class="modal">
+      <button class="modal-x" onclick="atCloseModal()">✕</button>
+      <h3 id="at_editTitle">Neuer Auftrag</h3>
+      <div class="field"><label>Kunde</label><input id="at_f_kunde" list="ts_customerList" placeholder="Kunde eingeben oder auswählen…" onchange="atCustomerPicked()"></div>
+      <div class="field"><label>Auftrag</label><input id="at_f_beschreibung" placeholder="z.B. Rauchmelder installieren"></div>
+      <div class="field"><label>Datum</label><input id="at_f_datum" type="date"></div>
+      <div class="field"><label>Telefon</label><input id="at_f_tel" type="tel"></div>
+      <div class="field"><label>Adresse</label><input id="at_f_adresse"></div>
+      <div class="field"><label>Notiz</label><textarea id="at_f_notiz" rows="3"></textarea></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="at_f_status">
+          <option value="offen">Offen</option>
+          <option value="geplant">Geplant</option>
+          <option value="abgeschlossen">Abgeschlossen</option>
+        </select>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn primary" onclick="atSaveAuftrag()">Speichern</button>
+        <button class="btn danger" id="at_deleteBtn" onclick="atDeleteAuftrag()" style="display:none;">Löschen</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <div class="line2">
@@ -1425,6 +1524,7 @@
         <button class="btn" onclick="closeMehrMenu();emailCurrent()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg> Per E-Mail senden (aktuelle Seite)</button>
         <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg> Fahrtenbuch</button>
         <button class="btn" onclick="closeMehrMenu();switchPage('material')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg> Material</button>
+        <button class="btn" onclick="closeMehrMenu();switchPage('auftraege')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg> Aufträge</button>
         <button class="btn" onclick="closeMehrMenu();logout()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Abmelden</button>
       </div>
     </div>
@@ -2139,6 +2239,9 @@ async function enterApp(){
   kdLoadLastOrderMap();
   const addBtn = document.getElementById('headerAddBtn');
   if(addBtn) addBtn.style.display = '';
+  const headerLogo = document.getElementById('headerLogo');
+  if(headerLogo) headerLogo.src = logoSrc();
+  stRenderDashboard();
 }
 sb.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
@@ -2161,8 +2264,10 @@ async function switchPage(page){
   document.getElementById('page-kunden').classList.toggle('active', page === 'kunden');
   document.getElementById('page-material').classList.toggle('active', page === 'material');
   document.getElementById('page-termine').classList.toggle('active', page === 'termine');
+  document.getElementById('page-auftraege').classList.toggle('active', page === 'auftraege');
+  document.getElementById('page-start').classList.toggle('active', page === 'start');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-  const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine' };
+  const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine', auftraege:'Aufträge', start:'Battermann' };
   const titleEl = document.getElementById('pageTitle');
   const inKdDetail = (page === 'kunden' && kdDetailCustomer);
   if(titleEl) titleEl.textContent = inKdDetail ? (kdDetailCustomer.name || 'Kunde') : (titles[page] || 'Battermann');
@@ -2189,6 +2294,12 @@ async function switchPage(page){
   if(page === 'termine'){
     tmLoadTermine();
     tmRenderCalendar();
+  }
+  if(page === 'auftraege'){
+    atLoadList();
+  }
+  if(page === 'start'){
+    stRenderDashboard();
   }
   if(page === 'stunden'){
     updateSammelVisibility();
@@ -4938,6 +5049,137 @@ function kdRenderObjekte(){
    ================================================================
    ================================================================ */
 let mtEditingId = null;
+
+/* ================================================================
+   AUFTRÄGE: einfache Aufgaben-/Jobliste je Kunde (Kunde, Auftrag, Datum,
+   Notiz, Anrufen/Route) — eigene Supabase-Tabelle "auftraege"
+   ================================================================ */
+let atItems = [];
+let atFilter = 'alle';
+let atEditingId = null;
+
+async function atLoadList(){
+  const wrap = document.getElementById('at_list');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  const { data, error } = await sb.from('auftraege').select('*').order('datum', { ascending: true, nullsFirst: false });
+  if(error){
+    wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'<br>(Falls die Tabelle "auftraege" noch fehlt, bitte in Supabase anlegen — siehe Hinweis im Chat.)</div>';
+    return;
+  }
+  atItems = data || [];
+  atRenderList();
+  stRenderDashboard();
+}
+function atSetFilter(f){
+  atFilter = f;
+  document.querySelectorAll('#at_filter .kd-chip').forEach(b => b.classList.toggle('active', b.dataset.status === f));
+  atRenderList();
+}
+function atRenderList(){
+  const wrap = document.getElementById('at_list');
+  const items = atFilter === 'alle' ? atItems : atItems.filter(a => a.status === atFilter);
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Keine Aufträge in dieser Ansicht.</div>'; return; }
+  const badgeClass = { offen:'offen', geplant:'offen', abgeschlossen:'abgeschlossen' };
+  const badgeText = { offen:'Offen', geplant:'Geplant', abgeschlossen:'Abgeschlossen' };
+  wrap.innerHTML = items.map(a => `
+    <div class="modal-item">
+      <div class="info">
+        <div class="name">${escAttr(a.beschreibung || 'Ohne Titel')} <span class="status-badge ${badgeClass[a.status]||'offen'}">${badgeText[a.status]||a.status}</span></div>
+        <div class="sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}${a.datum ? ' · '+escAttr(fmtDate(a.datum)) : ''}</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn small" ${a.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(a.tel||'')}')">Anrufen</button>
+        <button class="btn small" ${a.adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escAttr(a.adresse||'')}')">Route</button>
+        <button class="btn small" onclick="atOpenModal('${a.id}')" style="grid-column:1 / -1;">Bearbeiten</button>
+      </div>
+    </div>
+  `).join('');
+}
+function atCustomerPicked(){
+  const name = document.getElementById('at_f_kunde').value.trim();
+  const c = tsCustomers.find(x => x.name === name);
+  if(c){
+    if(!document.getElementById('at_f_tel').value) document.getElementById('at_f_tel').value = c.tel || '';
+    if(!document.getElementById('at_f_adresse').value) document.getElementById('at_f_adresse').value = c.objekt || c.rechnungsanschrift || '';
+  }
+}
+function atOpenModal(id){
+  atEditingId = id;
+  const deleteBtn = document.getElementById('at_deleteBtn');
+  if(id){
+    const a = atItems.find(x => x.id === id);
+    if(!a) return;
+    document.getElementById('at_editTitle').textContent = 'Auftrag bearbeiten';
+    document.getElementById('at_f_kunde').value = a.auftraggeber || '';
+    document.getElementById('at_f_beschreibung').value = a.beschreibung || '';
+    document.getElementById('at_f_datum').value = a.datum || '';
+    document.getElementById('at_f_tel').value = a.tel || '';
+    document.getElementById('at_f_adresse').value = a.adresse || '';
+    document.getElementById('at_f_notiz').value = a.notiz || '';
+    document.getElementById('at_f_status').value = a.status || 'offen';
+    deleteBtn.style.display = '';
+  } else {
+    document.getElementById('at_editTitle').textContent = 'Neuer Auftrag';
+    document.getElementById('at_f_kunde').value = '';
+    document.getElementById('at_f_beschreibung').value = '';
+    document.getElementById('at_f_datum').value = '';
+    document.getElementById('at_f_tel').value = '';
+    document.getElementById('at_f_adresse').value = '';
+    document.getElementById('at_f_notiz').value = '';
+    document.getElementById('at_f_status').value = 'offen';
+    deleteBtn.style.display = 'none';
+  }
+  document.getElementById('at_editModal').classList.add('open');
+}
+function atCloseModal(){
+  document.getElementById('at_editModal').classList.remove('open');
+}
+async function atSaveAuftrag(){
+  const rec = {
+    auftraggeber: document.getElementById('at_f_kunde').value.trim(),
+    beschreibung: document.getElementById('at_f_beschreibung').value.trim(),
+    datum: document.getElementById('at_f_datum').value || null,
+    tel: document.getElementById('at_f_tel').value.trim(),
+    adresse: document.getElementById('at_f_adresse').value.trim(),
+    notiz: document.getElementById('at_f_notiz').value.trim(),
+    status: document.getElementById('at_f_status').value
+  };
+  if(!rec.beschreibung){ showToast('Bitte eine Auftragsbeschreibung eingeben'); return; }
+  let error;
+  if(atEditingId){
+    ({ error } = await sb.from('auftraege').update(rec).eq('id', atEditingId));
+  } else {
+    ({ error } = await sb.from('auftraege').insert(rec));
+  }
+  if(error){ showToast('Fehler: '+error.message); return; }
+  showToast('Auftrag gespeichert');
+  atCloseModal();
+  atLoadList();
+}
+async function atDeleteAuftrag(){
+  if(!atEditingId) return;
+  if(!confirm('Diesen Auftrag wirklich löschen?')) return;
+  const { error } = await sb.from('auftraege').delete().eq('id', atEditingId);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  showToast('Auftrag gelöscht');
+  atCloseModal();
+  atLoadList();
+}
+
+/* ================================================================
+   STARTSEITE: kurze Übersicht (echte Zahlen aus Aufträgen & Terminen)
+   ================================================================ */
+async function stRenderDashboard(){
+  const offeneEl = document.getElementById('st_offeneAuftraege');
+  const termineEl = document.getElementById('st_anstehendeTermine');
+  if(!offeneEl || !termineEl) return;
+  const [atRes, ipRes] = await Promise.all([
+    sb.from('auftraege').select('id,status').neq('status', 'abgeschlossen'),
+    sb.from('protocols').select('id').not('naechster_termin', 'is', null)
+  ]);
+  offeneEl.textContent = atRes.error ? '–' : String((atRes.data||[]).length);
+  termineEl.textContent = ipRes.error ? '–' : String((ipRes.data||[]).length);
+}
 
 /* ================================================================
    TERMINE (aus "nächster Prüf-/Austauschtermin" der Ausführungsprotokolle)
