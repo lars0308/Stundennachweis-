@@ -37,31 +37,28 @@
   }
   .app{min-height:100vh;}
 
-  /* Header */
+  /* Header: schlanke Kopfzeile (Hamburger-Menü + Seitentitel + Status-Punkt) */
   header{
     position:sticky; top:0; z-index:50;
     background:#fff; border-bottom:1px solid var(--border);
     box-shadow:0 1px 2px rgba(0,0,0,.04);
-    padding:8px 12px;
-    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;
   }
-  .brand{display:flex;align-items:center;gap:8px;}
-  .brand-icon{
-    width:32px;height:32px;border-radius:6px;background:var(--green);
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  .slim-header{
+    padding:12px 14px;
+    display:flex; align-items:center; gap:10px;
   }
-  .brand-icon svg{width:18px;height:18px;stroke:#fff;}
-  .brand-title{font-weight:700;font-size:14px;color:#1f2937;}
-  .badge{
-    margin-left:8px;display:inline-flex;align-items:center;gap:4px;
-    padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;
-    background:#e6efe0;color:var(--green-dark);
+  .icon-btn{
+    border:none;background:none;padding:4px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:var(--green-dark);flex-shrink:0;
   }
-  .badge.offline{background:#fdf1e0;color:#92620a;}
-  .badge.ok{background:#e6efe0;color:var(--green-dark);}
-  .badge.err{background:#fdeaea;color:#b91c1c;}
-  .badge svg{width:11px;height:11px;}
-  .toolbar{display:flex;gap:6px;flex-wrap:wrap;}
+  .icon-btn svg{width:22px;height:22px;stroke:currentColor;}
+  .slim-header-title{flex:1;font-weight:700;font-size:16px;color:#1f2937;}
+  .status-dot{
+    width:9px;height:9px;border-radius:50%;background:#c8c8c8;flex-shrink:0;
+  }
+  .status-dot.ok{background:var(--green);}
+  .status-dot.offline{background:#e6a23c;}
+  .status-dot.err{background:#c0392b;}
   .btn{
     display:inline-flex;align-items:center;gap:6px;
     padding:7px 11px;border-radius:8px;border:1px solid var(--border);
@@ -587,44 +584,15 @@
 <div class="app" id="appRoot">
 
   <div class="topbar">
-    <header>
-      <div class="brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
-        </div>
-        <span class="brand-title">Objekt- und Reparaturservice Battermann</span>
-        <span class="badge" id="statusBadge">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
-          <span id="statusText">Verbinde…</span>
-        </span>
-      </div>
-      <div class="toolbar">
-        <button class="btn" onclick="newItem()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-          <span class="btn-label">Neu</span>
-        </button>
-        <button class="btn" onclick="openList()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"></path><path d="M3 9h18"></path></svg>
-          <span class="btn-label">Liste</span>
-        </button>
-        <button class="btn primary" onclick="saveItem()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg>
-          <span class="btn-label">Speichern</span>
-        </button>
-        <button class="btn" onclick="printCurrent()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg>
-          <span class="btn-label">PDF erstellen</span>
-        </button>
-        <button class="btn" onclick="emailCurrent()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-          <span class="btn-label">E-Mail</span>
-        </button>
-        <button class="btn" onclick="logout()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          <span class="btn-label">Abmelden</span>
-        </button>
-      </div>
+    <header class="slim-header">
+      <button class="icon-btn" onclick="openMehrMenu()" aria-label="Menü">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>
+      </button>
+      <span class="slim-header-title" id="pageTitle">Kunden</span>
+      <span class="status-dot" id="statusDot" title="Verbinde…"></span>
     </header>
+  </div>
+
   </div>
 
   <main>
@@ -1154,7 +1122,6 @@
 
       <div id="kd_listWrap">
         <section class="card">
-          <div class="card-head"><h2>Kunden</h2></div>
           <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderList()">
           <div class="btn-row" style="margin-bottom:14px;">
             <button class="btn primary" onclick="kdOpenModal(null, true)">+ Neuer Kunde</button>
@@ -1279,6 +1246,10 @@
       <button class="modal-x" onclick="closeMehrMenu()">✕</button>
       <h3>Mehr</h3>
       <div class="btn-row" style="flex-direction:column;">
+        <button class="btn" onclick="closeMehrMenu();newItem()">➕ Neu (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();saveItem()">💾 Speichern (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();printCurrent()">🖨️ PDF erstellen (aktuelle Seite)</button>
+        <button class="btn" onclick="closeMehrMenu();emailCurrent()">✉️ Per E-Mail senden (aktuelle Seite)</button>
         <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')">🚐 Fahrtenbuch</button>
         <button class="btn" onclick="closeMehrMenu();switchPage('material')">📦 Material</button>
         <button class="btn" onclick="closeMehrMenu();logout()">🚪 Abmelden</button>
@@ -1574,10 +1545,8 @@ function showToast(msg){
   window._toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
 }
 function setStatus(kind, text){
-  const badge = document.getElementById('statusBadge');
-  badge.classList.remove('ok','err','offline');
-  badge.classList.add(kind);
-  document.getElementById('statusText').textContent = text;
+  const dot = document.getElementById('statusDot');
+  if(dot){ dot.classList.remove('ok','err','offline'); dot.classList.add(kind); dot.title = text; }
 }
 function downloadCsv(rows, filename){
   const csv = Papa.unparse(rows);
@@ -1998,6 +1967,9 @@ async function switchPage(page){
   document.getElementById('page-material').classList.toggle('active', page === 'material');
   document.getElementById('page-termine').classList.toggle('active', page === 'termine');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine' };
+  const titleEl = document.getElementById('pageTitle');
+  if(titleEl) titleEl.textContent = titles[page] || 'Battermann';
   window.scrollTo(0, tabScrollPositions[page] || 0); // eigene gemerkte Position, neue Seite startet oben
 
   if(page === 'installation' && !ipInitialized){
@@ -4241,12 +4213,16 @@ function kdOpenCustomerDetail(id){
   document.getElementById('kd_inlineNotizen').value = c.notizen || '';
   kdLoadLetzterAuftrag(c);
   kdSwitchTab('uebersicht');
+  const titleEl = document.getElementById('pageTitle');
+  if(titleEl) titleEl.textContent = c.name || 'Kunde';
   window.scrollTo(0,0);
 }
 function kdBackToList(){
   kdDetailCustomer = null;
   document.getElementById('kd_detailWrap').style.display = 'none';
   document.getElementById('kd_listWrap').style.display = '';
+  const titleEl = document.getElementById('pageTitle');
+  if(titleEl) titleEl.textContent = 'Kunden';
 }
 function kdSwitchTab(tab){
   kdActiveTab = tab;
