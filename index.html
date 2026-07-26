@@ -209,6 +209,11 @@
   }
   .kd-header-name{font-size:18px;font-weight:700;margin-bottom:2px;}
   .kd-header-line{font-size:12.5px;opacity:.9;}
+  .kd-header-edit-btn{
+    background:rgba(255,255,255,.14);border:none;color:#fff;width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;align-self:flex-start;
+  }
+  .kd-header-edit-btn svg{width:16px;height:16px;}
   .kd-panel-card{padding:18px;}
   .kd-header-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
   .kd-header-actions .btn{font-size:11px;line-height:1.6;padding:8px 2px;}
@@ -239,6 +244,14 @@
     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
   }
   .kd-photo-cell{cursor:pointer;}
+  .kd-csv-row{display:flex;align-items:center;gap:8px;margin:2px 0 14px;}
+  .kd-csv-link{
+    background:none;border:none;padding:0;color:var(--muted);font-size:11.5px;
+    text-decoration:underline;cursor:pointer;
+  }
+  .kd-csv-link:hover{color:var(--green-dark);}
+  .kd-csv-sep{color:var(--border);font-size:11.5px;}
+  .kd-list-item .sub{display:flex;flex-direction:column;gap:1px;}
   .kd-lightbox{
     display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);
     flex-direction:column;align-items:center;justify-content:center;padding:16px;
@@ -619,6 +632,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>
       </button>
       <span class="slim-header-title" id="pageTitle">Kunden</span>
+      <button class="icon-btn" id="headerAddBtn" onclick="kdOpenModal(null, true)" aria-label="Neuer Kunde" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+      </button>
       <span class="status-dot" id="statusDot" title="Verbinde…"></span>
     </header>
   </div>
@@ -1151,10 +1167,10 @@
       <div id="kd_listWrap">
         <section class="card">
           <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderList()">
-          <div class="btn-row" style="margin-bottom:14px;">
-            <button class="btn primary" onclick="kdOpenModal(null, true)">+ Neuer Kunde</button>
-            <button class="btn" onclick="document.getElementById('kd_csvInput').click()">CSV importieren</button>
-            <button class="btn" onclick="tsExportCustomersCsv()">CSV exportieren</button>
+          <div class="kd-csv-row">
+            <button class="kd-csv-link" onclick="document.getElementById('kd_csvInput').click()">CSV importieren</button>
+            <span class="kd-csv-sep">·</span>
+            <button class="kd-csv-link" onclick="tsExportCustomersCsv()">CSV exportieren</button>
             <input type="file" id="kd_csvInput" class="hidden-file" accept=".csv" onchange="tsImportCustomersCsv(this.files[0])">
           </div>
           <div id="kd_list"></div>
@@ -1180,6 +1196,10 @@
         </div>
 
         <div id="kd_tab_uebersicht" class="kd-tabpane">
+          <section class="card" id="kd_offeneAufgabenCard" style="display:none;">
+            <div class="card-head"><h2>Offene Aufgaben</h2></div>
+            <div id="kd_offeneAufgaben"></div>
+          </section>
           <section class="card">
             <div class="card-head"><h2>Letzter Auftrag</h2></div>
             <div id="kd_letzterAuftrag"><div class="empty-note">Lädt…</div></div>
@@ -1989,6 +2009,8 @@ async function enterApp(){
   initGoogleDrive();
   updateDriveStatus();
   kdRenderList();
+  const addBtn = document.getElementById('headerAddBtn');
+  if(addBtn) addBtn.style.display = '';
 }
 sb.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
@@ -2015,6 +2037,8 @@ async function switchPage(page){
   const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine' };
   const titleEl = document.getElementById('pageTitle');
   if(titleEl) titleEl.textContent = titles[page] || 'Battermann';
+  const addBtn = document.getElementById('headerAddBtn');
+  if(addBtn) addBtn.style.display = (page === 'kunden' && !kdDetailCustomer) ? '' : 'none';
   window.scrollTo(0, tabScrollPositions[page] || 0); // eigene gemerkte Position, neue Seite startet oben
 
   if(page === 'installation' && !ipInitialized){
@@ -4236,7 +4260,10 @@ function kdRenderList(){
         <div class="kd-list-avatar">${escAttr(kdInitials(c.name))}</div>
         <div>
           <div class="name">${escAttr(c.name || 'Ohne Namen')}</div>
-          <div class="sub">${escAttr(c.objekt || '')} ${c.tel ? '· '+escAttr(c.tel) : ''}</div>
+          <div class="sub">
+            ${c.objekt ? `<span>${escAttr(c.objekt)}</span>` : ''}
+            ${c.tel ? `<span>${escAttr(c.tel)}</span>` : ''}
+          </div>
         </div>
       </div>
       <div class="modal-actions" style="grid-template-columns:1fr 1fr;">
@@ -4268,9 +4295,12 @@ function kdOpenCustomerDetail(id){
   kdRenderDetailTiles(c);
   document.getElementById('kd_inlineNotizen').value = c.notizen || '';
   kdLoadLetzterAuftrag(c);
+  kdLoadOffeneAufgaben(c);
   kdSwitchTab('uebersicht');
   const titleEl = document.getElementById('pageTitle');
   if(titleEl) titleEl.textContent = c.name || 'Kunde';
+  const addBtn = document.getElementById('headerAddBtn');
+  if(addBtn) addBtn.style.display = 'none';
   window.scrollTo(0,0);
 }
 function kdBackToList(){
@@ -4279,6 +4309,8 @@ function kdBackToList(){
   document.getElementById('kd_listWrap').style.display = '';
   const titleEl = document.getElementById('pageTitle');
   if(titleEl) titleEl.textContent = 'Kunden';
+  const addBtn = document.getElementById('headerAddBtn');
+  if(addBtn) addBtn.style.display = '';
 }
 function kdSwitchTab(tab){
   kdActiveTab = tab;
@@ -4299,11 +4331,14 @@ function kdRenderDetailHeader(c){
   document.getElementById('kd_detailHeader').innerHTML = `
     <div class="kd-header-top">
       <div class="kd-avatar">${escAttr(kdInitials(c.name))}</div>
-      <div>
+      <div style="flex:1;">
         <div class="kd-header-name">${escAttr(c.name || 'Ohne Namen')}</div>
         ${c.ansprechpartner ? `<div class="kd-header-line">${escAttr(c.ansprechpartner)}</div>` : ''}
         ${adresse ? `<div class="kd-header-line">${escAttr(adresse)}</div>` : ''}
       </div>
+      <button class="kd-header-edit-btn" onclick="kdOpenModal('${c.id}')" title="Kundendaten bearbeiten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+      </button>
     </div>
   `;
 }
@@ -4322,6 +4357,36 @@ function kdRenderDetailPanel(c){
       <div><span class="kd-info-label">E-Mail</span><span>${escAttr(c.email || '–')}</span></div>
     </div>
   `;
+}
+async function kdLoadOffeneAufgaben(c){
+  const card = document.getElementById('kd_offeneAufgabenCard');
+  const wrap = document.getElementById('kd_offeneAufgaben');
+  if(!c.name){ card.style.display = 'none'; return; }
+  const { data, error } = await sb.from('protocols')
+    .select('id,nr,objekt,naechster_termin')
+    .eq('auftraggeber', c.name)
+    .not('naechster_termin', 'is', null)
+    .order('naechster_termin', { ascending: true });
+  if(error || !data || !data.length){ card.style.display = 'none'; return; }
+  card.style.display = '';
+  const todayStr = new Date().toISOString().slice(0,10);
+  wrap.innerHTML = data.map(r => {
+    const days = Math.round((new Date(r.naechster_termin) - new Date(todayStr)) / 86400000);
+    const overdue = days < 0;
+    const badgeClass = overdue ? 'offen' : 'abgeschlossen';
+    const badgeText = overdue ? 'Überfällig' : 'Geplant';
+    return `
+      <div class="modal-item">
+        <div class="info">
+          <div class="name">${escAttr(r.objekt || 'Termin prüfen')} <span class="status-badge ${badgeClass}">${badgeText}</span></div>
+          <div class="sub">Termin: ${escAttr(fmtDate(r.naechster_termin))} · ${escAttr(r.nr||'')}</div>
+        </div>
+        <div class="modal-actions" style="grid-template-columns:1fr;">
+          <button class="btn small" onclick="ipLoadProtocol('${r.id}');switchPage('installation')">Öffnen</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 async function kdLoadLetzterAuftrag(c){
   const wrap = document.getElementById('kd_letzterAuftrag');
