@@ -2047,6 +2047,7 @@ async function newItem(){
   else if(currentPage === 'fahrtenbuch') fbAddDraftRow();
   else if(currentPage === 'kunden') kdOpenModal(null, true);
   else if(currentPage === 'material') mtOpenModal(null);
+  else showToast('Auf dieser Seite gibt es kein "Neu"');
 }
 async function saveItem(){
   if(currentPage === 'stunden') await tsSaveTimesheet();
@@ -2054,6 +2055,7 @@ async function saveItem(){
   else if(currentPage === 'fahrtenbuch') showToast('Fahrten werden einzeln über "Abschließen" gespeichert');
   else if(currentPage === 'kunden') showToast('Kunden werden im Pop-up gespeichert');
   else if(currentPage === 'material') showToast('Material wird im Pop-up gespeichert');
+  else showToast('Auf dieser Seite gibt es nichts zu speichern');
 }
 async function openList(){
   if(currentPage === 'stunden') await tsOpenLoadModal();
@@ -2061,6 +2063,7 @@ async function openList(){
   else if(currentPage === 'fahrtenbuch') await fbLoadTrips();
   else if(currentPage === 'kunden') kdRenderList();
   else if(currentPage === 'material') mtRenderList();
+  else showToast('Auf dieser Seite gibt es keine Liste');
 }
 
 /* ---------- Kunde auf BEIDEN Seiten übernehmen ---------- */
@@ -3747,6 +3750,10 @@ async function printCurrent(){
   // zuletzt fertig wurde, landete dann nicht das PDF im Vorschaufenster, das man
   // eigentlich gerade ausgewählt/gedrückt hatte.
   if(printInProgress){ showToast('Bitte kurz warten — Vorschau wird bereits erstellt'); return; }
+  if(!['stunden','installation','fahrtenbuch'].includes(currentPage)){
+    showToast('Für diese Seite gibt es kein PDF');
+    return;
+  }
   printInProgress = true;
   try {
     showToast('Bereite Vorschau vor…');
@@ -4160,6 +4167,10 @@ function downloadPhotosAsFiles(photos, prefix){
 }
 
 async function emailCurrent(){
+  if(!['stunden','installation','fahrtenbuch'].includes(currentPage)){
+    showToast('Für diese Seite gibt es keine E-Mail-Funktion');
+    return;
+  }
   let to = '', subject = '', body = '';
   let photosToSend = [];
   if(currentPage === 'stunden'){
