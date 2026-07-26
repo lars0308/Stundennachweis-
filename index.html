@@ -621,6 +621,7 @@
       <button class="tab-btn" data-page="installation" onclick="switchPage('installation')"><span>Ausführungsprotokoll</span></button>
       <button class="tab-btn" data-page="fahrtenbuch" onclick="switchPage('fahrtenbuch')"><span>Fahrtenbuch</span></button>
       <button class="tab-btn" data-page="material" onclick="switchPage('material')"><span>Material</span></button>
+      <button class="tab-btn" data-page="termine" onclick="switchPage('termine')"><span>Termine</span></button>
     </nav>
   </div>
 
@@ -1228,6 +1229,21 @@
           <input type="file" id="mt_csvInput" class="hidden-file" accept=".csv" onchange="tsImportMaterialsCsv(this.files[0])">
         </div>
         <div id="mt_list"></div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SEITE 6: TERMINE                                              -->
+    <!-- ============================================================ -->
+    <div class="page" id="page-termine">
+
+      <section class="card">
+        <div class="card-head"><h2>Anstehende Termine</h2></div>
+        <div class="empty-note" style="text-align:left;margin-bottom:10px;padding:0;">
+          Zeigt alle im Ausführungsprotokoll hinterlegten nächsten Prüf-/Austauschtermine (z.B. Rauchwarnmelder-Batteriewechsel, Wartung).
+        </div>
+        <div id="tm_list"><div class="empty-note">Lädt…</div></div>
       </section>
 
     </div>
@@ -1956,6 +1972,7 @@ async function switchPage(page){
   document.getElementById('page-fahrtenbuch').classList.toggle('active', page === 'fahrtenbuch');
   document.getElementById('page-kunden').classList.toggle('active', page === 'kunden');
   document.getElementById('page-material').classList.toggle('active', page === 'material');
+  document.getElementById('page-termine').classList.toggle('active', page === 'termine');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   window.scrollTo(0, tabScrollPositions[page] || 0); // eigene gemerkte Position, neue Seite startet oben
 
@@ -1972,6 +1989,9 @@ async function switchPage(page){
   }
   if(page === 'material'){
     mtRenderList();
+  }
+  if(page === 'termine'){
+    tmLoadTermine();
   }
   if(page === 'stunden'){
     updateSammelVisibility();
@@ -4506,6 +4526,48 @@ function kdRenderObjekte(){
    ================================================================
    ================================================================ */
 let mtEditingId = null;
+
+/* ================================================================
+   TERMINE (aus "nächster Prüf-/Austauschtermin" der Ausführungsprotokolle)
+   ================================================================ */
+async function tmLoadTermine(){
+  const wrap = document.getElementById('tm_list');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  const { data, error } = await sb.from('protocols')
+    .select('id,nr,auftraggeber,objekt,naechster_termin')
+    .not('naechster_termin', 'is', null)
+    .order('naechster_termin', { ascending: true });
+  if(error){ wrap.innerHTML = '<div class="empty-note">Fehler: '+escAttr(error.message)+'</div>'; return; }
+  if(!data || !data.length){ wrap.innerHTML = '<div class="empty-note">Keine anstehenden Termine hinterlegt.</div>'; return; }
+  const todayStr = new Date().toISOString().slice(0,10);
+  wrap.innerHTML = data.map(r => {
+    const days = Math.round((new Date(r.naechster_termin) - new Date(todayStr)) / 86400000);
+    let dueLabel, dueClass;
+    if(days < 0){ dueLabel = `überfällig seit ${Math.abs(days)} Tagen`; dueClass = 'offen'; }
+    else if(days === 0){ dueLabel = 'heute fällig'; dueClass = 'offen'; }
+    else if(days <= 14){ dueLabel = `in ${days} Tagen`; dueClass = 'offen'; }
+    else { dueLabel = `in ${days} Tagen`; dueClass = 'abgeschlossen'; }
+    return `
+      <div class="modal-item">
+        <div class="info">
+          <div class="name">${escAttr(r.auftraggeber || 'Ohne Kunde')} <span class="status-badge ${dueClass}">${escAttr(fmtDate(r.naechster_termin))} · ${escAttr(dueLabel)}</span></div>
+          <div class="sub">${escAttr(r.objekt || '')}${r.objekt ? ' · ' : ''}${escAttr(r.nr || '')}</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn small" onclick="ipLoadProtocol('${r.id}');switchPage('installation')">Öffnen</button>
+          <button class="btn small" onclick="tmMarkDone('${r.id}')">Erledigt</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+async function tmMarkDone(id){
+  if(!confirm('Termin als erledigt markieren? Er verschwindet dann aus dieser Liste.')) return;
+  const { error } = await sb.from('protocols').update({ naechster_termin: null }).eq('id', id);
+  if(error){ showToast('Fehler: '+error.message); return; }
+  showToast('Termin erledigt');
+  tmLoadTermine();
+}
 
 function mtRenderList(){
   const wrap = document.getElementById('mt_list');
