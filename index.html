@@ -140,6 +140,17 @@
   .checklist{display:flex;flex-direction:column;gap:8px;}
   .check-item{display:flex;align-items:flex-start;gap:9px;font-size:13px;}
   .check-item input{margin-top:3px;width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;}
+  .segmented{
+    display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#f7f8f6;
+  }
+  .segmented-opt{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+    padding:11px 8px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;
+    text-align:center;transition:background .15s,color .15s;
+  }
+  .segmented-opt:first-child{border-right:1px solid var(--border);}
+  .segmented-opt input{position:absolute;opacity:0;width:0;height:0;}
+  .segmented-opt:has(input:checked), .segmented-opt.is-active{background:var(--green);color:#fff;}
 
   /* Signatures */
   .sig-box{display:flex;flex-direction:column;gap:4px;}
@@ -167,13 +178,14 @@
   .modal{background:#fff;border-radius:12px;max-width:480px;width:100%;max-height:80vh;overflow:auto;padding:18px;}
   .modal h3{margin:0 0 12px;font-size:15px;color:var(--green-dark);}
   .modal-item{
-    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    display:flex;flex-direction:column;align-items:stretch;gap:8px;
     padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;
   }
   .modal-item div.info{font-size:12.5px;}
   .modal-item .name{font-weight:600;}
   .modal-item .sub{color:var(--muted);font-size:11px;}
-  .modal-actions{display:flex;gap:6px;}
+  .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .modal-actions .btn{text-align:center;white-space:nowrap;padding:8px 4px;font-size:12px;}
   .modal-close{margin-top:8px;width:100%;}
   .empty-note{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 0;}
   .modal-group{margin-bottom:14px;}
@@ -662,6 +674,24 @@
       </section>
 
       <section class="card">
+        <div class="card-head"><h2>Abrechnungsart</h2></div>
+        <div class="segmented" role="radiogroup">
+          <label class="segmented-opt">
+            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_aufwand" value="aufwand" checked onchange="tsUpdateAbrechnungsart()">
+            <span>Nach Aufwand (Stunden)</span>
+          </label>
+          <label class="segmented-opt">
+            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_festpreis" value="festpreis" onchange="tsUpdateAbrechnungsart()">
+            <span>Festpreis</span>
+          </label>
+        </div>
+        <div class="field" id="ts_festpreisWrap" style="display:none;max-width:260px;margin-top:12px;">
+          <label>Festpreis (€)</label>
+          <input type="text" id="ts_f_festpreis_betrag" inputmode="decimal" placeholder="z.B. 450,00">
+        </div>
+      </section>
+
+      <section class="card">
         <div class="card-head"><h2>Tätigkeiten / Leistungsbeschreibung</h2></div>
         <textarea class="full" id="ts_f_taetigkeiten" rows="4" placeholder="Ausgeführte Arbeiten…"></textarea>
       </section>
@@ -711,24 +741,6 @@
           </label>
           <button class="btn small" onclick="uploadPhotosToDrive(tsPhotos, document.getElementById('ts_f_auftraggeber').value, document.getElementById('ts_f_kdnr').value, document.getElementById('ts_f_rechnungsanschrift').value, document.getElementById('ts_f_objekt').value, document.getElementById('ts_f_berichtsnr').value)">Zu Google Drive hochladen</button>
           <span class="drive-status" id="driveStatus">Google Drive: nicht verbunden</span>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="card-head"><h2>Abrechnungsart</h2></div>
-        <div class="toggle-row" style="gap:16px;">
-          <label class="check-item" style="margin:0;">
-            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_aufwand" value="aufwand" checked onchange="tsUpdateAbrechnungsart()">
-            <span class="check-label-text">Nach Aufwand (Stunden)</span>
-          </label>
-          <label class="check-item" style="margin:0;">
-            <input type="radio" name="ts_abrechnungsart" id="ts_f_abrechnungsart_festpreis" value="festpreis" onchange="tsUpdateAbrechnungsart()">
-            <span class="check-label-text">Festpreis</span>
-          </label>
-        </div>
-        <div class="field" id="ts_festpreisWrap" style="display:none;max-width:260px;margin-top:8px;">
-          <label>Festpreis (€)</label>
-          <input type="text" id="ts_f_festpreis_betrag" inputmode="decimal" placeholder="z.B. 450,00">
         </div>
       </section>
 
@@ -2328,6 +2340,8 @@ function tsUpdateAbrechnungsart(){
   // Bei Festpreis wird die Stundenerfassung nicht gebraucht, daher ausblenden -
   // die Zeilen bleiben aber im Hintergrund erhalten, falls doch zurückgewechselt wird.
   document.getElementById('ts_arbeitszeitenCard').style.display = isFestpreis ? 'none' : '';
+  document.getElementById('ts_f_abrechnungsart_aufwand').closest('.segmented-opt').classList.toggle('is-active', !isFestpreis);
+  document.getElementById('ts_f_abrechnungsart_festpreis').closest('.segmented-opt').classList.toggle('is-active', isFestpreis);
 }
 function tsGetAbrechnungsart(){
   return document.getElementById('ts_f_abrechnungsart_festpreis').checked ? 'festpreis' : 'aufwand';
@@ -2488,7 +2502,7 @@ async function tsRenderModalList(){
         <div class="modal-actions">
           <button class="btn small" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
           <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
-          <button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Als Vorlage</button>
+          <button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Vorlage</button>
           <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
         </div>
       `;
@@ -3002,7 +3016,7 @@ async function ipRenderModalList(){
         <div class="modal-actions">
           <button class="btn small" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
           <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
-          <button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Als Vorlage</button>
+          <button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Vorlage</button>
           <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
         </div>
       `;
