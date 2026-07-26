@@ -59,8 +59,8 @@
   .status-dot.ok{background:var(--green);}
   .status-dot.offline{background:#e6a23c;}
   .status-dot.err{background:#c0392b;}
-  .header-logo-btn{background:none;border:none;padding:0;margin-left:8px;flex-shrink:0;cursor:pointer;}
-  .header-logo-btn img{height:34px;width:auto;display:block;border-radius:6px;}
+  .header-logo-btn{background:none;border:none;padding:0;margin-left:8px;flex-shrink:0;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;}
+  .header-logo-btn img{height:34px;width:34px;object-fit:contain;display:block;border-radius:6px;}
   .btn{
     display:inline-flex;align-items:center;gap:6px;
     padding:7px 11px;border-radius:8px;border:1px solid var(--border);
@@ -558,7 +558,8 @@
   }
   .tm-cal-day:hover{background:#f0f1ee;}
   .tm-cal-day.empty{cursor:default;}
-  .tm-cal-day.today{font-weight:700;color:var(--green-dark);}
+  .tm-cal-day.today{font-weight:700;color:var(--green-dark);box-shadow:inset 0 0 0 2px var(--green-dark);}
+  .tm-cal-day.today.selected{box-shadow:none;}
   .tm-cal-day.selected{background:var(--green-dark);color:#fff;}
   .tm-cal-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin-top:2px;}
   .tm-cal-day.selected .tm-cal-dot{background:#fff;}
@@ -1357,6 +1358,9 @@
           <span class="tm-cal-title" id="tm_calTitle">Monat</span>
           <button class="icon-btn" onclick="tmNextMonth()" aria-label="Nächster Monat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </button>
+          <button class="icon-btn" onclick="tmQuickAddTermin()" aria-label="Termin hinzufügen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
           </button>
         </div>
         <div class="tm-cal-weekdays">
@@ -5155,6 +5159,7 @@ async function atSaveAuftrag(){
   showToast('Auftrag gespeichert');
   atCloseModal();
   atLoadList();
+  tmRenderCalendar();
 }
 async function atDeleteAuftrag(){
   if(!atEditingId) return;
@@ -5164,6 +5169,7 @@ async function atDeleteAuftrag(){
   showToast('Auftrag gelöscht');
   atCloseModal();
   atLoadList();
+  tmRenderCalendar();
 }
 
 /* ================================================================
@@ -5191,6 +5197,10 @@ let tmCalDate = new Date();
 let tmSelectedDay = null;
 let tmEventsByDate = {};
 
+function tmQuickAddTermin(){
+  atOpenModal(null);
+  document.getElementById('at_f_datum').value = tmSelectedDay || tmDateKey(new Date());
+}
 function tmPrevMonth(){
   tmCalDate = new Date(tmCalDate.getFullYear(), tmCalDate.getMonth() - 1, 1);
   tmRenderCalendar();
@@ -5206,6 +5216,12 @@ async function tmRenderCalendar(){
   const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
   document.getElementById('tm_calTitle').textContent = `${monthNames[tmCalDate.getMonth()]} ${tmCalDate.getFullYear()}`;
   await tmLoadCalendarEvents();
+  if(tmSelectedDay === null){
+    const today = new Date();
+    if(today.getFullYear() === tmCalDate.getFullYear() && today.getMonth() === tmCalDate.getMonth()){
+      tmSelectedDay = tmDateKey(today);
+    }
+  }
   tmRenderCalendarGrid();
   if(tmSelectedDay) tmRenderDayList();
 }
@@ -5237,10 +5253,11 @@ async function tmLoadCalendarEvents(){
   const month = tmCalDate.getMonth();
   const rangeStart = new Date(year, month, 1).toISOString().slice(0,10);
   const rangeEnd = new Date(year, month + 1, 0).toISOString().slice(0,10);
-  const [tsRes, ipRes, ipTerminRes] = await Promise.all([
+  const [tsRes, ipRes, ipTerminRes, atRes] = await Promise.all([
     sb.from('timesheets').select('id,berichtsnr,auftraggeber,einsatzdatum').gte('einsatzdatum', rangeStart).lte('einsatzdatum', rangeEnd),
     sb.from('protocols').select('id,nr,auftraggeber,datum').gte('datum', rangeStart).lte('datum', rangeEnd),
-    sb.from('protocols').select('id,nr,auftraggeber,naechster_termin').gte('naechster_termin', rangeStart).lte('naechster_termin', rangeEnd)
+    sb.from('protocols').select('id,nr,auftraggeber,naechster_termin').gte('naechster_termin', rangeStart).lte('naechster_termin', rangeEnd),
+    sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,status').gte('datum', rangeStart).lte('datum', rangeEnd)
   ]);
   const map = {};
   const push = (dateStr, ev) => {
@@ -5253,6 +5270,7 @@ async function tmLoadCalendarEvents(){
   (tsRes.data||[]).forEach(r => push(r.einsatzdatum, { type:'ts', id:r.id, label:'Stundennachweis', nr:r.berichtsnr, kunde:r.auftraggeber, overdue:false }));
   (ipRes.data||[]).forEach(r => push(r.datum, { type:'ip', id:r.id, label:'Ausführungsprotokoll', nr:r.nr, kunde:r.auftraggeber, overdue:false }));
   (ipTerminRes.data||[]).forEach(r => push(r.naechster_termin, { type:'ip', id:r.id, label:'Prüf-/Austauschtermin', nr:r.nr, kunde:r.auftraggeber, overdue:r.naechster_termin < todayStr }));
+  (atRes.data||[]).forEach(r => push(r.datum, { type:'at', id:r.id, label:r.beschreibung || 'Auftrag', nr:'', kunde:r.auftraggeber, overdue:r.status !== 'abgeschlossen' && r.datum < todayStr }));
   tmEventsByDate = map;
 }
 function tmSelectDay(key){
@@ -5266,17 +5284,20 @@ function tmRenderDayList(){
   const wrap = document.getElementById('tm_dayList');
   const events = tmEventsByDate[tmSelectedDay] || [];
   if(!events.length){ wrap.innerHTML = '<div class="empty-note">Keine Termine an diesem Tag.</div>'; return; }
-  wrap.innerHTML = events.map(e => `
-    <div class="modal-item">
-      <div class="info">
+  wrap.innerHTML = events.map(e => {
+    const openFn = e.type === 'at'
+      ? `(async()=>{ await switchPage('auftraege'); await atLoadList(); atOpenModal('${e.id}'); })()`
+      : `(async()=>{ await switchPage('${e.type === 'ts' ? 'stunden' : 'installation'}'); await ${e.type === 'ts' ? `tsLoadTimesheet('${e.id}')` : `ipLoadProtocol('${e.id}')`}; })()`;
+    return `
+    <div class="kd-list-row" onclick="${openFn}">
+      <div class="kd-list-body">
         <div class="name">${escAttr(e.kunde || 'Ohne Kunde')} ${e.overdue ? '<span class="status-badge offen">Überfällig</span>' : ''}</div>
-        <div class="sub">${escAttr(e.label)} · ${escAttr(e.nr || '')}</div>
+        <div class="sub-line">${escAttr(e.label)} · ${escAttr(e.nr || '')}</div>
       </div>
-      <div class="modal-actions" style="grid-template-columns:1fr;">
-        <button class="btn small" onclick="(async()=>{ await switchPage('${e.type === 'ts' ? 'stunden' : 'installation'}'); await ${e.type === 'ts' ? `tsLoadTimesheet('${e.id}')` : `ipLoadProtocol('${e.id}')`}; })()">Öffnen</button>
-      </div>
+      <span class="kd-list-chevron">›</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function tmLoadTermine(){
@@ -5298,12 +5319,11 @@ async function tmLoadTermine(){
     else { dueLabel = `in ${days} Tagen`; dueClass = 'abgeschlossen'; }
     return `
       <div class="modal-item">
-        <div class="info">
+        <div class="info" style="cursor:pointer;" onclick="(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()">
           <div class="name">${escAttr(r.auftraggeber || 'Ohne Kunde')} <span class="status-badge ${dueClass}">${escAttr(fmtDate(r.naechster_termin))} · ${escAttr(dueLabel)}</span></div>
           <div class="sub">${escAttr(r.objekt || '')}${r.objekt ? ' · ' : ''}${escAttr(r.nr || '')}</div>
         </div>
         <div class="modal-actions">
-          <button class="btn small" onclick="(async()=>{ await switchPage('installation'); await ipLoadProtocol('${r.id}'); })()">Öffnen</button>
           <button class="btn small" onclick='tmAddToCalendar(${JSON.stringify((r.auftraggeber||"Termin") + (r.objekt ? " – "+r.objekt : ""))}, ${JSON.stringify(r.naechster_termin)}, ${JSON.stringify("Nächster Prüf-/Austauschtermin, "+(r.nr||""))})'>In Kalender speichern</button>
           <button class="btn small" onclick="tmMarkDone('${r.id}')">Erledigt</button>
         </div>
