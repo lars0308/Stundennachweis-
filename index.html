@@ -239,6 +239,10 @@
   }
   .kd-subtab.active{color:var(--green-dark);border-bottom-color:var(--green);}
   #kd_inlineNotizen{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;}
+  .kd-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .kd-stats-grid > div{display:flex;flex-direction:column;gap:2px;}
+  .kd-stats-value{font-size:20px;font-weight:700;color:var(--green-dark);}
+  .kd-stats-label{font-size:11.5px;color:var(--muted);}
 
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -1151,6 +1155,10 @@
           <section class="card">
             <div class="card-head"><h2>Letzter Auftrag</h2></div>
             <div id="kd_letzterAuftrag"><div class="empty-note">Lädt…</div></div>
+          </section>
+          <section class="card">
+            <div class="card-head"><h2>Statistiken</h2></div>
+            <div id="kd_stats"><div class="empty-note">Lädt…</div></div>
           </section>
           <section class="card">
             <div class="card-head"><h2>Schnellaktionen</h2></div>
@@ -4267,16 +4275,25 @@ function kdRenderDetailPanel(c){
 }
 async function kdLoadLetzterAuftrag(c){
   const wrap = document.getElementById('kd_letzterAuftrag');
-  if(!c.name){ wrap.innerHTML = '<div class="empty-note">Kein Auftraggeber-Name hinterlegt.</div>'; return; }
+  const statsWrap = document.getElementById('kd_stats');
+  if(!c.name){
+    wrap.innerHTML = '<div class="empty-note">Kein Auftraggeber-Name hinterlegt.</div>';
+    statsWrap.innerHTML = '<div class="empty-note">–</div>';
+    return;
+  }
   const [tsRes, ipRes] = await Promise.all([
-    sb.from('timesheets').select('id,berichtsnr,taetigkeiten,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}).limit(1),
-    sb.from('protocols').select('id,nr,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}).limit(1)
+    sb.from('timesheets').select('id,berichtsnr,taetigkeiten,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false}),
+    sb.from('protocols').select('id,nr,status,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
   ]);
   const items = [
     ...((tsRes.data||[]).map(r => ({ ...r, _type:'ts', nrLabel:r.berichtsnr, beschreibung:r.taetigkeiten }))),
     ...((ipRes.data||[]).map(r => ({ ...r, _type:'ip', nrLabel:r.nr, beschreibung:'Ausführungsprotokoll' })))
   ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch kein Auftrag für diesen Kunden.</div>'; return; }
+  if(!items.length){
+    wrap.innerHTML = '<div class="empty-note">Noch kein Auftrag für diesen Kunden.</div>';
+    statsWrap.innerHTML = '<div class="empty-note">Noch keine Daten.</div>';
+    return;
+  }
   const r = items[0];
   const badge = r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>';
   wrap.innerHTML = `
@@ -4288,6 +4305,17 @@ async function kdLoadLetzterAuftrag(c){
       <div class="modal-actions" style="grid-template-columns:1fr;">
         <button class="btn small" onclick="${r._type === 'ts' ? `tsLoadTimesheet('${r.id}')` : `ipLoadProtocol('${r.id}')`};switchPage('${r._type === 'ts' ? 'stunden' : 'installation'}')">Öffnen</button>
       </div>
+    </div>
+  `;
+  const gesamt = items.length;
+  const abgeschlossen = items.filter(x => x.status === 'abgeschlossen').length;
+  const offen = gesamt - abgeschlossen;
+  statsWrap.innerHTML = `
+    <div class="kd-stats-grid">
+      <div><span class="kd-stats-value">${gesamt}</span><span class="kd-stats-label">Gesamtaufträge</span></div>
+      <div><span class="kd-stats-value">${abgeschlossen}</span><span class="kd-stats-label">Abgeschlossen</span></div>
+      <div><span class="kd-stats-value">${offen}</span><span class="kd-stats-label">Offen</span></div>
+      <div><span class="kd-stats-value">${escAttr(fmtDate(r.created_at))}</span><span class="kd-stats-label">Letzter Kontakt</span></div>
     </div>
   `;
 }
