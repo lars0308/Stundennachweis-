@@ -179,6 +179,49 @@
   .modal-overlay.open{display:flex;}
   .modal{background:#fff;border-radius:12px;max-width:480px;width:100%;max-height:80vh;overflow:auto;padding:18px;}
   .modal h3{margin:0 0 12px;font-size:15px;color:var(--green-dark);}
+
+  /* "Mehr"-Menü als schlankes Bottom-Sheet statt zentriertem Popup */
+  .modal-overlay.sheet{align-items:flex-end;padding:0;}
+  .modal-overlay.sheet .modal{
+    border-radius:18px 18px 0 0;max-width:560px;max-height:85vh;
+    padding:0 0 calc(10px + env(safe-area-inset-bottom));
+    animation:sheetUp .18s ease-out;
+  }
+  @keyframes sheetUp{ from{transform:translateY(16px);opacity:.6;} to{transform:translateY(0);opacity:1;} }
+  .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:10px auto 4px;}
+  .sheet-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 16px 12px;border-bottom:1px solid var(--border);
+  }
+  .sheet-header h3{margin:0;font-size:16px;color:#1f2937;font-weight:700;}
+  .sheet-close{
+    border:none;background:#f3f4f6;color:var(--muted);border-radius:50%;
+    width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:15px;flex-shrink:0;
+  }
+  .sheet-list{padding:6px 8px;}
+  .sheet-section-label{
+    font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);
+    text-transform:uppercase;padding:14px 10px 6px;
+  }
+  .sheet-row{
+    display:flex;align-items:center;gap:12px;width:100%;
+    background:none;border:none;text-align:left;cursor:pointer;
+    padding:11px 10px;border-radius:10px;font-size:14.5px;color:#1f2937;font-weight:500;
+  }
+  .sheet-row:active, .sheet-row:hover{background:var(--green-light);}
+  .sheet-row .icon-circle{
+    width:34px;height:34px;border-radius:50%;background:var(--green-light);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--green-dark);
+  }
+  .sheet-row .icon-circle svg{width:17px;height:17px;stroke:currentColor;}
+  .sheet-row .row-text{flex:1;display:flex;flex-direction:column;line-height:1.3;}
+  .sheet-row .row-sub{font-size:11px;color:var(--muted);font-weight:400;}
+  .sheet-row .row-chevron{color:#d1d5db;flex-shrink:0;}
+  .sheet-row .row-chevron svg{width:16px;height:16px;stroke:currentColor;}
+  .sheet-row.danger{color:#b91c1c;}
+  .sheet-row.danger .icon-circle{background:#fdeaea;color:#b91c1c;}
+  .sheet-divider{height:1px;background:var(--border);margin:6px 4px;}
   .modal-item{
     display:flex;flex-direction:column;align-items:stretch;gap:8px;
     padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;
@@ -272,6 +315,18 @@
     font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;
   }
   .kd-chip.active{background:var(--green-dark);color:#fff;}
+
+  /* Aufträge-Liste im Karten-Look der Mockups: Titel+Status oben, Kunde/Datum darunter */
+  .at-list-row{
+    display:flex;align-items:flex-start;gap:10px;padding:13px 12px;
+    border:1px solid var(--border);border-radius:10px;margin-bottom:8px;
+    cursor:pointer;background:#fff;transition:background .15s;
+  }
+  .at-list-row:active{background:#f7f8f6;}
+  .at-list-body{flex:1;min-width:0;}
+  .at-list-body .at-title{font-weight:600;font-size:13.5px;color:var(--text);}
+  .at-list-body .at-sub{color:var(--muted);font-size:11.5px;margin-top:2px;}
+  .at-list-row .status-badge{flex-shrink:0;margin-top:1px;white-space:nowrap;}
   .kd-lightbox{
     display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);
     flex-direction:column;align-items:center;justify-content:center;padding:16px;
@@ -345,11 +400,12 @@
     box-shadow:0 -2px 10px rgba(0,0,0,.05);
   }
   .tab-btn{
-    flex:1;border:none;background:none;padding:6px 2px;font-size:10.5px;font-weight:600;
+    flex:1;border:none;background:none;padding:6px 1px;font-size:9.5px;font-weight:600;
     color:var(--muted);cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;
+    min-width:0;
   }
-  .tab-icon-svg{width:21px;height:21px;stroke:currentColor;}
+  .tab-icon-svg{width:19px;height:19px;stroke:currentColor;}
   .tab-btn.active{color:var(--green-dark);}
   .tab-btn:hover{color:var(--green-dark);}
   main{padding-bottom:70px;}
@@ -409,7 +465,7 @@
     #printArea{ position:absolute; left:0; top:0; width:100%; display:block !important; }
   }
 
-  .pd-page{ width:100%; padding:6mm 4mm; font-family: Arial, Helvetica, sans-serif; color:#111; box-sizing:border-box; }
+  .pd-page{ width:210mm; padding:6mm 4mm; font-family: Arial, Helvetica, sans-serif; color:#111; box-sizing:border-box; }
   .pd-pagebreak{ page-break-before: always; }
   .pd-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
   .pd-logo{ height:78px; object-fit:contain; }
@@ -490,6 +546,7 @@
     display:inline-block; padding:2px 9px; border-radius:999px; font-size:10.5px; font-weight:600; margin-left:8px;
   }
   .status-badge.offen{ background:#fdf1e0; color:#92620a; }
+  .status-badge.geplant{ background:#e8f0fb; color:#1d4ed8; }
   .status-badge.abgeschlossen{ background:#e6efe0; color:var(--green-dark); }
   .status-badge.offline-item{ background:#fdeaea; color:#b91c1c; }
 
@@ -1511,25 +1568,62 @@
       <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
       <span>Termine</span>
     </button>
+    <button class="tab-btn" data-page="auftraege" onclick="switchPage('auftraege')">
+      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      <span>Aufträge</span>
+    </button>
     <button class="tab-btn" data-page="mehr" onclick="openMehrMenu()">
       <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
       <span>Mehr</span>
     </button>
   </nav>
 
-  <div class="modal-overlay" id="mehrMenu">
+  <div class="modal-overlay sheet" id="mehrMenu">
     <div class="modal">
-      <button class="modal-x" onclick="closeMehrMenu()">✕</button>
-      <h3>Mehr</h3>
-      <div class="btn-row" style="flex-direction:column;">
-        <button class="btn" onclick="closeMehrMenu();newItem()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Neu (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();saveItem()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path></svg> Speichern (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();printCurrent()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> PDF erstellen (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();emailCurrent()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg> Per E-Mail senden (aktuelle Seite)</button>
-        <button class="btn" onclick="closeMehrMenu();switchPage('fahrtenbuch')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg> Fahrtenbuch</button>
-        <button class="btn" onclick="closeMehrMenu();switchPage('material')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg> Material</button>
-        <button class="btn" onclick="closeMehrMenu();switchPage('auftraege')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg> Aufträge</button>
-        <button class="btn" onclick="closeMehrMenu();logout()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Abmelden</button>
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h3>Mehr</h3>
+        <button class="sheet-close" onclick="closeMehrMenu()" aria-label="Schließen">✕</button>
+      </div>
+      <div class="sheet-list">
+        <div class="sheet-section-label">Aktuelle Seite</div>
+        <button class="sheet-row" onclick="closeMehrMenu();newItem()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span>
+          <span class="row-text">Neu</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();saveItem()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path></svg></span>
+          <span class="row-text">Speichern</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();printCurrent()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg></span>
+          <span class="row-text">PDF erstellen</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();emailCurrent()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span>
+          <span class="row-text">Per E-Mail senden</span>
+        </button>
+
+        <div class="sheet-divider"></div>
+        <div class="sheet-section-label">Bereiche</div>
+        <button class="sheet-row" onclick="closeMehrMenu();switchPage('start')">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"></path></svg></span>
+          <span class="row-text">Startseite</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();switchPage('fahrtenbuch')">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
+          <span class="row-text">Fahrtenbuch</span>
+        </button>
+        <button class="sheet-row" onclick="closeMehrMenu();switchPage('material')">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+          <span class="row-text">Material</span>
+        </button>
+
+        <div class="sheet-divider"></div>
+        <button class="sheet-row danger" onclick="closeMehrMenu();logout()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span>
+          <span class="row-text">Abmelden</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2127,7 +2221,24 @@ async function uploadPhotosToDrive(photos, customerName, kdnr, rechnungsanschrif
 /* ---------- Aktuelle Vorschau als echte PDF-Datei direkt in Google Drive speichern ---------- */
 async function buildPdfDataUrlFromPrintArea(){
   const area = document.getElementById('printArea');
-  const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  // Für die Aufnahme immer die volle (unskalierte) Seitenbreite verwenden — die
+  // Bildschirm-Vorschau ist ggf. nur optisch verkleinert (siehe scalePreviewPages),
+  // die echte PDF-Datei soll aber immer in voller Auflösung/Proportion entstehen.
+  const pages = area.querySelectorAll('.pd-page');
+  const savedTransforms = [];
+  pages.forEach(page => { savedTransforms.push(page.style.transform); page.style.transform = 'none'; });
+  const savedWrapStyles = [];
+  area.querySelectorAll('.pd-page-scaler').forEach(wrap => {
+    savedWrapStyles.push({ el: wrap, width: wrap.style.width, height: wrap.style.height, overflow: wrap.style.overflow });
+    wrap.style.width = ''; wrap.style.height = ''; wrap.style.overflow = 'visible';
+  });
+  let canvas;
+  try {
+    canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  } finally {
+    pages.forEach((page, i) => { page.style.transform = savedTransforms[i]; });
+    savedWrapStyles.forEach(s => { s.el.style.width = s.width; s.el.style.height = s.height; s.el.style.overflow = s.overflow; });
+  }
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageW = pdf.internal.pageSize.getWidth();
@@ -2245,7 +2356,7 @@ async function enterApp(){
   if(addBtn) addBtn.style.display = '';
   const headerLogo = document.getElementById('headerLogo');
   if(headerLogo) headerLogo.src = logoSrc();
-  stRenderDashboard();
+  await switchPage('start');
 }
 sb.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
@@ -4127,9 +4238,40 @@ async function printCurrent(){
     area.classList.add('preview-open');
     document.getElementById('previewToolbar').classList.add('open');
     area.scrollTop = 0;
+    scalePreviewPages();
   } finally {
     printInProgress = false;
   }
+}
+/* Die .pd-page-Elemente haben eine feste A4-Breite (210mm), damit ihr Layout
+   nie zusammengequetscht wird. Auf einem schmalen Handy-Bildschirm wird die
+   ganze Seite deshalb hier per CSS-Transform verkleinert dargestellt — das
+   eigentliche HTML/Layout bleibt dabei unangetastet (und damit unverzerrt),
+   nur die Anzeige wird skaliert. Die für die echte PDF-Datei genutzte
+   html2canvas-Aufnahme liest weiterhin die reale, unskalierte Breite aus. */
+function scalePreviewPages(){
+  const area = document.getElementById('printArea');
+  const pages = area.querySelectorAll('.pd-page');
+  const availWidth = window.innerWidth - 20; // 10px Rand links/rechts
+  pages.forEach(page => {
+    page.style.transform = '';
+    let wrap = page.parentElement;
+    if(!wrap || !wrap.classList.contains('pd-page-scaler')){
+      wrap = document.createElement('div');
+      wrap.className = 'pd-page-scaler';
+      page.parentNode.insertBefore(wrap, page);
+      wrap.appendChild(page);
+    }
+    const naturalWidth = page.offsetWidth;
+    const naturalHeight = page.offsetHeight;
+    const scale = Math.min(1, availWidth / naturalWidth);
+    page.style.transformOrigin = 'top left';
+    page.style.transform = 'scale(' + scale + ')';
+    wrap.style.width = (naturalWidth * scale) + 'px';
+    wrap.style.height = (naturalHeight * scale) + 'px';
+    wrap.style.margin = '0 auto 16px';
+    wrap.style.overflow = 'hidden';
+  });
 }
 function closePreview(){
   document.getElementById('printArea').classList.remove('preview-open');
@@ -5083,19 +5225,16 @@ function atRenderList(){
   const wrap = document.getElementById('at_list');
   const items = atFilter === 'alle' ? atItems : atItems.filter(a => a.status === atFilter);
   if(!items.length){ wrap.innerHTML = '<div class="empty-note">Keine Aufträge in dieser Ansicht.</div>'; return; }
-  const badgeClass = { offen:'offen', geplant:'offen', abgeschlossen:'abgeschlossen' };
+  const badgeClass = { offen:'offen', geplant:'geplant', abgeschlossen:'abgeschlossen' };
   const badgeText = { offen:'Offen', geplant:'Geplant', abgeschlossen:'Abgeschlossen' };
   wrap.innerHTML = items.map(a => `
-    <div class="modal-item">
-      <div class="info">
-        <div class="name">${escAttr(a.beschreibung || 'Ohne Titel')} <span class="status-badge ${badgeClass[a.status]||'offen'}">${badgeText[a.status]||a.status}</span></div>
-        <div class="sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}${a.datum ? ' · '+escAttr(fmtDate(a.datum)) : ''}</div>
+    <div class="at-list-row" onclick="atOpenModal('${a.id}')">
+      <div class="at-list-body">
+        <div class="at-title">${escAttr(a.beschreibung || 'Ohne Titel')}</div>
+        <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
+        ${a.datum ? `<div class="at-sub">${escAttr(fmtDate(a.datum))}</div>` : ''}
       </div>
-      <div class="modal-actions">
-        <button class="btn small" ${a.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(a.tel||'')}')">Anrufen</button>
-        <button class="btn small" ${a.adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escAttr(a.adresse||'')}')">Route</button>
-        <button class="btn small" onclick="atOpenModal('${a.id}')" style="grid-column:1 / -1;">Bearbeiten</button>
-      </div>
+      <span class="status-badge ${badgeClass[a.status]||'offen'}">${badgeText[a.status]||a.status}</span>
     </div>
   `).join('');
 }
