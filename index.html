@@ -238,8 +238,8 @@
   .modal-group{margin-bottom:14px;}
   .modal-group summary{
     cursor:pointer;font-weight:700;font-size:13px;color:var(--green-dark);
-    padding:8px 4px;list-style:none;display:flex;align-items:center;gap:6px;
-    border-bottom:1px solid var(--border);margin-bottom:8px;
+    padding:8px 4px;list-style:none;display:flex;align-items:center;gap:8px;
+    border-bottom:2px solid var(--green-light);margin-bottom:10px;
   }
   .modal-group summary::-webkit-details-marker{display:none;}
   .modal-group summary::before{content:'▸';display:inline-block;transition:transform .15s;color:var(--muted);}
@@ -580,6 +580,8 @@
   .trip-field-grid .field{margin:0;}
   .trip-field-grid .field label{font-size:9.5px;}
   .trip-field-grid .field input, .trip-field-grid .field select{font-size:13px;padding:5px 0;}
+  .dc-check-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13.5px;}
+  .dc-check-row input{width:18px;height:18px;flex-shrink:0;}
 
   /* Saubere Zusammenfassungs-Ansicht für abgeschlossene Nachweise/Protokolle,
      statt einfach das (gesperrte) Formular grau anzuzeigen. */
@@ -1747,74 +1749,85 @@
         <div class="start-date" id="st_dateLine"></div>
       </div>
 
-      <div class="start-stats-grid">
-        <div class="start-stat-card" onclick="switchPage('termine')">
+      <div class="start-stats-grid" id="st_statsGrid">
+        <div class="start-stat-card" data-tile="heuteTermine" onclick="switchPage('termine')">
           <div class="start-stat-value" id="st_heuteTermine">–</div>
           <div class="start-stat-label">Heute Termine</div>
         </div>
-        <div class="start-stat-card" onclick="switchPage('auftraege')">
+        <div class="start-stat-card" data-tile="offeneAuftraege" onclick="switchPage('auftraege')">
           <div class="start-stat-value" id="st_offeneAuftraege">–</div>
           <div class="start-stat-label">Offene Aufträge</div>
         </div>
-        <div class="start-stat-card" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('rechnungen'); })()">
+        <div class="start-stat-card" data-tile="rechnungenOffen" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('rechnungen'); })()">
           <div class="start-stat-value" id="st_rechnungenOffen">–</div>
           <div class="start-stat-label">Rechnungen offen</div>
         </div>
-        <div class="start-stat-card" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('angebote'); })()">
+        <div class="start-stat-card" data-tile="angeboteOffen" onclick="(async()=>{ await switchPage('angebote'); agSwitchType('angebote'); })()">
           <div class="start-stat-value" id="st_angeboteOffen">–</div>
           <div class="start-stat-label">Angebote offen</div>
         </div>
-        <div class="start-stat-card" onclick="switchPage('termine')">
+        <div class="start-stat-card" data-tile="anstehendeTermine" onclick="switchPage('termine')">
           <div class="start-stat-value" id="st_anstehendeTermine">–</div>
           <div class="start-stat-label">Anstehende Termine</div>
         </div>
-        <div class="start-stat-card" onclick="switchPage('kunden')">
+        <div class="start-stat-card" data-tile="kundenGesamt" onclick="switchPage('kunden')">
           <div class="start-stat-value" id="st_kundenGesamt">–</div>
           <div class="start-stat-label">Kunden gesamt</div>
         </div>
-        <div class="start-stat-card" id="st_kontostandCard" style="display:none;" onclick="openAllAccountsModal()">
+        <div class="start-stat-card" data-tile="kontostand" id="st_kontostandCard" style="display:none;" onclick="openAllAccountsModal()">
           <div class="start-stat-value" id="st_kontostand">–</div>
           <div class="start-stat-label" id="st_kontostandLabel">Kontostand</div>
         </div>
       </div>
 
+      <section class="start-section" id="st_kontoChartSection" style="display:none;">
+        <div class="start-section-head"><h2>Konten-Übersicht</h2><a onclick="openAllAccountsModal()">Details</a></div>
+        <div id="st_kontoChart"></div>
+      </section>
+
+      <section class="start-section" id="st_statsSection" style="display:none;">
+        <div class="start-section-head"><h2>Statistiken</h2></div>
+        <div class="fb-summary" id="st_statsGridBox"></div>
+      </section>
+
       <section class="start-section">
-        <div class="start-section-head"><h2>Schnellaktionen</h2></div>
-        <div class="qa-grid">
-          <button class="qa-tile" onclick="kdOpenModal(null, true)">
+        <div class="start-section-head"><h2>Schnellaktionen</h2><a onclick="openDashboardCustomize()">Anpassen</a></div>
+        <div class="qa-grid" id="st_qaGrid">
+          <button class="qa-tile" data-tile="neuerKunde" onclick="kdOpenModal(null, true)">
             <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg></span>
             <span>Neuer Kunde</span>
           </button>
-          <button class="qa-tile" onclick="atOpenModal(null)">
+          <button class="qa-tile" data-tile="neuerAuftrag" onclick="atOpenModal(null)">
             <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
             <span>Neuer Auftrag</span>
           </button>
-          <button class="qa-tile" onclick="tsGoToChooser()">
+          <button class="qa-tile" data-tile="stundenStarten" onclick="tsGoToChooser()">
             <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
             <span>Stunden starten</span>
           </button>
-          <button class="qa-tile" onclick="switchPage('installation')">
+          <button class="qa-tile" data-tile="berichtErstellen" onclick="switchPage('installation')">
             <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
             <span>Bericht erstellen</span>
           </button>
-          <button class="qa-tile" onclick="switchPage('fahrtenbuch')">
+          <button class="qa-tile" data-tile="fahrtenbuch" onclick="switchPage('fahrtenbuch')">
             <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
             <span>Fahrtenbuch</span>
           </button>
-          <button class="qa-tile" onclick="switchPage('material')">
+          <button class="qa-tile" data-tile="material" onclick="switchPage('material')">
             <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
             <span>Material</span>
           </button>
-          <button class="qa-tile" onclick="stQuickOpenAg('angebote')">
+          <button class="qa-tile" data-tile="angebotErstellen" onclick="stQuickOpenAg('angebote')">
             <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h1"></path></svg></span>
             <span>Angebot erstellen</span>
           </button>
-          <button class="qa-tile" onclick="stQuickOpenAg('rechnungen')">
+          <button class="qa-tile" data-tile="rechnungErstellen" onclick="stQuickOpenAg('rechnungen')">
             <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M10 13h4"></path><path d="M10 17h4"></path></svg></span>
             <span>Rechnung erstellen</span>
           </button>
         </div>
       </section>
+
 
       <section class="start-section">
         <div class="start-section-head"><h2>Nächste Termine</h2><a onclick="switchPage('termine')">Alle anzeigen</a></div>
@@ -2091,6 +2104,22 @@
       <button class="modal-x" onclick="document.getElementById('accountsModal').classList.remove('open')">✕</button>
       <h3>Konten &amp; Kontostände</h3>
       <div id="accountsModalList"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Startseite anpassen (welche Kacheln sichtbar sind) -->
+  <div class="modal-overlay" id="dashboardCustomizeModal">
+    <div class="modal">
+      <button class="modal-x" onclick="closeDashboardCustomize()">✕</button>
+      <h3>Startseite anpassen</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;">Wähle, welche Kacheln auf der Startseite angezeigt werden.</p>
+      <div class="sheet-section-label">Statistik-Kacheln</div>
+      <div id="dc_statsList"></div>
+      <div class="sheet-section-label" style="margin-top:14px;">Schnellaktionen</div>
+      <div id="dc_qaList"></div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn primary" onclick="closeDashboardCustomize()">Fertig</button>
+      </div>
     </div>
   </div>
 
@@ -3738,17 +3767,18 @@ async function tsRenderModalList(){
     details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
     group.items.forEach(t => {
       const div = document.createElement('div');
-      div.className = 'modal-item';
+      div.className = 'trip-card';
       const statusBadge = t._offline
         ? '<span class="status-badge offline-item">Offline · wartet</span>'
         : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
       div.innerHTML = `
-        <div class="info">
-          <div class="name">${escAttr(t.berichtsnr || 'Ohne Nr.')} ${statusBadge}</div>
-          <div class="sub">${escAttr(t.objekt || '')}${t.objekt ? ' · ' : ''}${fmtDateTime(t.created_at)}</div>
+        <div class="trip-card-top">
+          <span class="trip-card-date">${escAttr(t.berichtsnr || 'Ohne Nr.')}</span>
+          ${statusBadge}
         </div>
-        <div class="modal-actions">
-          <button class="btn small" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
+        <div class="trip-meta-row"><span>${escAttr(t.objekt || 'Ohne Objekt')}</span><span>${fmtDateTime(t.created_at)}</span></div>
+        <div class="btn-row">
+          <button class="btn small primary" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
           <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
           <button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Vorlage</button>
           <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
@@ -4279,17 +4309,18 @@ async function ipRenderModalList(){
     details.innerHTML = `<summary>${escAttr(group.name)} <span class="modal-group-count">(${group.items.length})</span></summary>`;
     group.items.forEach(p => {
       const div = document.createElement('div');
-      div.className = 'modal-item';
+      div.className = 'trip-card';
       const statusBadge = p._offline
         ? '<span class="status-badge offline-item">Offline · wartet</span>'
         : (p.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
       div.innerHTML = `
-        <div class="info">
-          <div class="name">${escAttr(p.nr || 'Ohne Nr.')} ${statusBadge}</div>
-          <div class="sub">${escAttr(p.objekt || '')}${p.objekt ? ' · ' : ''}${fmtDateTime(p.created_at)}</div>
+        <div class="trip-card-top">
+          <span class="trip-card-date">${escAttr(p.nr || 'Ohne Nr.')}</span>
+          ${statusBadge}
         </div>
-        <div class="modal-actions">
-          <button class="btn small" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
+        <div class="trip-meta-row"><span>${escAttr(p.objekt || 'Ohne Objekt')}</span><span>${fmtDateTime(p.created_at)}</span></div>
+        <div class="btn-row">
+          <button class="btn small primary" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
           <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
           <button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Vorlage</button>
           <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
@@ -4691,6 +4722,64 @@ async function saveAppSettings(){
   applyAppSettings();
   showToast('Einstellungen gespeichert');
   closeAppSettingsModal();
+}
+
+/* ================================================================
+   STARTSEITE ANPASSEN (welche Kacheln sichtbar sind)
+   Reine Anzeige-Präferenz für dieses Gerät -> localStorage genügt.
+   ================================================================ */
+const DASHBOARD_STAT_LABELS = {
+  heuteTermine: 'Heute Termine', offeneAuftraege: 'Offene Aufträge',
+  rechnungenOffen: 'Rechnungen offen', angeboteOffen: 'Angebote offen',
+  anstehendeTermine: 'Anstehende Termine', kundenGesamt: 'Kunden gesamt',
+  kontostand: 'Kontostand (nur mit sevDesk)'
+};
+const DASHBOARD_QA_LABELS = {
+  neuerKunde: 'Neuer Kunde', neuerAuftrag: 'Neuer Auftrag', stundenStarten: 'Stunden starten',
+  berichtErstellen: 'Bericht erstellen', fahrtenbuch: 'Fahrtenbuch', material: 'Material',
+  angebotErstellen: 'Angebot erstellen', rechnungErstellen: 'Rechnung erstellen'
+};
+function dashboardTilePrefs(){
+  try { return JSON.parse(localStorage.getItem('dashboardTiles') || '{}'); } catch(e){ return {}; }
+}
+function isDashboardTileVisible(key){
+  const prefs = dashboardTilePrefs();
+  return prefs[key] !== false; // Standard: sichtbar, außer explizit ausgeblendet
+}
+function setDashboardTileVisible(key, visible){
+  const prefs = dashboardTilePrefs();
+  prefs[key] = visible;
+  localStorage.setItem('dashboardTiles', JSON.stringify(prefs));
+  applyDashboardCustomization();
+}
+function applyDashboardCustomization(){
+  document.querySelectorAll('#st_statsGrid [data-tile]').forEach(el => {
+    if(el.id === 'st_kontostandCard' && !sevdeskConnected()) return; // eigene Logik lässt das ausgeblendet
+    el.style.display = isDashboardTileVisible(el.dataset.tile) ? '' : 'none';
+  });
+  document.querySelectorAll('#st_qaGrid [data-tile]').forEach(el => {
+    el.style.display = isDashboardTileVisible(el.dataset.tile) ? '' : 'none';
+  });
+}
+function openDashboardCustomize(){
+  const statsWrap = document.getElementById('dc_statsList');
+  const qaWrap = document.getElementById('dc_qaList');
+  statsWrap.innerHTML = Object.entries(DASHBOARD_STAT_LABELS).map(([key,label]) => `
+    <label class="dc-check-row">
+      <input type="checkbox" ${isDashboardTileVisible(key) ? 'checked' : ''} onchange="setDashboardTileVisible('${key}', this.checked)">
+      <span>${label}</span>
+    </label>
+  `).join('');
+  qaWrap.innerHTML = Object.entries(DASHBOARD_QA_LABELS).map(([key,label]) => `
+    <label class="dc-check-row">
+      <input type="checkbox" ${isDashboardTileVisible(key) ? 'checked' : ''} onchange="setDashboardTileVisible('${key}', this.checked)">
+      <span>${label}</span>
+    </label>
+  `).join('');
+  document.getElementById('dashboardCustomizeModal').classList.add('open');
+}
+function closeDashboardCustomize(){
+  document.getElementById('dashboardCustomizeModal').classList.remove('open');
 }
 
 function logoSrc(){
@@ -6196,6 +6285,30 @@ async function sevdeskGetAccountBalance(){
   return { name: account.name || 'Konto', balance: Number(balance) || 0 };
 }
 // Alle hinterlegten Konten mit jeweiligem Kontostand (für die Übersicht aller Konten)
+// Verlauf des Kontostands (Summe aller Konten) über die letzten Monate.
+// Nutzt den offiziell dokumentierten Endpunkt GET /CheckAccount/{id}/getBalanceAtDate.
+// Hinweis: das genaue Datumsformat für "date" konnte hier nicht an einem echten
+// Account getestet werden (ISO "YYYY-MM-DD" ist der übliche Standard bei sevDesk-
+// Datumsfeldern) — falls der Verlauf leer bleibt, bitte kurz Bescheid geben.
+async function sevdeskGetBalanceHistoryAllAccounts(months){
+  const accounts = await sevdeskFetch('/CheckAccount');
+  if(!accounts.length) return [];
+  const now = new Date();
+  const points = [];
+  for(let i = months - 1; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth() - i + 1, 0); // letzter Tag des jeweiligen Monats
+    const dateStr = d.toISOString().slice(0,10);
+    let sum = 0;
+    for(const acc of accounts){
+      try {
+        const res = await sevdeskFetchRaw('/CheckAccount/' + acc.id + '/getBalanceAtDate?date=' + dateStr);
+        sum += Number(res.objects) || 0;
+      } catch(e){ /* einzelnes Konto ignorieren, Rest trotzdem zeigen */ }
+    }
+    points.push({ label: d.toLocaleDateString('de-DE', { month:'short', year:'2-digit' }), value: sum });
+  }
+  return points;
+}
 async function sevdeskGetAllAccountBalances(){
   const accounts = await sevdeskFetch('/CheckAccount');
   const results = [];
@@ -6943,6 +7056,75 @@ async function stRenderDashboard(){
       `).join('');
     }
   }
+
+  applyDashboardCustomization();
+  stRenderStats(atOpenRes);
+  if(sevdeskConnected()){
+    stRenderKontoChart();
+  } else {
+    document.getElementById('st_kontoChartSection').style.display = 'none';
+  }
+}
+
+// Einfaches, selbstgebautes SVG-Balkendiagramm (keine externe Chart-Bibliothek nötig)
+function renderSimpleBarChart(container, points){
+  if(!points.length){ container.innerHTML = '<div class="empty-note">Keine Daten verfügbar.</div>'; return; }
+  const w = 320, h = 130, padBottom = 20, padTop = 10;
+  const max = Math.max(...points.map(p => p.value), 1);
+  const barW = w / points.length;
+  const bars = points.map((p, i) => {
+    const barH = max > 0 ? ((p.value / max) * (h - padBottom - padTop)) : 0;
+    const x = i * barW + barW * 0.15;
+    const y = h - padBottom - barH;
+    return `<rect x="${x}" y="${y}" width="${barW*0.7}" height="${barH}" rx="3" fill="var(--green,#4a6b2a)"></rect>
+            <text x="${x + barW*0.35}" y="${h-6}" font-size="9" text-anchor="middle" fill="#6b7280">${p.label}</text>`;
+  }).join('');
+  container.innerHTML = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;">${bars}</svg>
+    <div style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:4px;">Kontostand gesamt (letzter Tag je Monat)</div>`;
+}
+async function stRenderKontoChart(){
+  const section = document.getElementById('st_kontoChartSection');
+  const wrap = document.getElementById('st_kontoChart');
+  section.style.display = '';
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  try {
+    const points = await sevdeskGetBalanceHistoryAllAccounts(6);
+    renderSimpleBarChart(wrap, points);
+  } catch(e){
+    wrap.innerHTML = '<div class="empty-note">Konnte Verlauf nicht laden: ' + escAttr(e.message) + '</div>';
+  }
+}
+async function stRenderStats(atOpenRes){
+  const section = document.getElementById('st_statsSection');
+  const box = document.getElementById('st_statsGridBox');
+  section.style.display = '';
+  const [atAllRes, tsMonthRes] = await Promise.all([
+    sb.from('auftraege').select('id,status'),
+    sb.from('timesheets').select('id').gte('einsatzdatum', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10))
+  ]);
+  const atAll = atAllRes.error ? [] : (atAllRes.data || []);
+  const atAbgeschlossen = atAll.filter(a => a.status === 'abgeschlossen').length;
+  const tsMonth = tsMonthRes.error ? 0 : (tsMonthRes.data || []).length;
+
+  const tiles = [
+    { label: 'Aufträge gesamt', value: atAll.length },
+    { label: 'Abgeschlossen', value: atAbgeschlossen },
+    { label: 'Nachweise diesen Monat', value: tsMonth }
+  ];
+
+  if(sevdeskConnected()){
+    try {
+      const paid = await sevdeskFetch('/Invoice?status=1000');
+      const umsatz = paid.reduce((s,i) => s + (Number(i.sumGross)||0), 0);
+      tiles.push({ label: 'Umsatz bezahlt (gesamt)', value: fmtMoney(umsatz) });
+    } catch(e){
+      tiles.push({ label: 'Umsatz bezahlt', value: '–' });
+    }
+  }
+
+  box.innerHTML = tiles.map(t => `
+    <div class="box"><div class="num">${t.value}</div><div class="lbl">${t.label}</div></div>
+  `).join('');
 }
 
 /* ================================================================
