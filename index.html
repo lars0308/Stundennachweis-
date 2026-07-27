@@ -27,7 +27,7 @@
     --border:#e5e7eb;
     --bg:#f9fafb;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -468,12 +468,13 @@
      lange drücken + Finger hochziehen -> durchgehender Bogen mit weiteren Bereichen */
   .tab-home-slot{flex:1;position:relative;display:flex;justify-content:center;}
   .tab-home-btn{
-    position:absolute;top:-22px;width:54px;height:54px;border-radius:50%;
+    position:absolute;top:-10px;width:54px;height:54px;border-radius:50%;
     background:#fff;border:3px solid #e07b1f;color:#e07b1f;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer;z-index:77;
     transition:transform .12s,background .12s,color .12s;
     -webkit-touch-callout:none;user-select:none;touch-action:none;
+    -webkit-tap-highlight-color:transparent;outline:none;
   }
   .tab-home-btn:active{transform:scale(.92);}
   .tab-home-btn.active{background:#e07b1f;color:#fff;}
@@ -481,7 +482,7 @@
 
   /* Transparente Fläche, die während des Ziehens Touch-Events einfängt (kein Scrollen,
      kein abgedunkelter Hintergrund) */
-  .home-radial-catcher{position:fixed;inset:0;z-index:74;display:none;touch-action:none;}
+  .home-radial-catcher{position:fixed;inset:0;z-index:74;display:none;touch-action:none;-webkit-tap-highlight-color:transparent;}
   .home-radial-catcher.open{display:block;}
   #homeRadialSvg{position:fixed;left:0;top:0;z-index:76;pointer-events:none;overflow:visible;}
   .home-radial-slice{
@@ -495,9 +496,9 @@
     transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .12s;
   }
   .home-radial-label.open{opacity:1;}
-  .home-radial-label .qa-icon{width:28px;height:28px;}
-  .home-radial-label .qa-icon svg{width:14px;height:14px;}
-  .home-radial-label span.radial-label{font-size:8.5px;font-weight:700;color:var(--text);white-space:nowrap;line-height:1;}
+  .home-radial-label .qa-icon{width:34px;height:34px;}
+  .home-radial-label .qa-icon svg{width:17px;height:17px;}
+  .home-radial-label span.radial-label{font-size:9.5px;font-weight:700;color:var(--text);white-space:nowrap;line-height:1;}
 
   /* Gerätesperre: Vollbild-Overlay, das vor der eigentlichen App liegt */
   #deviceLockScreen{
@@ -909,6 +910,10 @@
     <!-- ============================================================ -->
     <div class="page" id="page-stunden">
 
+      <div class="btn-row" style="margin-bottom:14px;">
+        <button class="btn" onclick="tsOpenLoadModal()">📄 Gespeicherte Nachweise ansehen</button>
+      </div>
+
       <div id="ts_choiceScreen" class="type-btn-grid" style="margin-bottom:16px;">
         <button class="type-btn" onclick="tsShowFormChoice()">
           <span class="type-btn-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
@@ -1219,6 +1224,10 @@
     <!-- SEITE 2: INSTALLATIONSPROTOKOLL                               -->
     <!-- ============================================================ -->
     <div class="page" id="page-installation">
+
+      <div class="btn-row" style="margin-bottom:14px;">
+        <button class="btn" onclick="ipOpenLoadModal()">📄 Gespeicherte Protokolle ansehen</button>
+      </div>
 
       <div class="lock-banner" id="ip_lockBanner" style="display:none;">
         <span>Dieses Protokoll ist abgeschlossen und schreibgeschützt.</span>
@@ -1762,6 +1771,10 @@
         <div class="start-stat-card" onclick="switchPage('kunden')">
           <div class="start-stat-value" id="st_kundenGesamt">–</div>
           <div class="start-stat-label">Kunden gesamt</div>
+        </div>
+        <div class="start-stat-card" id="st_kontostandCard" style="display:none;" onclick="openSevdeskSettings()">
+          <div class="start-stat-value" id="st_kontostand">–</div>
+          <div class="start-stat-label" id="st_kontostandLabel">Kontostand</div>
         </div>
       </div>
 
@@ -6035,6 +6048,17 @@ async function sevdeskGetOpenAngeboteSum(){
   const sent = await sevdeskFetch('/Order?orderType=AN&status=200');
   return [...drafts, ...sent].reduce((s,o) => s + (Number(o.sumGross)||0), 0);
 }
+// Kontostand: sevDesk führt "CheckAccount"-Konten (Bankkonten/Kassen). Wir nehmen das
+// als Standard markierte Konto, sonst das erste. Endpunkt laut sevDesk-API-Dokumentation:
+// GET /CheckAccount/{id}/getCurrentBalance
+async function sevdeskGetAccountBalance(){
+  const accounts = await sevdeskFetch('/CheckAccount');
+  if(!accounts.length) throw new Error('Kein Bankkonto in sevDesk gefunden');
+  const account = accounts.find(a => a.defaultAccount === true || a.defaultAccount === '1') || accounts[0];
+  const res = await sevdeskFetchRaw('/CheckAccount/' + account.id + '/getCurrentBalance');
+  const balance = res.objects;
+  return { name: account.name || 'Konto', balance: Number(balance) || 0 };
+}
 
 // POST-Helfer für sevDesk (Kontakte anlegen etc.)
 async function sevdeskPost(path, body){
@@ -6494,8 +6518,8 @@ function initDeviceLock(){
 }
 
 const HOME_RADIAL_PAGES = ['angebote','installation','material','fahrtenbuch','auftraege'];
-const HOME_RADIAL_R1 = 58;  // innerer Radius des Bogens
-const HOME_RADIAL_R2 = 138; // äußerer Radius des Bogens
+const HOME_RADIAL_R1 = 64;  // innerer Radius des Bogens
+const HOME_RADIAL_R2 = 155; // äußerer Radius des Bogens
 const HOME_RADIAL_A_START = 172; // Grad, linkes Ende des Bogens
 const HOME_RADIAL_A_END = 8;     // Grad, rechtes Ende des Bogens
 let homeRadialActiveIndex = -1;
@@ -6685,6 +6709,22 @@ async function stRenderDashboard(){
     document.getElementById('st_angeboteOffen').textContent = angSum === null ? '–' : fmtMoney(angSum);
   }
   document.getElementById('st_kundenGesamt').textContent = String((tsCustomers||[]).length);
+
+  const kontoCard = document.getElementById('st_kontostandCard');
+  if(sevdeskConnected()){
+    kontoCard.style.display = '';
+    try {
+      const { name, balance } = await sevdeskGetAccountBalance();
+      document.getElementById('st_kontostand').textContent = fmtMoney(balance);
+      document.getElementById('st_kontostandLabel').textContent = 'Kontostand · ' + name;
+    } catch(e){
+      document.getElementById('st_kontostand').textContent = '–';
+      document.getElementById('st_kontostandLabel').textContent = 'Kontostand (Fehler)';
+      console.warn('sevDesk Kontostand-Abfrage fehlgeschlagen:', e.message);
+    }
+  } else {
+    kontoCard.style.display = 'none';
+  }
 
   // Nächste Termine: Aufträge mit Datum + Prüf-/Austauschtermine zusammengeführt, chronologisch, die 3 nächsten
   const nextItems = [
