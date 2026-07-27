@@ -465,33 +465,62 @@
   .tab-btn:hover{color:var(--green-dark);}
 
   /* Runder Home-Button in der Mitte der unteren Leiste: antippen -> Startseite,
-     lange drücken -> Radial-Menü mit weiteren Bereichen */
+     lange drücken + Finger hochziehen -> durchgehender Bogen mit weiteren Bereichen */
   .tab-home-slot{flex:1;position:relative;display:flex;justify-content:center;}
   .tab-home-btn{
     position:absolute;top:-22px;width:54px;height:54px;border-radius:50%;
     background:#fff;border:3px solid #e07b1f;color:#e07b1f;
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer;z-index:77;
     transition:transform .12s,background .12s,color .12s;
-    -webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+    -webkit-touch-callout:none;user-select:none;touch-action:none;
   }
   .tab-home-btn:active{transform:scale(.92);}
   .tab-home-btn.active{background:#e07b1f;color:#fff;}
   .tab-home-btn svg{width:24px;height:24px;stroke:currentColor;}
-  .home-radial-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.25);z-index:75;display:none;}
-  .home-radial-backdrop.open{display:block;}
-  .home-radial-item{
-    position:fixed;width:52px;height:52px;border-radius:50%;background:#fff;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-    box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer;z-index:76;
-    transform:translate(-50%,-50%) scale(.4);opacity:0;pointer-events:none;
-    transition:transform .18s ease-out,opacity .18s ease-out;
+
+  /* Transparente Fläche, die während des Ziehens Touch-Events einfängt (kein Scrollen,
+     kein abgedunkelter Hintergrund) */
+  .home-radial-catcher{position:fixed;inset:0;z-index:74;display:none;touch-action:none;}
+  .home-radial-catcher.open{display:block;}
+  #homeRadialSvg{position:fixed;left:0;top:0;z-index:76;pointer-events:none;overflow:visible;}
+  .home-radial-slice{
+    fill:#fff;stroke:rgba(0,0,0,.08);stroke-width:1;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.18));
+    transition:fill .1s;
   }
-  .home-radial-item.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
-  .home-radial-item .qa-icon{width:26px;height:26px;}
-  .home-radial-item .qa-icon svg{width:13px;height:13px;}
-  .home-radial-item .radial-label{font-size:8px;font-weight:700;color:var(--text);line-height:1;}
+  .home-radial-slice.active{fill:#fdf1e0;}
+  .home-radial-label{
+    position:fixed;z-index:78;display:flex;flex-direction:column;align-items:center;gap:2px;
+    transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .12s;
+  }
+  .home-radial-label.open{opacity:1;}
+  .home-radial-label .qa-icon{width:28px;height:28px;}
+  .home-radial-label .qa-icon svg{width:14px;height:14px;}
+  .home-radial-label span.radial-label{font-size:8.5px;font-weight:700;color:var(--text);white-space:nowrap;line-height:1;}
+
+  /* Gerätesperre: Vollbild-Overlay, das vor der eigentlichen App liegt */
+  #deviceLockScreen{
+    display:none;position:fixed;inset:0;z-index:2000;
+    background:linear-gradient(160deg, var(--green-dark), #1c2b16);
+    color:#fff;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;gap:14px;
+  }
+  #deviceLockScreen.open{display:flex;}
+  #deviceLockScreen .dl-icon{
+    width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;margin-bottom:6px;
+  }
+  #deviceLockScreen .dl-icon svg{width:30px;height:30px;}
+  #deviceLockScreen h2{margin:0 0 8px;font-size:18px;}
+  #deviceLockScreen .dl-pin-row{display:flex;gap:8px;width:100%;max-width:320px;margin-top:10px;}
+  #deviceLockScreen .dl-pin-row input{
+    flex:1;min-width:0;padding:12px 14px;border-radius:10px;border:none;font-size:18px;
+    letter-spacing:.2em;text-align:center;
+  }
+  #deviceLockScreen .btn.primary{background:#e07b1f;border-color:#e07b1f;}
   main{padding-bottom:70px;}
+  body.no-scroll{overflow:hidden;position:fixed;width:100%;}
   footer{margin-bottom:70px;}
 
   .page{display:none;}
@@ -523,20 +552,33 @@
     background:#fdf6e8;border:1px solid #f0dfae;border-radius:8px;padding:12px 14px;
     font-size:12px;color:#7a5c10;line-height:1.5;margin-bottom:14px;
   }
-  .trip-table th{white-space:nowrap;}
-  .trip-locked{color:var(--text);}
   .trip-badge{
     display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:600;margin-left:6px;
   }
   .trip-badge.draft{background:#fdf1e0;color:#92620a;}
   .trip-badge.final{background:#e6efe0;color:var(--green-dark);}
   .trip-badge.void{background:#fdeaea;color:#b91c1c;}
-  .trip-row.storniert{opacity:.5;text-decoration:line-through;}
   .change-log{font-size:10.5px;color:var(--muted);margin-top:2px;}
-  .fb-summary{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:13px;}
-  .fb-summary .box{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 14px;}
+  .fb-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+  .fb-summary .box{background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;}
   .fb-summary .box .num{font-weight:700;color:var(--green-dark);font-size:16px;}
-  .fb-summary .box .lbl{color:var(--muted);font-size:11px;}
+  .fb-summary .box .lbl{color:var(--muted);font-size:10.5px;margin-top:2px;}
+
+  /* Fahrtenbuch als Karten statt breiter Tabelle (mobil nutzbar) */
+  .trip-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+  .trip-card.storniert{opacity:.55;}
+  .trip-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .trip-card-date{font-weight:700;font-size:13px;color:var(--text);}
+  .trip-route{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);margin-bottom:6px;}
+  .trip-route svg{width:14px;height:14px;stroke:var(--muted);flex-shrink:0;}
+  .trip-route .arrow{color:var(--muted);flex-shrink:0;}
+  .trip-meta-row{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+  .trip-meta-row b{color:var(--text);}
+  .trip-locked-view .trip-meta-row{margin-bottom:4px;}
+  .trip-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:8px;}
+  .trip-field-grid .field{margin:0;}
+  .trip-field-grid .field label{font-size:9.5px;}
+  .trip-field-grid .field input, .trip-field-grid .field select{font-size:13px;padding:5px 0;}
 
   /* ============================================================
      DRUCK-/PDF-VORLAGE (matches Referenz-PDF)
@@ -1389,37 +1431,18 @@
     <div class="page" id="page-fahrtenbuch">
 
       <section class="card">
-        <div class="card-head"><h2>Fahrtenbuch</h2></div>
-        <div class="disclaimer-box">Für die steuerliche Anerkennung durch das Finanzamt muss ein Fahrtenbuch zeitnah, lückenlos und in "geschlossener Form" geführt werden. Deshalb: Neue Fahrten sind zunächst als <strong>Entwurf</strong>frei bearbeitbar. Über "Abschließen" wird der Eintrag gesperrt; danach sind nur noch protokollierte Korrekturen möglich. Für eine rechtsverbindliche Nutzung empfehlen wir, das einmal mit deinem Steuerberater abzustimmen.
-        </div>
-
-        <div class="btn-row" style="margin-bottom:14px;">
-          <button class="btn primary" onclick="fbAddDraftRow()">+ Fahrt hinzufügen</button>
-          <button class="btn" onclick="fbImportFromTimesheet()">Aus aktuellem Stundennachweis übernehmen</button>
-        </div>
-
-        <div class="table-wrap">
-          <table class="trip-table">
-            <thead>
-              <tr>
-                <th style="width:100px;">Datum</th>
-                <th style="width:110px;">Fahrer</th>
-                <th style="width:100px;">Kennzeichen</th>
-                <th style="width:130px;">Start</th>
-                <th style="width:130px;">Ziel</th>
-                <th style="width:140px;">Zweck / Kunde</th>
-                <th style="width:80px;">km Start</th>
-                <th style="width:80px;">km Ende</th>
-                <th style="width:80px;">km gefahren</th>
-                <th style="width:90px;">Art</th>
-                <th style="width:170px;"></th>
-              </tr>
-            </thead>
-            <tbody id="fb_tripsBody"></tbody>
-          </table>
+        <div class="card-head"><span class="card-head-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span><h2>Fahrtenbuch</h2></div>
+        <div class="disclaimer-box">Für die steuerliche Anerkennung durch das Finanzamt muss ein Fahrtenbuch zeitnah, lückenlos und in "geschlossener Form" geführt werden. Deshalb: Neue Fahrten sind zunächst als <strong>Entwurf</strong> frei bearbeitbar. Über "Abschließen" wird der Eintrag gesperrt; danach sind nur noch protokollierte Korrekturen möglich. Für eine rechtsverbindliche Nutzung empfehlen wir, das einmal mit deinem Steuerberater abzustimmen.
         </div>
 
         <div class="fb-summary" id="fb_summary"></div>
+
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn primary" onclick="fbAddDraftRow()">+ Fahrt hinzufügen</button>
+          <button class="btn" onclick="fbImportFromTimesheet()">Aus Stundennachweis übernehmen</button>
+        </div>
+
+        <div id="fb_tripsBody"></div>
       </section>
 
     </div>
@@ -1510,8 +1533,8 @@
     <div class="page" id="page-material">
 
       <section class="card">
-        <div class="card-head"><h2>Material verwalten</h2></div>
-        <input type="text" id="mt_search" class="modal-search" placeholder="Material suchen (Bezeichnung, Artikelnr., Hersteller)…" oninput="mtRenderList()">
+        <div class="card-head"><span class="card-head-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span><h2>Material verwalten</h2></div>
+        <input type="text" id="mt_search" class="modal-search" placeholder="Material suchen…" oninput="mtRenderList()">
         <div class="btn-row" style="margin-bottom:14px;">
           <button class="btn primary" onclick="mtOpenModal(null)">+ Neues Material</button>
           <button class="btn" onclick="document.getElementById('mt_csvInput').click()">CSV importieren</button>
@@ -1709,18 +1732,29 @@
         </div>
       </div>
       <div class="field"><label>Auftrag</label><input id="at_f_beschreibung" placeholder="z.B. Rauchmelder installieren"></div>
-      <div class="field"><label>Datum</label><input id="at_f_datum" type="date"></div>
+      <div class="grid2">
+        <div class="field"><label>Datum</label><input id="at_f_datum" type="date"></div>
+        <div class="field"><label>Uhrzeit (optional)</label><input id="at_f_uhrzeit" type="time"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Status</label>
+          <select id="at_f_status">
+            <option value="offen">Offen</option>
+            <option value="geplant">Geplant</option>
+            <option value="abgeschlossen">Abgeschlossen</option>
+          </select>
+        </div>
+        <div class="field"><label>Priorität</label>
+          <select id="at_f_prioritaet">
+            <option value="normal">Normal</option>
+            <option value="dringend">Dringend</option>
+          </select>
+        </div>
+      </div>
       <div class="field"><label>Telefon</label><input id="at_f_tel" type="tel"></div>
       <div class="field"><label>Adresse</label><input id="at_f_adresse"></div>
+      <div class="btn-row" id="at_quickActions" style="margin-bottom:6px;"></div>
       <div class="field"><label>Notiz</label><textarea id="at_f_notiz" rows="3"></textarea></div>
-      <div class="field">
-        <label>Status</label>
-        <select id="at_f_status">
-          <option value="offen">Offen</option>
-          <option value="geplant">Geplant</option>
-          <option value="abgeschlossen">Abgeschlossen</option>
-        </select>
-      </div>
       <div class="btn-row" style="margin-top:10px;">
         <button class="btn primary" onclick="atSaveAuftrag()">Speichern</button>
         <button class="btn danger" id="at_deleteBtn" onclick="atDeleteAuftrag()" style="display:none;">Löschen</button>
@@ -1796,28 +1830,29 @@
     </button>
   </nav>
 
-  <div class="home-radial-backdrop" id="homeRadialBackdrop" onclick="closeHomeRadial()"></div>
-  <div id="homeRadialMenu">
-    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('angebote')">
+  <div class="home-radial-catcher" id="homeRadialCatcher"></div>
+  <svg id="homeRadialSvg" width="1" height="1"></svg>
+  <div id="homeRadialLabels">
+    <div class="home-radial-label" data-page="angebote">
       <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h1"></path></svg></span>
       <span class="radial-label">Angebot/RE</span>
-    </button>
-    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('installation')">
+    </div>
+    <div class="home-radial-label" data-page="installation">
       <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
       <span class="radial-label">Protokoll</span>
-    </button>
-    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('material')">
+    </div>
+    <div class="home-radial-label" data-page="material">
       <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
       <span class="radial-label">Material</span>
-    </button>
-    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('fahrtenbuch')">
+    </div>
+    <div class="home-radial-label" data-page="fahrtenbuch">
       <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
       <span class="radial-label">Fahrten­buch</span>
-    </button>
-    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('auftraege')">
+    </div>
+    <div class="home-radial-label" data-page="auftraege">
       <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
       <span class="radial-label">Aufträge</span>
-    </button>
+    </div>
   </div>
 
 
@@ -1872,6 +1907,10 @@
           <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
           <div class="row-text">sevDesk<span class="row-sub" id="ag_sevdeskStatusLabel">Nicht verbunden</span></div>
         </button>
+        <button class="sheet-row" onclick="closeMehrMenu();openDeviceLockSettings()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+          <div class="row-text">Gerätesperre<span class="row-sub" id="deviceLockStatusLabel">Deaktiviert</span></div>
+        </button>
 
         <div class="sheet-divider"></div>
         <button class="sheet-row danger" onclick="closeMehrMenu();logout()">
@@ -1906,6 +1945,15 @@
         <button class="btn primary" onclick="saveSevdeskToken()">Speichern &amp; testen</button>
         <button class="btn danger" onclick="disconnectSevdesk()">Trennen</button>
       </div>
+      <div class="sheet-divider" style="margin:16px 0;"></div>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.5;">
+        Kunden aus dieser App als Kontakte in sevDesk anlegen (nur Name — bereits vorhandene Kontakte
+        mit gleichem Namen werden übersprungen, es entstehen keine Duplikate).
+      </p>
+      <div class="btn-row">
+        <button class="btn" onclick="pushAllCustomersToSevdesk()">Alle Kunden zu sevDesk übertragen</button>
+      </div>
+      <div id="sevdesk_pushStatus" style="font-size:12.5px;margin-top:8px;color:var(--muted);"></div>
     </div>
   </div>
 
@@ -1920,6 +1968,58 @@
         <button class="btn" onclick="closeDriveSavedConfirmation()">Schließen</button>
       </div>
     </div>
+  </div>
+
+  <!-- Modal: Gerätesperre einrichten (PIN + optional Biometrie) -->
+  <div class="modal-overlay" id="deviceLockModal">
+    <div class="modal">
+      <button class="modal-x" onclick="closeDeviceLockSettings()">✕</button>
+      <h3>Gerätesperre</h3>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-6px;">
+        Sperrt die App bei jedem Neuladen, bis ein PIN eingegeben oder per Fingerabdruck/Face-ID
+        (falls dein Gerät das unterstützt) entsperrt wird. Rein lokal auf diesem Gerät — dein
+        sevDesk-/Supabase-Login bleibt davon unberührt.
+      </p>
+      <div id="dl_offState">
+        <div class="field">
+          <label>PIN festlegen (4–6 Ziffern)</label>
+          <input id="dl_f_pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Neuer PIN">
+        </div>
+        <div class="field">
+          <label>PIN wiederholen</label>
+          <input id="dl_f_pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="PIN wiederholen">
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="enableDeviceLock()">Gerätesperre aktivieren</button>
+        </div>
+      </div>
+      <div id="dl_onState" style="display:none;">
+        <div style="background:var(--green-light);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--green-dark);margin-bottom:12px;">
+          ✓ Gerätesperre ist aktiv.
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="dl_biometricBtn" onclick="setupDeviceBiometric()">Fingerabdruck / Face-ID einrichten</button>
+        </div>
+        <div id="dl_biometricStatus" style="font-size:12px;color:var(--muted);margin:6px 0 14px;"></div>
+        <div class="btn-row">
+          <button class="btn danger" onclick="disableDeviceLock()">Gerätesperre deaktivieren</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vollbild-Sperrbildschirm: erscheint vor allem anderen, solange nicht entsperrt -->
+  <div id="deviceLockScreen">
+    <div class="dl-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    </div>
+    <h2>Battermann App gesperrt</h2>
+    <button class="btn primary" id="dl_biometricUnlockBtn" style="display:none;" onclick="tryBiometricUnlock()">Mit Fingerabdruck / Face-ID entsperren</button>
+    <div class="dl-pin-row">
+      <input id="dl_unlockPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="PIN eingeben" onkeydown="if(event.key==='Enter') attemptPinUnlock()">
+      <button class="btn primary" onclick="attemptPinUnlock()">Entsperren</button>
+    </div>
+    <div id="dl_unlockError" style="color:#fca5a5;font-size:12.5px;margin-top:10px;"></div>
   </div>
 
   <div class="kd-lightbox" id="kd_lightbox">
@@ -2077,6 +2177,10 @@
       <div class="grid2">
         <div class="field"><label>Einheit</label><input id="mt_f_einheit" type="text" placeholder="z. B. Stück, m, kg"></div>
         <div class="field"><label>Preis (optional)</label><input id="mt_f_preis" type="text"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Lagerbestand (optional)</label><input id="mt_f_bestand" type="number" step="1" placeholder="z.B. 12"></div>
+        <div class="field"><label>Warnen ab (optional)</label><input id="mt_f_mindestbestand" type="number" step="1" placeholder="z.B. 5"></div>
       </div>
     </div>
     <div class="btn-row" style="margin-top:14px;">
@@ -2659,7 +2763,7 @@ async function enterApp(){
   setStatus('ok', 'Online · synchron');
   ['ts_sigAuftragnehmer','ts_sigKunde','ip_sigMonteur','ip_sigKunde'].forEach(renderSigPreview);
   await Promise.all([tsLoadCustomers(), tsLoadMaterials(), tsLoadEmployees()]);
-  await tsNewTimesheet();
+  await tsNewTimesheet(true);
   updateAlsoIpVisibility();
   updateOfflineBadge();
   initGoogleDrive();
@@ -3334,7 +3438,7 @@ async function tsTimerStop(){
   const vonStr = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
   const bisStr = `${pad(stop.getHours())}:${pad(stop.getMinutes())}`;
   const kundeName = document.getElementById('ts_timerCustomerPicker').value.trim();
-  await tsNewTimesheet();
+  await tsNewTimesheet(true);
   const customer = tsCustomers.find(c => c.name === kundeName);
   if(customer){
     applyCustomerEverywhere(customer);
@@ -3348,7 +3452,7 @@ async function tsTimerStop(){
 }
 
 /* ---------- Aktionen ---------- */
-async function tsNewTimesheet(){
+async function tsNewTimesheet(silent){
   setLocked('stunden', false);
   tsCurrentId = null;
   tsMaterialRows = [];
@@ -3368,8 +3472,10 @@ async function tsNewTimesheet(){
   tsAddWorkRow({ name:'Battermann', kennzeichen:'', von:'', bis:'', pause:'', fahrzeit:'', km:'' });
   document.getElementById('ts_f_berichtsnr').value = await nextNumber('timesheets','berichtsnr','AB');
   document.getElementById('ts_f_auftragsnr').value = await nextNumber('timesheets','auftragsnr','AUF');
-  showToast('Neuer Nachweis angelegt');
-  tsShowFormChoice();
+  if(!silent){
+    showToast('Neuer Nachweis angelegt');
+    tsShowFormChoice();
+  }
 }
 async function tsSaveTimesheet(){
   if(tsLocked){ showToast('Dieser Nachweis ist abgeschlossen — bitte erst "Bearbeitung freigeben"'); return; }
@@ -3391,7 +3497,7 @@ async function tsDeleteTimesheet(id){
   const { error } = await sb.from('timesheets').delete().eq('id', id);
   if(error){ showToast('Fehler: '+error.message); return; }
   await tsRenderModalList();
-  if(tsCurrentId === id){ await tsNewTimesheet(); }
+  if(tsCurrentId === id){ await tsNewTimesheet(true); }
   showToast('Nachweis gelöscht');
 }
 async function tsOpenLoadModal(){
@@ -3465,7 +3571,7 @@ async function tsRenderModalList(){
 async function tsCopyAsNew(id){
   const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
   if(error){ showToast('Fehler: '+error.message); return; }
-  await tsNewTimesheet();
+  await tsNewTimesheet(true);
   Object.entries(tsFieldMap).forEach(([fieldId, col]) => {
     // Auftrags-/Berichtsnummer NICHT übernehmen — die neue, frisch vergebene Nummer bleibt.
     if(fieldId === 'ts_f_auftragsnr' || fieldId === 'ts_f_berichtsnr') return;
@@ -4159,92 +4265,98 @@ async function fbStornoTrip(id){
 
 function fbRenderTrips(){
   const body = document.getElementById('fb_tripsBody');
-  body.innerHTML = '';
+  const cards = [];
 
   fbDrafts.forEach(d => {
-    const tr = document.createElement('tr');
-    tr.className = 'trip-row';
-    tr.innerHTML = `
-      <td><input type="date" value="${escAttr(d.datum)}" onchange="fbUpdateDraftField(${d._draftId},'datum',this.value)"></td>
-      <td><input type="text" list="ts_employeeList" value="${escAttr(d.fahrer)}" onchange="fbUpdateDraftField(${d._draftId},'fahrer',this.value)"></td>
-      <td><input type="text" value="${escAttr(d.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateDraftField(${d._draftId},'kennzeichen',this.value)"></td>
-      <td><input type="text" value="${escAttr(d.start_ort)}" onchange="fbUpdateDraftField(${d._draftId},'start_ort',this.value)"></td>
-      <td><input type="text" value="${escAttr(d.ziel_ort)}" onchange="fbUpdateDraftField(${d._draftId},'ziel_ort',this.value)"></td>
-      <td><input type="text" value="${escAttr(d.zweck)}" onchange="fbUpdateDraftField(${d._draftId},'zweck',this.value)"></td>
-      <td><input type="number" value="${escAttr(d.km_start)}" onchange="fbUpdateDraftField(${d._draftId},'km_start',this.value)"></td>
-      <td><input type="number" value="${escAttr(d.km_ende)}" onchange="fbUpdateDraftField(${d._draftId},'km_ende',this.value)"></td>
-      <td><input type="number" value="${escAttr(d.km_gefahren)}" onchange="fbUpdateDraftField(${d._draftId},'km_gefahren',this.value)"></td>
-      <td>
-        <select onchange="fbUpdateDraftField(${d._draftId},'typ',this.value)">
-          <option value="dienstlich" ${d.typ==='dienstlich'?'selected':''}>dienstlich</option>
-          <option value="privat" ${d.typ==='privat'?'selected':''}>privat</option>
-        </select>
-      </td>
-      <td>
-        <span class="trip-badge draft">Entwurf</span>
-        <div class="btn-row" style="margin-top:4px;">
-          <button class="btn small" onclick="fbSaveDraft(${d._draftId})">Speichern</button>
-          <button class="btn small danger" onclick="fbRemoveDraft(${d._draftId})">✕</button>
+    cards.push(`
+      <div class="trip-card">
+        <div class="trip-card-top">
+          <span class="trip-badge draft">Entwurf</span>
         </div>
-      </td>
-    `;
-    body.appendChild(tr);
+        <div class="trip-field-grid">
+          <div class="field"><label>Datum</label><input type="date" value="${escAttr(d.datum)}" onchange="fbUpdateDraftField(${d._draftId},'datum',this.value)"></div>
+          <div class="field"><label>Fahrer</label><input type="text" list="ts_employeeList" value="${escAttr(d.fahrer)}" onchange="fbUpdateDraftField(${d._draftId},'fahrer',this.value)"></div>
+          <div class="field"><label>Kennzeichen</label><input type="text" value="${escAttr(d.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateDraftField(${d._draftId},'kennzeichen',this.value)"></div>
+          <div class="field"><label>Art</label>
+            <select onchange="fbUpdateDraftField(${d._draftId},'typ',this.value)">
+              <option value="dienstlich" ${d.typ==='dienstlich'?'selected':''}>dienstlich</option>
+              <option value="privat" ${d.typ==='privat'?'selected':''}>privat</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:1 / -1;"><label>Start</label><input type="text" value="${escAttr(d.start_ort)}" onchange="fbUpdateDraftField(${d._draftId},'start_ort',this.value)"></div>
+          <div class="field" style="grid-column:1 / -1;"><label>Ziel</label><input type="text" value="${escAttr(d.ziel_ort)}" onchange="fbUpdateDraftField(${d._draftId},'ziel_ort',this.value)"></div>
+          <div class="field" style="grid-column:1 / -1;"><label>Zweck / Kunde</label><input type="text" value="${escAttr(d.zweck)}" onchange="fbUpdateDraftField(${d._draftId},'zweck',this.value)"></div>
+          <div class="field"><label>km Start</label><input type="number" value="${escAttr(d.km_start)}" onchange="fbUpdateDraftField(${d._draftId},'km_start',this.value)"></div>
+          <div class="field"><label>km Ende</label><input type="number" value="${escAttr(d.km_ende)}" onchange="fbUpdateDraftField(${d._draftId},'km_ende',this.value)"></div>
+          <div class="field" style="grid-column:1 / -1;"><label>km gefahren</label><input type="number" value="${escAttr(d.km_gefahren)}" onchange="fbUpdateDraftField(${d._draftId},'km_gefahren',this.value)"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn small primary" onclick="fbSaveDraft(${d._draftId})">Speichern</button>
+          <button class="btn small danger" onclick="fbRemoveDraft(${d._draftId})">Verwerfen</button>
+        </div>
+      </div>
+    `);
   });
 
   fbTrips.forEach(t => {
-    const tr = document.createElement('tr');
-    tr.className = 'trip-row' + (t.storniert ? ' storniert' : '');
     if(t.entwurf){
-      tr.innerHTML = `
-        <td><input type="date" value="${escAttr(t.datum)}" onchange="fbUpdateTripField('${t.id}','datum',this.value)"></td>
-        <td><input type="text" list="ts_employeeList" value="${escAttr(t.fahrer)}" onchange="fbUpdateTripField('${t.id}','fahrer',this.value)"></td>
-        <td><input type="text" value="${escAttr(t.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateTripField('${t.id}','kennzeichen',this.value)"></td>
-        <td><input type="text" value="${escAttr(t.start_ort)}" onchange="fbUpdateTripField('${t.id}','start_ort',this.value)"></td>
-        <td><input type="text" value="${escAttr(t.ziel_ort)}" onchange="fbUpdateTripField('${t.id}','ziel_ort',this.value)"></td>
-        <td><input type="text" value="${escAttr(t.zweck)}" onchange="fbUpdateTripField('${t.id}','zweck',this.value)"></td>
-        <td><input type="number" value="${t.km_start ?? ''}" onchange="fbUpdateTripField('${t.id}','km_start',this.value)"></td>
-        <td><input type="number" value="${t.km_ende ?? ''}" onchange="fbUpdateTripField('${t.id}','km_ende',this.value)"></td>
-        <td><input type="number" value="${t.km_gefahren ?? ''}" onchange="fbUpdateTripField('${t.id}','km_gefahren',this.value)"></td>
-        <td>
-          <select onchange="fbUpdateTripField('${t.id}','typ',this.value)">
-            <option value="dienstlich" ${t.typ==='dienstlich'?'selected':''}>dienstlich</option>
-            <option value="privat" ${t.typ==='privat'?'selected':''}>privat</option>
-          </select>
-        </td>
-        <td>
-          <span class="trip-badge draft">Entwurf</span>
-          <div class="btn-row" style="margin-top:4px;">
+      cards.push(`
+        <div class="trip-card">
+          <div class="trip-card-top">
+            <span class="trip-badge draft">Entwurf</span>
+          </div>
+          <div class="trip-field-grid">
+            <div class="field"><label>Datum</label><input type="date" value="${escAttr(t.datum)}" onchange="fbUpdateTripField('${t.id}','datum',this.value)"></div>
+            <div class="field"><label>Fahrer</label><input type="text" list="ts_employeeList" value="${escAttr(t.fahrer)}" onchange="fbUpdateTripField('${t.id}','fahrer',this.value)"></div>
+            <div class="field"><label>Kennzeichen</label><input type="text" value="${escAttr(t.kennzeichen)}" placeholder="z.B. SHG-AB 12" onchange="fbUpdateTripField('${t.id}','kennzeichen',this.value)"></div>
+            <div class="field"><label>Art</label>
+              <select onchange="fbUpdateTripField('${t.id}','typ',this.value)">
+                <option value="dienstlich" ${t.typ==='dienstlich'?'selected':''}>dienstlich</option>
+                <option value="privat" ${t.typ==='privat'?'selected':''}>privat</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1 / -1;"><label>Start</label><input type="text" value="${escAttr(t.start_ort)}" onchange="fbUpdateTripField('${t.id}','start_ort',this.value)"></div>
+            <div class="field" style="grid-column:1 / -1;"><label>Ziel</label><input type="text" value="${escAttr(t.ziel_ort)}" onchange="fbUpdateTripField('${t.id}','ziel_ort',this.value)"></div>
+            <div class="field" style="grid-column:1 / -1;"><label>Zweck / Kunde</label><input type="text" value="${escAttr(t.zweck)}" onchange="fbUpdateTripField('${t.id}','zweck',this.value)"></div>
+            <div class="field"><label>km Start</label><input type="number" value="${t.km_start ?? ''}" onchange="fbUpdateTripField('${t.id}','km_start',this.value)"></div>
+            <div class="field"><label>km Ende</label><input type="number" value="${t.km_ende ?? ''}" onchange="fbUpdateTripField('${t.id}','km_ende',this.value)"></div>
+            <div class="field" style="grid-column:1 / -1;"><label>km gefahren</label><input type="number" value="${t.km_gefahren ?? ''}" onchange="fbUpdateTripField('${t.id}','km_gefahren',this.value)"></div>
+          </div>
+          <div class="btn-row">
             <button class="btn small primary" onclick="fbFinalizeTrip('${t.id}')">Abschließen</button>
           </div>
-        </td>
-      `;
+        </div>
+      `);
     } else {
       const changeCount = Array.isArray(t.aenderungen) ? t.aenderungen.length : 0;
-      tr.innerHTML = `
-        <td class="trip-locked">${escAttr(t.datum)}</td>
-        <td class="trip-locked">${escAttr(t.fahrer)}</td>
-        <td class="trip-locked">${escAttr(t.kennzeichen)}</td>
-        <td class="trip-locked">${escAttr(t.start_ort)}</td>
-        <td class="trip-locked">${escAttr(t.ziel_ort)}</td>
-        <td class="trip-locked">${escAttr(t.zweck)}</td>
-        <td class="trip-locked">${t.km_start ?? '–'}</td>
-        <td class="trip-locked">${t.km_ende ?? '–'}</td>
-        <td class="trip-locked">${t.km_gefahren ?? '–'}</td>
-        <td class="trip-locked">${escAttr(t.typ)}</td>
-        <td>
-          <span class="trip-badge ${t.storniert ? 'void' : 'final'}">${t.storniert ? 'storniert' : 'abgeschlossen'}</span>
+      cards.push(`
+        <div class="trip-card trip-locked-view${t.storniert ? ' storniert' : ''}">
+          <div class="trip-card-top">
+            <span class="trip-card-date">${escAttr(fmtDate(t.datum))} · ${escAttr(t.fahrer)}</span>
+            <span class="trip-badge ${t.storniert ? 'void' : 'final'}">${t.storniert ? 'Storniert' : 'Abgeschlossen'}</span>
+          </div>
+          <div class="trip-route">
+            <span>${escAttr(t.start_ort)}</span><span class="arrow">→</span><span>${escAttr(t.ziel_ort)}</span>
+          </div>
+          <div class="trip-meta-row">
+            <span>${escAttr(t.zweck || '–')}</span>
+            <span><b>${t.km_gefahren ?? '–'}</b> km</span>
+            <span>${escAttr(t.kennzeichen || '–')}</span>
+            <span>${escAttr(t.typ)}</span>
+          </div>
           ${changeCount ? `<div class="change-log">${changeCount}× korrigiert</div>` : ''}
-          ${!t.storniert ? `
-          <div class="btn-row" style="margin-top:4px;">
-            <button class="btn small" onclick="fbCorrectTrip('${t.id}','km_gefahren','Gefahrene km')">Korrigieren</button>
-            <button class="btn small danger" onclick="fbStornoTrip('${t.id}')">Stornieren</button>
-          </div>` : `<div class="change-log">Grund: ${escAttr(t.storno_grund||'')}</div>`}
-        </td>
-      `;
+          ${t.storniert
+            ? `<div class="change-log">Grund: ${escAttr(t.storno_grund||'')}</div>`
+            : `<div class="btn-row">
+                 <button class="btn small" onclick="fbCorrectTrip('${t.id}','km_gefahren','Gefahrene km')">Korrigieren</button>
+                 <button class="btn small danger" onclick="fbStornoTrip('${t.id}')">Stornieren</button>
+               </div>`}
+        </div>
+      `);
     }
-    body.appendChild(tr);
   });
 
+  body.innerHTML = cards.length ? cards.join('') : '<div class="empty-note">Noch keine Fahrten erfasst.</div>';
   fbRenderSummary();
 }
 
@@ -5268,6 +5380,11 @@ function kdRenderDetailTiles(c){
       <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></span>
       <span>Kundendaten bearbeiten</span>
     </button>
+    ${sevdeskConnected() ? `
+    <button class="kd-tile" onclick="pushSingleCustomerToSevdesk('${c.id}')">
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+      <span>Zu sevDesk übertragen</span>
+    </button>` : ''}
   `;
 }
 function kdCallTel(tel){
@@ -5564,9 +5681,9 @@ function atRenderList(){
   wrap.innerHTML = items.map(a => `
     <div class="at-list-row" onclick="atOpenModal('${a.id}')">
       <div class="at-list-body">
-        <div class="at-title">${escAttr(a.beschreibung || 'Ohne Titel')}</div>
+        <div class="at-title">${a.prioritaet === 'dringend' ? '🔴 ' : ''}${escAttr(a.beschreibung || 'Ohne Titel')}</div>
         <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
-        ${a.datum ? `<div class="at-sub">${escAttr(fmtDate(a.datum))}</div>` : ''}
+        ${a.datum ? `<div class="at-sub">${escAttr(fmtDate(a.datum))}${a.uhrzeit ? ' · '+escAttr(a.uhrzeit.slice(0,5))+' Uhr' : ''}</div>` : ''}
       </div>
       <span class="status-badge ${badgeClass[a.status]||'offen'}">${badgeText[a.status]||a.status}</span>
     </div>
@@ -5590,23 +5707,36 @@ function atOpenModal(id){
     document.getElementById('at_f_kunde').value = a.auftraggeber || '';
     document.getElementById('at_f_beschreibung').value = a.beschreibung || '';
     document.getElementById('at_f_datum').value = a.datum || '';
+    document.getElementById('at_f_uhrzeit').value = a.uhrzeit || '';
     document.getElementById('at_f_tel').value = a.tel || '';
     document.getElementById('at_f_adresse').value = a.adresse || '';
     document.getElementById('at_f_notiz').value = a.notiz || '';
     document.getElementById('at_f_status').value = a.status || 'offen';
+    document.getElementById('at_f_prioritaet').value = a.prioritaet || 'normal';
     deleteBtn.style.display = '';
+    renderAtQuickActions(a.tel, a.adresse);
   } else {
     document.getElementById('at_editTitle').textContent = 'Neuer Auftrag';
     document.getElementById('at_f_kunde').value = '';
     document.getElementById('at_f_beschreibung').value = '';
     document.getElementById('at_f_datum').value = '';
+    document.getElementById('at_f_uhrzeit').value = '';
     document.getElementById('at_f_tel').value = '';
     document.getElementById('at_f_adresse').value = '';
     document.getElementById('at_f_notiz').value = '';
     document.getElementById('at_f_status').value = 'offen';
+    document.getElementById('at_f_prioritaet').value = 'normal';
     deleteBtn.style.display = 'none';
+    renderAtQuickActions('', '');
   }
   document.getElementById('at_editModal').classList.add('open');
+}
+function renderAtQuickActions(tel, adresse){
+  const wrap = document.getElementById('at_quickActions');
+  const parts = [];
+  if(tel && tel.trim()) parts.push(`<button class="btn small" onclick="kdCallTel('${escAttr(tel)}')">📞 Anrufen</button>`);
+  if(adresse && adresse.trim()) parts.push(`<button class="btn small" onclick="kdOpenMapsAddr('${escAttr(adresse)}')">📍 Route</button>`);
+  wrap.innerHTML = parts.join('');
 }
 function atCloseModal(){
   document.getElementById('at_editModal').classList.remove('open');
@@ -5616,10 +5746,12 @@ async function atSaveAuftrag(){
     auftraggeber: document.getElementById('at_f_kunde').value.trim(),
     beschreibung: document.getElementById('at_f_beschreibung').value.trim(),
     datum: document.getElementById('at_f_datum').value || null,
+    uhrzeit: document.getElementById('at_f_uhrzeit').value || null,
     tel: document.getElementById('at_f_tel').value.trim(),
     adresse: document.getElementById('at_f_adresse').value.trim(),
     notiz: document.getElementById('at_f_notiz').value.trim(),
-    status: document.getElementById('at_f_status').value
+    status: document.getElementById('at_f_status').value,
+    prioritaet: document.getElementById('at_f_prioritaet').value
   };
   if(!rec.beschreibung){ showToast('Bitte eine Auftragsbeschreibung eingeben'); return; }
   let error;
@@ -5745,6 +5877,68 @@ async function sevdeskGetOpenAngeboteSum(){
   const drafts = await sevdeskFetch('/Order?orderType=AN&status=100');
   const sent = await sevdeskFetch('/Order?orderType=AN&status=200');
   return [...drafts, ...sent].reduce((s,o) => s + (Number(o.sumGross)||0), 0);
+}
+
+// POST-Helfer für sevDesk (Kontakte anlegen etc.)
+async function sevdeskPost(path, body){
+  const token = sevdeskToken();
+  if(!token) throw new Error('Kein sevDesk-Token hinterlegt');
+  const res = await fetch(SEVDESK_BASE + path, {
+    method: 'POST',
+    headers: { 'Authorization': token, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error('sevDesk-Anfrage fehlgeschlagen (HTTP '+res.status+')');
+  return res.json();
+}
+// Prüft, ob bereits ein Kontakt mit exakt diesem Namen existiert (verhindert Duplikate)
+async function sevdeskContactExists(name){
+  if(!name || !name.trim()) return true; // ohne Namen lieber nicht anlegen
+  const matches = await sevdeskFetch('/Contact?name=' + encodeURIComponent(name.trim()));
+  return matches.some(c => (c.name||'').trim().toLowerCase() === name.trim().toLowerCase());
+}
+// Legt einen einzelnen Kunden als sevDesk-Kontakt an (Kategorie "Kunde", id 3).
+// Bewusst nur der Name — Adresse/Telefon/E-Mail brauchen eigene sevDesk-Endpunkte
+// (ContactAddress/CommunicationWay), die hier noch nicht angebunden sind.
+async function pushCustomerToSevdesk(customer){
+  if(!sevdeskConnected()) throw new Error('sevDesk ist nicht verbunden');
+  const name = (customer.name || '').trim();
+  if(!name) throw new Error('Kunde hat keinen Namen');
+  if(await sevdeskContactExists(name)) return { skipped: true };
+  await sevdeskPost('/Contact', {
+    name,
+    category: { id: 3, objectName: 'Category' } // 3 = Kunde in sevDesk
+  });
+  return { skipped: false };
+}
+async function pushAllCustomersToSevdesk(){
+  if(!sevdeskConnected()){ showToast('Bitte zuerst sevDesk verbinden'); return; }
+  const statusEl = document.getElementById('sevdesk_pushStatus');
+  const list = tsCustomers || [];
+  if(!list.length){ statusEl.textContent = 'Keine Kunden vorhanden.'; return; }
+  let created = 0, skipped = 0, failed = 0;
+  for(let i=0;i<list.length;i++){
+    statusEl.textContent = `Übertrage… (${i+1}/${list.length})`;
+    try {
+      const r = await pushCustomerToSevdesk(list[i]);
+      if(r.skipped) skipped++; else created++;
+    } catch(e){
+      failed++;
+    }
+  }
+  statusEl.textContent = `Fertig: ${created} neu angelegt, ${skipped} übersprungen (bereits vorhanden)${failed ? ', '+failed+' fehlgeschlagen' : ''}.`;
+}
+async function pushSingleCustomerToSevdesk(id){
+  const c = tsCustomers.find(x => x.id === id);
+  if(!c) return;
+  if(!sevdeskConnected()){ showToast('Bitte zuerst sevDesk verbinden (Mehr → sevDesk)'); return; }
+  showToast('Übertrage zu sevDesk…');
+  try {
+    const r = await pushCustomerToSevdesk(c);
+    showToast(r.skipped ? 'Kontakt existiert in sevDesk bereits' : 'Als sevDesk-Kontakt angelegt');
+  } catch(e){
+    showToast('Fehler: ' + e.message);
+  }
 }
 
 /* ================================================================
@@ -6021,6 +6215,136 @@ function initPrivacyMode(){
    ================================================================ */
 let homeLongPressTimer = null;
 let homeLongPressFired = false;
+/* ================================================================
+   GERÄTESPERRE: PIN (immer verfügbar) + optional Biometrie (WebAuthn,
+   Fingerabdruck/Face-ID über den Plattform-Authenticator des Geräts).
+   Rein lokal (localStorage) — unabhängig vom Supabase-/sevDesk-Login.
+   ================================================================ */
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function deviceLockEnabled(){ return localStorage.getItem('deviceLockEnabled') === '1'; }
+function deviceLockCredId(){ return localStorage.getItem('deviceLockCredId') || ''; }
+function openDeviceLockSettings(){
+  const on = deviceLockEnabled();
+  document.getElementById('dl_offState').style.display = on ? 'none' : '';
+  document.getElementById('dl_onState').style.display = on ? '' : 'none';
+  document.getElementById('dl_f_pin1').value = '';
+  document.getElementById('dl_f_pin2').value = '';
+  document.getElementById('dl_biometricStatus').textContent = deviceLockCredId()
+    ? '✓ Biometrie ist eingerichtet.'
+    : (window.PublicKeyCredential ? '' : 'Dein Browser unterstützt keine Biometrie-Anmeldung — nur PIN verfügbar.');
+  document.getElementById('deviceLockModal').classList.add('open');
+}
+function closeDeviceLockSettings(){
+  document.getElementById('deviceLockModal').classList.remove('open');
+}
+async function enableDeviceLock(){
+  const p1 = document.getElementById('dl_f_pin1').value.trim();
+  const p2 = document.getElementById('dl_f_pin2').value.trim();
+  if(!/^\d{4,6}$/.test(p1)){ showToast('PIN muss 4–6 Ziffern haben'); return; }
+  if(p1 !== p2){ showToast('PINs stimmen nicht überein'); return; }
+  localStorage.setItem('deviceLockPinHash', await sha256Hex(p1));
+  localStorage.setItem('deviceLockEnabled', '1');
+  updateDeviceLockStatusLabel();
+  showToast('Gerätesperre aktiviert');
+  openDeviceLockSettings();
+}
+function disableDeviceLock(){
+  if(!confirm('Gerätesperre wirklich deaktivieren?')) return;
+  localStorage.removeItem('deviceLockEnabled');
+  localStorage.removeItem('deviceLockPinHash');
+  localStorage.removeItem('deviceLockCredId');
+  updateDeviceLockStatusLabel();
+  showToast('Gerätesperre deaktiviert');
+  closeDeviceLockSettings();
+}
+function updateDeviceLockStatusLabel(){
+  const el = document.getElementById('deviceLockStatusLabel');
+  if(el) el.textContent = deviceLockEnabled() ? 'Aktiv' : 'Deaktiviert';
+}
+async function setupDeviceBiometric(){
+  if(!window.PublicKeyCredential){ showToast('Dieser Browser unterstützt keine Biometrie-Anmeldung'); return; }
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const userId = crypto.getRandomValues(new Uint8Array(16));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'Battermann App' },
+        user: { id: userId, name: 'geraet-nutzer', displayName: 'Gerätenutzer' },
+        pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000
+      }
+    });
+    const idB64 = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    localStorage.setItem('deviceLockCredId', idB64);
+    document.getElementById('dl_biometricStatus').textContent = '✓ Biometrie eingerichtet.';
+    showToast('Biometrie eingerichtet');
+  } catch(e){
+    showToast('Einrichtung abgebrochen oder fehlgeschlagen: ' + e.message);
+  }
+}
+async function tryBiometricUnlock(){
+  const idB64 = deviceLockCredId();
+  if(!idB64) return;
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const rawId = Uint8Array.from(atob(idB64), c => c.charCodeAt(0));
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ type:'public-key', id: rawId, transports:['internal'] }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    unlockDevice();
+  } catch(e){
+    document.getElementById('dl_unlockError').textContent = 'Biometrie fehlgeschlagen — bitte PIN nutzen.';
+  }
+}
+async function attemptPinUnlock(){
+  const pin = document.getElementById('dl_unlockPin').value.trim();
+  const hash = await sha256Hex(pin);
+  if(hash === localStorage.getItem('deviceLockPinHash')){
+    unlockDevice();
+  } else {
+    document.getElementById('dl_unlockError').textContent = 'Falscher PIN';
+    document.getElementById('dl_unlockPin').value = '';
+  }
+}
+function unlockDevice(){
+  sessionStorage.setItem('deviceUnlocked', '1');
+  document.getElementById('deviceLockScreen').classList.remove('open');
+  document.getElementById('dl_unlockError').textContent = '';
+  document.getElementById('dl_unlockPin').value = '';
+}
+function initDeviceLock(){
+  updateDeviceLockStatusLabel();
+  if(!deviceLockEnabled()) return;
+  if(sessionStorage.getItem('deviceUnlocked') === '1') return; // schon in diesem Tab entsperrt
+  document.getElementById('deviceLockScreen').classList.add('open');
+  const bioBtn = document.getElementById('dl_biometricUnlockBtn');
+  if(deviceLockCredId() && window.PublicKeyCredential){
+    bioBtn.style.display = '';
+    tryBiometricUnlock(); // gleich automatisch versuchen (Browser zeigt System-Prompt)
+  } else {
+    bioBtn.style.display = 'none';
+  }
+}
+
+const HOME_RADIAL_PAGES = ['angebote','installation','material','fahrtenbuch','auftraege'];
+const HOME_RADIAL_R1 = 58;  // innerer Radius des Bogens
+const HOME_RADIAL_R2 = 138; // äußerer Radius des Bogens
+const HOME_RADIAL_A_START = 172; // Grad, linkes Ende des Bogens
+const HOME_RADIAL_A_END = 8;     // Grad, rechtes Ende des Bogens
+let homeRadialActiveIndex = -1;
+let homeRadialCenter = { x: 0, y: 0 };
+
+let homeRadialOpen = false;
 function setupHomeFab(){
   const btn = document.getElementById('homeFabBtn');
   if(!btn || btn._wired) return;
@@ -6031,7 +6355,7 @@ function setupHomeFab(){
     homeLongPressTimer = setTimeout(() => {
       homeLongPressFired = true;
       openHomeRadial();
-    }, 450);
+    }, 420);
   };
   const cancel = () => { clearTimeout(homeLongPressTimer); };
   btn.addEventListener('pointerdown', start);
@@ -6043,31 +6367,100 @@ function setupHomeFab(){
     if(homeLongPressFired){ homeLongPressFired = false; return; }
     switchPage('start');
   });
+  // Auf document lauschen (nicht nur auf den Button/Catcher) — mobile Browser routen
+  // Touch-Move/-Up-Events teils implizit weiter zum Startelement, ein document-Listener
+  // bekommt sie in jedem Fall, da sie durch den DOM-Baum hoch bubbeln.
+  document.addEventListener('pointermove', (e) => { if(homeRadialOpen) onHomeRadialMove(e); }, { passive:false });
+  document.addEventListener('pointerup', (e) => { if(homeRadialOpen) onHomeRadialRelease(e); });
+  document.addEventListener('pointercancel', () => { if(homeRadialOpen) closeHomeRadial(); });
+  document.addEventListener('touchmove', (e) => { if(homeRadialOpen) e.preventDefault(); }, { passive:false });
+}
+function polarToXY(cx, cy, r, angleDeg){
+  const rad = angleDeg * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+}
+function homeRadialSlices(){
+  // 5 gleich große Segmente über den ganzen Bogen, mit 2° Lücke zwischen den Segmenten
+  const span = HOME_RADIAL_A_START - HOME_RADIAL_A_END;
+  const step = span / HOME_RADIAL_PAGES.length;
+  const gap = 2;
+  return HOME_RADIAL_PAGES.map((page, i) => {
+    const a1 = HOME_RADIAL_A_START - i * step - gap/2;
+    const a2 = HOME_RADIAL_A_START - (i+1) * step + gap/2;
+    return { page, a1, a2, mid: (a1+a2)/2 };
+  });
 }
 function openHomeRadial(){
   const btn = document.getElementById('homeFabBtn');
   const rect = btn.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  const menu = document.getElementById('homeRadialMenu');
-  const items = menu.querySelectorAll('.home-radial-item');
-  const angles = [160, 125, 90, 55, 20]; // Grad, über einen Halbkreis oberhalb des Buttons verteilt
-  const radius = 92;
-  items.forEach((el, i) => {
-    const rad = angles[i] * Math.PI / 180;
-    const x = cx + Math.cos(rad) * radius;
-    const y = cy - Math.sin(rad) * radius;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+  homeRadialCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+  const { x: cx, y: cy } = homeRadialCenter;
+
+  const svg = document.getElementById('homeRadialSvg');
+  svg.setAttribute('width', window.innerWidth);
+  svg.setAttribute('height', window.innerHeight);
+  const slices = homeRadialSlices();
+  svg.innerHTML = slices.map((s, i) => {
+    const p1 = polarToXY(cx, cy, HOME_RADIAL_R2, s.a1);
+    const p2 = polarToXY(cx, cy, HOME_RADIAL_R2, s.a2);
+    const p3 = polarToXY(cx, cy, HOME_RADIAL_R1, s.a2);
+    const p4 = polarToXY(cx, cy, HOME_RADIAL_R1, s.a1);
+    const d = `M ${p1.x} ${p1.y} A ${HOME_RADIAL_R2} ${HOME_RADIAL_R2} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${HOME_RADIAL_R1} ${HOME_RADIAL_R1} 0 0 0 ${p4.x} ${p4.y} Z`;
+    return `<path class="home-radial-slice" data-index="${i}" d="${d}"></path>`;
+  }).join('');
+
+  const midR = (HOME_RADIAL_R1 + HOME_RADIAL_R2) / 2;
+  document.querySelectorAll('.home-radial-label').forEach((el, i) => {
+    const s = slices[i];
+    const p = polarToXY(cx, cy, midR, s.mid);
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
     el.classList.add('open');
   });
-  document.getElementById('homeRadialBackdrop').classList.add('open');
+
+  document.getElementById('homeRadialCatcher').classList.add('open');
+  document.body.classList.add('no-scroll');
+  homeRadialActiveIndex = -1;
+  homeRadialOpen = true;
   if(navigator.vibrate) navigator.vibrate(10);
 }
-function closeHomeRadial(){
-  document.querySelectorAll('.home-radial-item').forEach(el => el.classList.remove('open'));
-  document.getElementById('homeRadialBackdrop').classList.remove('open');
+function homeRadialIndexAt(x, y){
+  const dx = x - homeRadialCenter.x;
+  const dy = homeRadialCenter.y - y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if(dist < HOME_RADIAL_R1 || dist > HOME_RADIAL_R2 + 20) return -1;
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  if(angle < 0) angle += 360;
+  const slices = homeRadialSlices();
+  for(let i=0;i<slices.length;i++){
+    const s = slices[i];
+    if(angle <= s.a1 + 1 && angle >= s.a2 - 1) return i;
+  }
+  return -1;
 }
+function onHomeRadialMove(e){
+  e.preventDefault();
+  const idx = homeRadialIndexAt(e.clientX, e.clientY);
+  if(idx !== homeRadialActiveIndex){
+    homeRadialActiveIndex = idx;
+    document.querySelectorAll('.home-radial-slice').forEach((el, i) => el.classList.toggle('active', i === idx));
+    if(idx >= 0 && navigator.vibrate) navigator.vibrate(6);
+  }
+}
+function onHomeRadialRelease(e){
+  const idx = homeRadialIndexAt(e.clientX, e.clientY);
+  closeHomeRadial();
+  if(idx >= 0){ switchPage(HOME_RADIAL_PAGES[idx]); }
+}
+function closeHomeRadial(){
+  document.getElementById('homeRadialCatcher').classList.remove('open');
+  document.body.classList.remove('no-scroll');
+  document.getElementById('homeRadialSvg').innerHTML = '';
+  document.querySelectorAll('.home-radial-label').forEach(el => el.classList.remove('open'));
+  homeRadialActiveIndex = -1;
+  homeRadialOpen = false;
+}
+
 
 function stGreetingName(){
   const first = (tsEmployees && tsEmployees[0] && tsEmployees[0].name) ? tsEmployees[0].name.trim().split(/\s+/) : [];
@@ -6376,25 +6769,25 @@ function mtRenderList(){
     (m.hersteller||'').toLowerCase().includes(q)
   );
   if(!list.length){ wrap.innerHTML = '<div class="empty-note">Kein Material gefunden.</div>'; return; }
-  wrap.innerHTML = '';
-  list.forEach(m => {
-    const div = document.createElement('div');
-    div.className = 'modal-item';
-    div.innerHTML = `
-      <div class="info">
-        <div class="name">${escAttr(m.bezeichnung || 'Ohne Bezeichnung')}</div>
-        <div class="sub">${escAttr(m.artikelnr || '')} ${m.hersteller ? '· '+escAttr(m.hersteller) : ''} ${m.preis!=null && m.preis!=='' ? '· '+escAttr(m.preis)+' €' : ''}</div>
+  wrap.innerHTML = list.map(m => {
+    const low = m.bestand != null && m.mindestbestand != null && m.bestand <= m.mindestbestand;
+    const bestandHtml = m.bestand != null
+      ? `<span class="status-badge ${low ? 'offen' : 'abgeschlossen'}">${escAttr(m.bestand)}${m.einheit ? ' '+escAttr(m.einheit) : ' Stk'}</span>`
+      : '';
+    return `
+    <div class="at-list-row" onclick="mtOpenModal('${m.id}')">
+      <div class="at-list-body">
+        <div class="at-title">${escAttr(m.bezeichnung || 'Ohne Bezeichnung')}</div>
+        <div class="at-sub">${[escAttr(m.artikelnr||''), escAttr(m.hersteller||'')].filter(Boolean).join(' · ') || '–'}</div>
+        ${m.preis!=null && m.preis!=='' ? `<div class="at-sub">${fmtMoney(m.preis)}</div>` : ''}
       </div>
-      <div class="modal-actions">
-        <button class="btn small" onclick="mtOpenModal('${m.id}')">Bearbeiten</button>
-      </div>
-    `;
-    wrap.appendChild(div);
-  });
+      ${bestandHtml}
+    </div>`;
+  }).join('');
 }
 
 function mtClearForm(){
-  ['mt_f_artikelnr','mt_f_bezeichnung','mt_f_hersteller','mt_f_einheit','mt_f_preis']
+  ['mt_f_artikelnr','mt_f_bezeichnung','mt_f_hersteller','mt_f_einheit','mt_f_preis','mt_f_bestand','mt_f_mindestbestand']
     .forEach(id => document.getElementById(id).value = '');
 }
 
@@ -6413,6 +6806,8 @@ function mtOpenModal(id){
     document.getElementById('mt_f_hersteller').value = m.hersteller || '';
     document.getElementById('mt_f_einheit').value = m.einheit || '';
     document.getElementById('mt_f_preis').value = m.preis != null ? m.preis : '';
+    document.getElementById('mt_f_bestand').value = m.bestand != null ? m.bestand : '';
+    document.getElementById('mt_f_mindestbestand').value = m.mindestbestand != null ? m.mindestbestand : '';
     document.getElementById('mt_editTitle').textContent = 'Material bearbeiten';
     document.getElementById('mt_deleteBtn').style.display = '';
   }
@@ -6427,12 +6822,16 @@ async function mtSaveMaterial(){
   const bezeichnung = document.getElementById('mt_f_bezeichnung').value.trim();
   if(!bezeichnung){ showToast('Bitte eine Artikelbezeichnung eintragen'); return; }
   const preisRaw = document.getElementById('mt_f_preis').value;
+  const bestandRaw = document.getElementById('mt_f_bestand').value;
+  const mindestRaw = document.getElementById('mt_f_mindestbestand').value;
   const rec = {
     artikelnr: document.getElementById('mt_f_artikelnr').value,
     bezeichnung,
     hersteller: document.getElementById('mt_f_hersteller').value,
     einheit: document.getElementById('mt_f_einheit').value,
-    preis: preisRaw ? parseFloat(String(preisRaw).replace(',','.')) : null
+    preis: preisRaw ? parseFloat(String(preisRaw).replace(',','.')) : null,
+    bestand: bestandRaw !== '' ? parseInt(bestandRaw, 10) : null,
+    mindestbestand: mindestRaw !== '' ? parseInt(mindestRaw, 10) : null
   };
   if(mtEditingId) rec.id = mtEditingId;
   const { error } = await sb.from('materials').upsert(rec);
@@ -6502,6 +6901,7 @@ function mtStopScan(){
    INIT
    ================================================================ */
 window.addEventListener('load', async () => {
+  initDeviceLock();
   const { data: { session } } = await sb.auth.getSession();
   if(session){ await enterApp(); }
 });
