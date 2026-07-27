@@ -1750,7 +1750,7 @@
       </div>
 
       <div class="start-stats-grid" id="st_statsGrid">
-        <div class="start-stat-card" data-tile="heuteTermine" onclick="switchPage('termine')">
+        <div class="start-stat-card" data-tile="heuteTermine" onclick="openTagesablauf()">
           <div class="start-stat-value" id="st_heuteTermine">–</div>
           <div class="start-stat-label">Heute Termine</div>
         </div>
@@ -1773,6 +1773,10 @@
         <div class="start-stat-card" data-tile="kundenGesamt" onclick="switchPage('kunden')">
           <div class="start-stat-value" id="st_kundenGesamt">–</div>
           <div class="start-stat-label">Kunden gesamt</div>
+        </div>
+        <div class="start-stat-card" data-tile="letzterKunde" id="st_letzterKundeCard" onclick="stOpenLastCustomer()">
+          <div class="start-stat-value" id="st_letzterKunde" style="font-size:16px;">–</div>
+          <div class="start-stat-label">Letzter Kunde</div>
         </div>
         <div class="start-stat-card" data-tile="kontostand" id="st_kontostandCard" style="display:none;" onclick="openAllAccountsModal()">
           <div class="start-stat-value" id="st_kontostand">–</div>
@@ -2095,6 +2099,16 @@
         <button class="btn primary" id="driveSavedOpenBtn">In Drive öffnen ↗</button>
         <button class="btn" onclick="closeDriveSavedConfirmation()">Schließen</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tagesablauf - heutige Termine direkt in Aufgaben umwandeln -->
+  <div class="modal-overlay" id="tagesablaufModal">
+    <div class="modal">
+      <button class="modal-x" onclick="document.getElementById('tagesablaufModal').classList.remove('open')">✕</button>
+      <h3>Tagesablauf</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;" id="ta_dateLine"></p>
+      <div id="ta_list"></div>
     </div>
   </div>
 
@@ -4732,6 +4746,7 @@ const DASHBOARD_STAT_LABELS = {
   heuteTermine: 'Heute Termine', offeneAuftraege: 'Offene Aufträge',
   rechnungenOffen: 'Rechnungen offen', angeboteOffen: 'Angebote offen',
   anstehendeTermine: 'Anstehende Termine', kundenGesamt: 'Kunden gesamt',
+  letzterKunde: 'Letzter Kunde',
   kontostand: 'Kontostand (nur mit sevDesk)'
 };
 const DASHBOARD_QA_LABELS = {
@@ -6276,13 +6291,32 @@ async function sevdeskGetOpenAngeboteSum(){
 // Kontostand: sevDesk führt "CheckAccount"-Konten (Bankkonten/Kassen). Wir nehmen das
 // als Standard markierte Konto, sonst das erste. Endpunkt laut sevDesk-API-Dokumentation:
 // GET /CheckAccount/{id}/getCurrentBalance
+function dashboardKontoPref(){ return localStorage.getItem('dashboardKontoAccountId') || 'combined'; }
+function setDashboardKontoPref(v){
+  localStorage.setItem('dashboardKontoAccountId', v);
+  document.getElementById('accountsModal').classList.remove('open');
+  showToast('Als Startseite-Kachel festgelegt');
+  stRenderDashboard();
+}
 async function sevdeskGetAccountBalance(){
   const accounts = await sevdeskFetch('/CheckAccount');
   if(!accounts.length) throw new Error('Kein Bankkonto in sevDesk gefunden');
-  const account = accounts.find(a => a.defaultAccount === true || a.defaultAccount === '1') || accounts[0];
+  const pref = dashboardKontoPref();
+  if(pref === 'combined'){
+    let sum = 0;
+    for(const acc of accounts){
+      try {
+        const res = await sevdeskFetchRaw('/CheckAccount/' + acc.id + '/getCurrentBalance');
+        sum += Number(res.objects) || 0;
+      } catch(e){ /* einzelnes Konto ignorieren */ }
+    }
+    return { name: 'Alle Konten', balance: sum };
+  }
+  const account = accounts.find(a => String(a.id) === String(pref))
+    || accounts.find(a => a.defaultAccount === true || a.defaultAccount === '1')
+    || accounts[0];
   const res = await sevdeskFetchRaw('/CheckAccount/' + account.id + '/getCurrentBalance');
-  const balance = res.objects;
-  return { name: account.name || 'Konto', balance: Number(balance) || 0 };
+  return { name: account.name || 'Konto', balance: Number(res.objects) || 0 };
 }
 // Alle hinterlegten Konten mit jeweiligem Kontostand (für die Übersicht aller Konten)
 // Verlauf des Kontostands (Summe aller Konten) über die letzten Monate.
@@ -6315,9 +6349,9 @@ async function sevdeskGetAllAccountBalances(){
   for(const acc of accounts){
     try {
       const res = await sevdeskFetchRaw('/CheckAccount/' + acc.id + '/getCurrentBalance');
-      results.push({ name: acc.name || 'Konto', balance: Number(res.objects) || 0, isDefault: acc.defaultAccount === true || acc.defaultAccount === '1' });
+      results.push({ id: acc.id, name: acc.name || 'Konto', balance: Number(res.objects) || 0, isDefault: acc.defaultAccount === true || acc.defaultAccount === '1' });
     } catch(e){
-      results.push({ name: acc.name || 'Konto', balance: null, isDefault: false });
+      results.push({ id: acc.id, name: acc.name || 'Konto', balance: null, isDefault: false });
     }
   }
   return results;
@@ -6329,14 +6363,19 @@ async function openAllAccountsModal(){
   try {
     const accounts = await sevdeskGetAllAccountBalances();
     if(!accounts.length){ wrap.innerHTML = '<div class="empty-note">Keine Konten in sevDesk gefunden.</div>'; return; }
-    wrap.innerHTML = accounts.map(a => `
-      <div class="at-list-row" style="cursor:default;">
+    const pref = dashboardKontoPref();
+    const combinedSum = accounts.reduce((s,a) => s + (a.balance||0), 0);
+    const rowHtml = (id, name, balanceText, selected) => `
+      <div class="at-list-row" onclick="setDashboardKontoPref('${id}')">
         <div class="at-list-body">
-          <div class="at-title">${escAttr(a.name)}${a.isDefault ? ' (Standard)' : ''}</div>
+          <div class="at-title">${selected ? '✓ ' : ''}${escAttr(name)}</div>
+          <div class="at-sub">${selected ? 'Auf Startseite angezeigt' : 'Antippen, um auf Startseite anzuzeigen'}</div>
         </div>
-        <div style="font-weight:700;font-size:14px;color:var(--text);">${a.balance !== null ? fmtMoney(a.balance) : '–'}</div>
-      </div>
-    `).join('');
+        <div style="font-weight:700;font-size:14px;color:var(--text);">${balanceText}</div>
+      </div>`;
+    wrap.innerHTML =
+      rowHtml('combined', 'Alle Konten (Summe)', fmtMoney(combinedSum), pref === 'combined') +
+      accounts.map(a => rowHtml(a.id, a.name + (a.isDefault ? ' (Standard)' : ''), a.balance !== null ? fmtMoney(a.balance) : '–', pref === String(a.id))).join('');
   } catch(e){
     wrap.innerHTML = '<div class="empty-note">Fehler beim Laden: ' + escAttr(e.message) + '</div>';
   }
@@ -6650,6 +6689,12 @@ async function agCreatePdf(){
 /* ================================================================
    STARTSEITE: kurze Übersicht (echte Zahlen aus Aufträgen & Terminen)
    ================================================================ */
+async function stOpenLastCustomer(){
+  const lastCustomer = [...(tsCustomers||[])].sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))[0];
+  if(!lastCustomer){ showToast('Noch keine Kunden vorhanden'); return; }
+  await switchPage('kunden');
+  kdOpenCustomerDetail(lastCustomer.id);
+}
 async function stQuickOpenAg(type){
   await switchPage('angebote');
   agSwitchType(type);
@@ -6992,6 +7037,9 @@ async function stRenderDashboard(){
   }
   document.getElementById('st_kundenGesamt').textContent = String((tsCustomers||[]).length);
 
+  const lastCustomer = [...(tsCustomers||[])].sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))[0];
+  document.getElementById('st_letzterKunde').textContent = lastCustomer ? lastCustomer.name : '–';
+
   const kontoCard = document.getElementById('st_kontostandCard');
   if(sevdeskConnected()){
     kontoCard.style.display = '';
@@ -7304,6 +7352,57 @@ async function tmMarkDone(id, type){
   tmLoadTermine();
   tmRenderCalendar();
   if(typeof atLoadList === 'function') atLoadList();
+}
+
+async function openTagesablauf(){
+  const modal = document.getElementById('tagesablaufModal');
+  const wrap = document.getElementById('ta_list');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  document.getElementById('ta_dateLine').textContent = stFormatDateLine(new Date());
+  modal.classList.add('open');
+  const todayStr = new Date().toISOString().slice(0,10);
+  const [atRes, ipRes] = await Promise.all([
+    sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,uhrzeit,status').eq('datum', todayStr).neq('status', 'abgeschlossen'),
+    sb.from('protocols').select('id,nr,auftraggeber,objekt,naechster_termin').eq('naechster_termin', todayStr)
+  ]);
+  const items = [
+    ...(atRes.data||[]).map(r => ({ type:'at', id:r.id, kunde:r.auftraggeber, label:r.beschreibung||'Auftrag', uhrzeit:r.uhrzeit })),
+    ...(ipRes.data||[]).map(r => ({ type:'ip', id:r.id, kunde:r.auftraggeber, label:'Prüf-/Austauschtermin'+(r.nr?' · '+r.nr:''), uhrzeit:null }))
+  ];
+  if(!items.length){ wrap.innerHTML = '<div class="empty-note">Für heute sind keine Termine eingetragen. Guten Tag! 🎉</div>'; return; }
+  wrap.innerHTML = items.map((it, i) => `
+    <div class="trip-card">
+      <div class="trip-card-top">
+        <span class="trip-card-date">${escAttr(it.kunde || 'Ohne Kunde')}</span>
+        ${it.uhrzeit ? `<span class="status-badge offen">${escAttr(it.uhrzeit.slice(0,5))} Uhr</span>` : ''}
+      </div>
+      <div class="trip-meta-row"><span>${escAttr(it.label)}</span></div>
+      <div class="btn-row">
+        <button class="btn small primary" onclick="taStartTimesheet(${i})">Stundenzettel</button>
+        <button class="btn small" onclick="taStartProtocol(${i})">Protokoll</button>
+        ${it.type === 'at' ? `<button class="btn small danger" onclick="tmMarkDone('${it.id}','at')">Erledigt</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+  window._taItems = items;
+}
+async function taFindCustomerByName(name){
+  return (tsCustomers||[]).find(c => c.name === name) || null;
+}
+async function taStartTimesheet(i){
+  const it = window._taItems[i];
+  document.getElementById('tagesablaufModal').classList.remove('open');
+  await switchPage('stunden');
+  tsShowFormChoice();
+  const c = await taFindCustomerByName(it.kunde);
+  if(c) applyCustomerEverywhere(c);
+}
+async function taStartProtocol(i){
+  const it = window._taItems[i];
+  document.getElementById('tagesablaufModal').classList.remove('open');
+  await switchPage('installation');
+  const c = await taFindCustomerByName(it.kunde);
+  if(c) applyCustomerEverywhere(c);
 }
 
 function mtRenderList(){
