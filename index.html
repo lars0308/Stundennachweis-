@@ -580,6 +580,20 @@
   .trip-field-grid .field label{font-size:9.5px;}
   .trip-field-grid .field input, .trip-field-grid .field select{font-size:13px;padding:5px 0;}
 
+  /* Saubere Zusammenfassungs-Ansicht für abgeschlossene Nachweise/Protokolle,
+     statt einfach das (gesperrte) Formular grau anzuzeigen. */
+  .summary-top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+  .summary-title{font-size:17px;font-weight:700;color:var(--text);}
+  .summary-nr{font-size:12px;color:var(--muted);margin-top:2px;}
+  .summary-block{margin-bottom:16px;}
+  .summary-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:2px;}
+  .summary-value{font-size:14px;color:var(--text);font-weight:600;}
+  .summary-value.small{font-size:12.5px;font-weight:400;color:var(--muted);margin-top:1px;}
+  .summary-icon-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13.5px;color:var(--text);}
+  .summary-icon-row svg{width:17px;height:17px;stroke:var(--green-dark);flex-shrink:0;}
+  .summary-sig-block{margin-top:6px;}
+  .summary-sig-block img{max-height:60px;border-bottom:1px solid var(--border);}
+
   /* ============================================================
      DRUCK-/PDF-VORLAGE (matches Referenz-PDF)
      ============================================================ */
@@ -938,6 +952,48 @@
         <button class="btn small" onclick="tsUnlock()">Bearbeitung freigeben</button>
       </div>
 
+      <div id="ts_summaryView" style="display:none;">
+        <section class="card">
+          <div class="summary-top-row">
+            <div>
+              <div class="summary-title">Stundennachweis</div>
+              <div class="summary-nr">Nr. <span id="tss_nr"></span></div>
+            </div>
+            <span class="status-badge abgeschlossen">Abgeschlossen</span>
+          </div>
+          <div class="summary-block">
+            <span class="summary-label">Kunde</span>
+            <div class="summary-value" id="tss_kunde"></div>
+            <div class="summary-value small" id="tss_adresse"></div>
+          </div>
+          <div class="summary-block">
+            <span class="summary-label">Auftragsbeschreibung</span>
+            <div class="summary-value small" id="tss_taetigkeit" style="font-weight:400;color:var(--text);"></div>
+          </div>
+          <div class="summary-icon-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+            <span id="tss_datum"></span>
+          </div>
+          <div class="summary-icon-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+            <span id="tss_arbeitszeit"></span>
+          </div>
+          <div class="summary-icon-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <span id="tss_mitarbeiter"></span>
+          </div>
+          <div class="summary-block summary-sig-block">
+            <span class="summary-label">Unterschrift Kunde</span>
+            <div id="tss_sig"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="emailCurrent()">+ Teilen</button>
+            <button class="btn" onclick="printCurrent()">PDF</button>
+            <button class="btn" onclick="tsCopyAsNew(tsCurrentId)">Duplizieren</button>
+          </div>
+        </section>
+      </div>
+
       <section class="card">
         <div class="top-row">
           <div class="company">
@@ -1200,6 +1256,48 @@
       </section>
 
       <div id="ip_formContent" style="display:none;">
+
+      <div id="ip_summaryView" style="display:none;">
+        <section class="card">
+          <div class="summary-top-row">
+            <div>
+              <div class="summary-title" id="ips_art">Protokoll</div>
+              <div class="summary-nr">Nr. <span id="ips_nr"></span></div>
+            </div>
+            <span class="status-badge abgeschlossen">Abgeschlossen</span>
+          </div>
+          <div class="summary-block">
+            <span class="summary-label">Kunde</span>
+            <div class="summary-value" id="ips_kunde"></div>
+            <div class="summary-value small" id="ips_adresse"></div>
+          </div>
+          <div class="summary-block">
+            <span class="summary-label">Tätigkeit / Beschreibung</span>
+            <div class="summary-value small" id="ips_taetigkeit" style="font-weight:400;color:var(--text);"></div>
+          </div>
+          <div class="summary-icon-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+            <span id="ips_datum"></span>
+          </div>
+          <div class="summary-icon-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <span id="ips_monteur"></span>
+          </div>
+          <div class="summary-icon-row" id="ips_terminRow" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+            <span id="ips_termin"></span>
+          </div>
+          <div class="summary-block summary-sig-block">
+            <span class="summary-label">Unterschrift Kunde</span>
+            <div id="ips_sig"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="emailCurrent()">+ Teilen</button>
+            <button class="btn" onclick="printCurrent()">PDF</button>
+            <button class="btn" onclick="ipCopyAsNew(ipCurrentId)">Duplizieren</button>
+          </div>
+        </section>
+      </div>
 
       <div class="vorlage-current">
         <span id="ip_currentVorlageLabel">Vorlage: Montage</span>
@@ -2294,6 +2392,20 @@ function setLocked(prefix, locked){
   if(prefix === 'installation') ipLocked = locked;
   const banner = document.getElementById(prefix === 'stunden' ? 'ts_lockBanner' : 'ip_lockBanner');
   if(banner) banner.style.display = locked ? '' : 'none';
+  // Bei abgeschlossenen Nachweisen/Protokollen zeigen wir eine saubere
+  // Zusammenfassung (wie im Mockup) statt des grau hinterlegten Formulars.
+  const summaryId = prefix === 'stunden' ? 'ts_summaryView' : (prefix === 'installation' ? 'ip_summaryView' : null);
+  const summaryEl = summaryId ? document.getElementById(summaryId) : null;
+  if(summaryEl){
+    const formContentEl = document.getElementById(prefix === 'stunden' ? 'ts_formContent' : 'ip_formContent');
+    const cardSections = (formContentEl || pageEl).querySelectorAll(':scope > section.card');
+    cardSections.forEach(el => { el.style.display = locked ? 'none' : ''; });
+    summaryEl.style.display = locked ? '' : 'none';
+    if(locked){
+      if(prefix === 'stunden' && typeof tsRenderSummary === 'function') tsRenderSummary();
+      if(prefix === 'installation' && typeof ipRenderSummary === 'function') ipRenderSummary();
+    }
+  }
 }
 
 async function tsUnlock(){
@@ -3232,6 +3344,29 @@ function tsComputeRow(r){
   const gesamtH = arbeitszeitH!==null ? arbeitszeitH + fahrzeit/60 : null;
   return { arbeitszeitH, gesamtH };
 }
+function tsRenderSummary(){
+  document.getElementById('tss_nr').textContent = document.getElementById('ts_f_berichtsnr').value || '–';
+  document.getElementById('tss_kunde').textContent = document.getElementById('ts_f_auftraggeber').value || 'Ohne Kunde';
+  document.getElementById('tss_adresse').textContent = document.getElementById('ts_f_rechnungsanschrift').value || '';
+  document.getElementById('tss_taetigkeit').textContent = document.getElementById('ts_f_taetigkeiten').value || 'Keine Angabe';
+  document.getElementById('tss_datum').textContent = fmtDate(document.getElementById('ts_f_einsatzdatum').value);
+  let totalH = 0;
+  tsWorkRows.forEach(r => { const { gesamtH } = tsComputeRow(r); if(gesamtH) totalH += gesamtH; });
+  const totalStr = totalH.toFixed(1).replace('.', ',');
+  let zeitText;
+  if(tsWorkRows.length === 1 && tsWorkRows[0].von && tsWorkRows[0].bis){
+    zeitText = `${tsWorkRows[0].von} - ${tsWorkRows[0].bis} (${totalStr} h)`;
+  } else {
+    zeitText = `Gesamt ${totalStr} h`;
+  }
+  document.getElementById('tss_arbeitszeit').textContent = zeitText;
+  const names = [...new Set(tsWorkRows.map(r => r.name).filter(Boolean))];
+  document.getElementById('tss_mitarbeiter').textContent = names.join(', ') || '–';
+  const sigData = getSigData('ts_sigKunde');
+  document.getElementById('tss_sig').innerHTML = sigData
+    ? `<img src="${sigData}" alt="Unterschrift">`
+    : '<span class="summary-value small">Noch keine Unterschrift</span>';
+}
 function tsRenderWork(){
   const body = document.getElementById('ts_workBody');
   body.innerHTML = '';
@@ -3959,6 +4094,28 @@ function ipCollectRecord(){
   rec.sig_monteur = getSigData('ip_sigMonteur');
   rec.sig_kunde = getSigData('ip_sigKunde');
   return rec;
+}
+function ipRenderSummary(){
+  const art = document.getElementById('ip_f_termin_art').value || 'Protokoll';
+  document.getElementById('ips_art').textContent = art;
+  document.getElementById('ips_nr').textContent = document.getElementById('ip_f_nr').value || '–';
+  document.getElementById('ips_kunde').textContent = document.getElementById('ip_f_auftraggeber').value || 'Ohne Kunde';
+  document.getElementById('ips_adresse').textContent = document.getElementById('ip_f_rechnungsanschrift').value || '';
+  document.getElementById('ips_taetigkeit').textContent = document.getElementById('ip_f_taetigkeiten').value || 'Keine Angabe';
+  document.getElementById('ips_datum').textContent = fmtDate(document.getElementById('ip_f_datum').value);
+  document.getElementById('ips_monteur').textContent = document.getElementById('ip_f_monteur').value || '–';
+  const termin = document.getElementById('ip_f_naechster_termin').value;
+  const terminRow = document.getElementById('ips_terminRow');
+  if(termin){
+    document.getElementById('ips_termin').textContent = 'Nächster Termin: ' + fmtDate(termin);
+    terminRow.style.display = '';
+  } else {
+    terminRow.style.display = 'none';
+  }
+  const sigData = getSigData('ip_sigKunde');
+  document.getElementById('ips_sig').innerHTML = sigData
+    ? `<img src="${sigData}" alt="Unterschrift">`
+    : '<span class="summary-value small">Noch keine Unterschrift</span>';
 }
 function ipApplyRecord(rec){
   Object.entries(ipFieldMap).forEach(([fieldId, col]) => {
