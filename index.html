@@ -1650,6 +1650,12 @@
         <div id="kd_tab_fotos" class="kd-tabpane" style="display:none;">
           <section class="card">
             <div class="card-head"><h2>Fotos</h2></div>
+            <div class="btn-row" style="margin-bottom:12px;">
+              <button class="btn small primary" onclick="document.getElementById('kd_ownPhotoInput').click()">+ Foto hinzufügen</button>
+              <input type="file" id="kd_ownPhotoInput" class="hidden-file" accept="image/*" multiple onchange="kdAddOwnPhotos(this.files)">
+              <button class="btn small" onclick="kdSavePhotosToDrive()">In Drive speichern</button>
+              <button class="btn small" onclick="kdOpenDriveFolder()">Ordner öffnen ↗</button>
+            </div>
             <div class="kd-photos-grid" id="kd_tabPhotosGrid"><div class="empty-note">Lädt…</div></div>
           </section>
         </div>
@@ -2151,6 +2157,17 @@
       <h3>Tagesablauf</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;" id="ta_dateLine"></p>
       <div id="ta_list"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Kontoumsätze über alle ausgewählten Konten -->
+  <div class="modal-overlay" id="kontoUmsaetzeModal">
+    <div class="modal">
+      <button class="modal-x" onclick="document.getElementById('kontoUmsaetzeModal').classList.remove('open')">✕</button>
+      <h3>Kontoumsätze</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;">Welche Konten sollen einfließen?</p>
+      <div id="umsaetzeAccountToggles" style="margin-bottom:12px;"></div>
+      <div id="umsaetzeModalList"></div>
     </div>
   </div>
 
@@ -6178,7 +6195,7 @@ async function kdLoadBerichte(){
   if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch keine Nachweise oder Protokolle zu diesem Kunden.</div>'; return; }
   kdRenderBerichteList();
 }
-/* ---------- Tab "Fotos": alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
+/* ---------- Tab "Fotos": eigene Fotos + alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
 let kdFotoList = [];
 async function kdLoadFotos(){
   const c = kdDetailCustomer;
@@ -6190,6 +6207,7 @@ async function kdLoadFotos(){
     sb.from('protocols').select('nr,fotos,created_at').eq('auftraggeber', c.name).order('created_at',{ascending:false})
   ]);
   const photos = [];
+  (c.fotos || []).forEach(f => photos.push({ src: f, label: 'Eigenes Foto', date: c.created_at }));
   (tsRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.berichtsnr, date:r.created_at})));
   (ipRes.data||[]).forEach(r => (r.fotos||[]).forEach(f => photos.push({src:f, label:r.nr, date:r.created_at})));
   kdFotosLoaded = true;
@@ -6200,6 +6218,63 @@ async function kdLoadFotos(){
     grid.innerHTML = photos.map((p,i) => `<div class="kd-photo-cell" onclick="kdOpenLightbox(${i})"><img src="${p.src}" loading="lazy"><span>${escAttr(p.label||'')}</span></div>`).join('');
   }
 }
+async function kdAddOwnPhotos(files){
+  if(!files || !files.length || !kdDetailCustomer) return;
+  const readers = Array.from(files).map(file => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  }));
+  const dataUrls = await Promise.all(readers);
+  const updatedFotos = [...(kdDetailCustomer.fotos || []), ...dataUrls];
+  const { error } = await sb.from('customers').update({ fotos: updatedFotos }).eq('id', kdDetailCustomer.id);
+  if(error){ showToast('Fehler beim Speichern: ' + error.message + ' (evtl. fehlt die Spalte "fotos" bei customers)'); return; }
+  kdDetailCustomer.fotos = updatedFotos;
+  const idx = tsCustomers.findIndex(x => x.id === kdDetailCustomer.id);
+  if(idx > -1) tsCustomers[idx].fotos = updatedFotos;
+  showToast(dataUrls.length + ' Foto(s) hinzugefügt');
+  kdLoadFotos();
+}
+async function kdGetOrCreateDriveFolder(){
+  const c = kdDetailCustomer;
+  if(!gDriveToken){
+    showToast('Bitte Google-Drive-Zugriff im Pop-up bestätigen…');
+    connectGoogleDrive();
+    return null;
+  }
+  const rootId = await driveFindOrCreateFolder('Kundenfotos', null);
+  let custFolderName = (c.name && c.name.trim()) ? c.name.trim() : 'Unbekannter Kunde';
+  if(c.kdnr && c.kdnr.trim()) custFolderName += ' Kdn: ' + c.kdnr.trim();
+  if(c.rechnungsanschrift && c.rechnungsanschrift.trim()) custFolderName += ' ' + c.rechnungsanschrift.trim();
+  return await driveFindOrCreateFolder(custFolderName, rootId);
+}
+async function kdSavePhotosToDrive(){
+  const c = kdDetailCustomer;
+  if(!c || !(c.fotos||[]).length){ showToast('Keine eigenen Fotos zum Hochladen vorhanden'); return; }
+  try {
+    showToast('Lade Fotos zu Google Drive hoch…');
+    const folderId = await kdGetOrCreateDriveFolder();
+    if(!folderId) return;
+    for(let i=0;i<c.fotos.length;i++){
+      await driveUploadDataUrl(c.fotos[i], 'foto-' + (i+1) + '.jpg', folderId);
+    }
+    showDriveSavedConfirmation(['Kundenfotos', c.name || 'Kunde'], c.fotos.length + ' Foto(s)', folderId);
+  } catch(e){
+    gDriveToken = null;
+    updateDriveStatus();
+    showToast('Fehler beim Hochladen: ' + e.message);
+  }
+}
+async function kdOpenDriveFolder(){
+  try {
+    const folderId = await kdGetOrCreateDriveFolder();
+    if(!folderId) return;
+    window.open('https://drive.google.com/drive/folders/' + folderId, '_blank');
+  } catch(e){
+    showToast('Fehler beim Öffnen des Ordners: ' + e.message);
+  }
+}
+
 
 /* ---------- Foto-Vollbildansicht ---------- */
 let kdLightboxIndex = 0;
@@ -6688,6 +6763,65 @@ async function sevdeskGetAllAccountBalances(){
   }
   return results;
 }
+// Kontoumsätze: einzelne Buchungen je Konto. Laut sevDesk-API-Konventionen wird
+// mit checkAccount[id] gefiltert (Standardmuster für Fremdschlüssel-Filter in der
+// sevDesk-API) — nicht live an einem echten Account getestet, bei Problemen bitte
+// melden, dann passe ich das Format an.
+function kontoUmsatzExcluded(){
+  try { return JSON.parse(localStorage.getItem('kontoUmsatzExcluded') || '[]'); } catch(e){ return []; }
+}
+function setKontoUmsatzExcluded(ids){
+  localStorage.setItem('kontoUmsatzExcluded', JSON.stringify(ids));
+}
+function toggleKontoUmsatzAccount(id, included){
+  let excluded = kontoUmsatzExcluded();
+  if(included) excluded = excluded.filter(x => String(x) !== String(id));
+  else if(!excluded.includes(id)) excluded.push(id);
+  setKontoUmsatzExcluded(excluded);
+}
+async function sevdeskGetTransactionsForAccount(accountId, limit){
+  const tx = await sevdeskFetch(`/CheckAccountTransaction?checkAccount[id]=${accountId}&checkAccount[objectName]=CheckAccount&limit=${limit||50}`);
+  return tx;
+}
+async function openKontoUmsaetzeModal(){
+  const wrap = document.getElementById('umsaetzeModalList');
+  const toggles = document.getElementById('umsaetzeAccountToggles');
+  wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
+  document.getElementById('kontoUmsaetzeModal').classList.add('open');
+  try {
+    const accounts = await sevdeskFetch('/CheckAccount');
+    const excluded = kontoUmsatzExcluded();
+    toggles.innerHTML = accounts.map(a => `
+      <label class="dc-check-row">
+        <input type="checkbox" ${excluded.includes(String(a.id)) ? '' : 'checked'} onchange="toggleKontoUmsatzAccount('${a.id}', this.checked); openKontoUmsaetzeModal();">
+        <span>${escAttr(a.name)}</span>
+      </label>
+    `).join('');
+    const included = accounts.filter(a => !excluded.includes(String(a.id)));
+    if(!included.length){ wrap.innerHTML = '<div class="empty-note">Keine Konten ausgewählt.</div>'; return; }
+    let allTx = [];
+    for(const a of included){
+      try {
+        const tx = await sevdeskGetTransactionsForAccount(a.id, 30);
+        allTx.push(...tx.map(t => ({ ...t, _accountName: a.name })));
+      } catch(e){ /* einzelnes Konto überspringen */ }
+    }
+    allTx.sort((a,b) => (b.valueDate||b.entryDate||'').localeCompare(a.valueDate||a.entryDate||''));
+    if(!allTx.length){ wrap.innerHTML = '<div class="empty-note">Keine Umsätze gefunden.</div>'; return; }
+    wrap.innerHTML = allTx.slice(0, 100).map(t => `
+      <div class="at-list-row" style="cursor:default;">
+        <div class="at-list-body">
+          <div class="at-title">${escAttr(t.paymtPurpose || t.payeePayerName || 'Ohne Verwendungszweck')}</div>
+          <div class="at-sub">${escAttr(t._accountName)} · ${fmtDate((t.valueDate||t.entryDate||'').slice(0,10))}</div>
+        </div>
+        <div style="font-weight:700;font-size:14px;color:${Number(t.amount) < 0 ? '#b91c1c' : 'var(--text)'};">${fmtMoney(Number(t.amount)||0)}</div>
+      </div>
+    `).join('');
+  } catch(e){
+    wrap.innerHTML = '<div class="empty-note">Fehler beim Laden: ' + escAttr(e.message) + '</div>';
+  }
+}
+
 async function openAllAccountsModal(){
   const wrap = document.getElementById('accountsModalList');
   wrap.innerHTML = '<div class="empty-note">Lädt…</div>';
@@ -6707,7 +6841,8 @@ async function openAllAccountsModal(){
       </div>`;
     wrap.innerHTML =
       rowHtml('combined', 'Alle Konten (Summe)', fmtMoney(combinedSum), pref === 'combined') +
-      accounts.map(a => rowHtml(a.id, a.name + (a.isDefault ? ' (Standard)' : ''), a.balance !== null ? fmtMoney(a.balance) : '–', pref === String(a.id))).join('');
+      accounts.map(a => rowHtml(a.id, a.name + (a.isDefault ? ' (Standard)' : ''), a.balance !== null ? fmtMoney(a.balance) : '–', pref === String(a.id))).join('') +
+      `<div class="btn-row" style="margin-top:12px;"><button class="btn" onclick="openKontoUmsaetzeModal()">Kontoumsätze anzeigen</button></div>`;
   } catch(e){
     wrap.innerHTML = '<div class="empty-note">Fehler beim Laden: ' + escAttr(e.message) + '</div>';
   }
