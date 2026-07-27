@@ -368,6 +368,19 @@
   .start-hero h1{font-size:19px;margin:0 0 4px;font-weight:700;}
   .start-hero p{margin:0;font-size:13px;opacity:.92;}
   .start-hero .start-date{margin-top:12px;font-size:11.5px;opacity:.85;}
+  .privacy-eye-btn{
+    position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,.18);border:none;color:#fff;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .privacy-eye-btn svg{width:18px;height:18px;stroke:currentColor;}
+  #page-start.privacy-on .start-stat-value,
+  #page-start.privacy-on .at-title,
+  #page-start.privacy-on .at-sub,
+  #page-start.privacy-on .kd-list-body .name,
+  #page-start.privacy-on .kd-list-body .sub-line{
+    filter:blur(7px);user-select:none;
+  }
   .start-stats-grid{
     display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:2;padding:0 2px;
   }
@@ -441,11 +454,43 @@
     flex:1;border:none;background:none;padding:6px 1px;font-size:9.5px;font-weight:600;
     color:var(--muted);cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;
-    min-width:0;
+    min-width:0;position:relative;
   }
   .tab-icon-svg{width:19px;height:19px;stroke:currentColor;}
-  .tab-btn.active{color:var(--green-dark);}
+  .tab-btn.active{color:var(--green-dark);font-weight:700;}
+  .tab-btn.active::before{
+    content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--green-dark);
+  }
   .tab-btn:hover{color:var(--green-dark);}
+
+  /* Runder Home-Button in der Mitte der unteren Leiste: antippen -> Startseite,
+     lange drücken -> Radial-Menü mit weiteren Bereichen */
+  .tab-home-slot{flex:1;position:relative;display:flex;justify-content:center;}
+  .tab-home-btn{
+    position:absolute;top:-22px;width:54px;height:54px;border-radius:50%;
+    background:#fff;border:3px solid #e07b1f;color:#e07b1f;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer;
+    transition:transform .12s,background .12s,color .12s;
+    -webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+  }
+  .tab-home-btn:active{transform:scale(.92);}
+  .tab-home-btn.active{background:#e07b1f;color:#fff;}
+  .tab-home-btn svg{width:24px;height:24px;stroke:currentColor;}
+  .home-radial-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.25);z-index:75;display:none;}
+  .home-radial-backdrop.open{display:block;}
+  .home-radial-item{
+    position:fixed;width:52px;height:52px;border-radius:50%;background:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer;z-index:76;
+    transform:translate(-50%,-50%) scale(.4);opacity:0;pointer-events:none;
+    transition:transform .18s ease-out,opacity .18s ease-out;
+  }
+  .home-radial-item.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
+  .home-radial-item .qa-icon{width:26px;height:26px;}
+  .home-radial-item .qa-icon svg{width:13px;height:13px;}
+  .home-radial-item .radial-label{font-size:8px;font-weight:700;color:var(--text);line-height:1;}
   main{padding-bottom:70px;}
   footer{margin-bottom:70px;}
 
@@ -687,14 +732,19 @@
   /* PDF-Vorschau direkt in der App */
   .preview-toolbar{
     position:fixed; top:0; left:0; right:0; z-index:950; background:#fff; border-bottom:1px solid var(--border);
-    padding:10px 14px; display:none; gap:10px; justify-content:center; align-items:center;
+    padding:8px 8px; display:none; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center;
     box-shadow:0 2px 10px rgba(0,0,0,.12);
   }
   .preview-toolbar.open{ display:flex; }
+  .preview-toolbar .btn{ font-size:12.5px; padding:8px 10px; white-space:nowrap; }
   #printArea.preview-open{
     display:block; position:fixed; inset:0; z-index:900; background:#e5e7eb; overflow-y:auto;
-    padding:66px 10px 30px;
+    padding:110px 10px 30px;
     -webkit-overflow-scrolling:touch;
+  }
+  @media (min-width:560px){
+    #printArea.preview-open{ padding-top:66px; }
+    .preview-toolbar .btn{ font-size:14px; padding:8px 14px; }
   }
   #printArea.preview-open .pd-page{
     background:#fff; max-width:800px; margin:0 auto 16px; box-shadow:0 2px 12px rgba(0,0,0,.12);
@@ -825,7 +875,10 @@
           <div class="card-head"><h2>Zeit stoppen</h2></div>
           <div class="field">
             <label>Kunde</label>
-            <input id="ts_timerCustomerPicker" list="ts_customerList" placeholder="Kunde eingeben oder auswählen…">
+            <div class="picker-with-arrow">
+              <input id="ts_timerCustomerPicker" placeholder="Kunde eingeben oder auswählen…">
+              <button type="button" class="picker-arrow-btn" id="ts_timerCustomerPicker_arrow" title="Liste öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+            </div>
           </div>
           <div class="timer-display" id="ts_timerDisplay">00:00:00</div>
           <div class="btn-row" style="justify-content:center;">
@@ -1556,6 +1609,9 @@
     <div class="page" id="page-start">
 
       <div class="start-hero">
+        <button class="privacy-eye-btn" id="privacyEyeBtn" onclick="togglePrivacyMode()" title="Zahlen ausblenden">
+          <svg id="privacyEyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
         <h1 id="st_greeting">Guten Tag!</h1>
         <p>Willkommen zurück bei <b>Battermann</b></p>
         <div class="start-date" id="st_dateLine"></div>
@@ -1725,23 +1781,45 @@
       <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
       <span>Stunden</span>
     </button>
-    <button class="tab-btn" data-page="installation" onclick="switchPage('installation')">
-      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg>
-      <span>Protokoll</span>
-    </button>
+    <div class="tab-home-slot">
+      <button class="tab-home-btn" id="homeFabBtn" data-page="start" aria-label="Startseite — lange drücken für mehr Bereiche">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"></path></svg>
+      </button>
+    </div>
     <button class="tab-btn" data-page="termine" onclick="switchPage('termine')">
       <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
       <span>Termine</span>
-    </button>
-    <button class="tab-btn" data-page="auftraege" onclick="switchPage('auftraege')">
-      <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-      <span>Aufträge</span>
     </button>
     <button class="tab-btn" data-page="mehr" onclick="openMehrMenu()">
       <svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
       <span>Mehr</span>
     </button>
   </nav>
+
+  <div class="home-radial-backdrop" id="homeRadialBackdrop" onclick="closeHomeRadial()"></div>
+  <div id="homeRadialMenu">
+    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('angebote')">
+      <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h1"></path></svg></span>
+      <span class="radial-label">Angebot/RE</span>
+    </button>
+    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('installation')">
+      <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg></span>
+      <span class="radial-label">Protokoll</span>
+    </button>
+    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('material')">
+      <span class="qa-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+      <span class="radial-label">Material</span>
+    </button>
+    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('fahrtenbuch')">
+      <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg></span>
+      <span class="radial-label">Fahrten­buch</span>
+    </button>
+    <button class="home-radial-item" onclick="closeHomeRadial();switchPage('auftraege')">
+      <span class="qa-icon qa-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+      <span class="radial-label">Aufträge</span>
+    </button>
+  </div>
+
 
   <div class="modal-overlay sheet" id="mehrMenu">
     <div class="modal">
@@ -1827,6 +1905,19 @@
       <div class="btn-row">
         <button class="btn primary" onclick="saveSevdeskToken()">Speichern &amp; testen</button>
         <button class="btn danger" onclick="disconnectSevdesk()">Trennen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bestätigung nach Google-Drive-Upload: zeigt klar WO die Datei gelandet ist -->
+  <div class="modal-overlay" id="driveSavedModal">
+    <div class="modal">
+      <button class="modal-x" onclick="closeDriveSavedConfirmation()">✕</button>
+      <h3>✓ In Google Drive gespeichert</h3>
+      <div id="driveSavedPath" style="font-size:13px;color:var(--text);line-height:1.6;background:#f7f8f6;border-radius:8px;padding:10px 12px;margin-bottom:14px;word-break:break-word;"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="driveSavedOpenBtn">In Drive öffnen ↗</button>
+        <button class="btn" onclick="closeDriveSavedConfirmation()">Schließen</button>
       </div>
     </div>
   </div>
@@ -2437,7 +2528,14 @@ async function buildPdfDataUrlFromPrintArea(){
   });
   let canvas;
   try {
-    canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    // Warten bis Web-Fonts vollständig geladen sind UND alle Bilder (z.B. das Firmenlogo)
+    // fertig geladen haben, bevor der Screenshot gemacht wird — sonst wird mit falschen
+    // Höhen/Metriken gerendert, was genau zu ineinander geschobenem/überlappendem Text führt.
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const imgs = Array.from(area.querySelectorAll('img'));
+    await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: area.scrollWidth, windowHeight: area.scrollHeight });
   } finally {
     pages.forEach((page, i) => { page.style.transform = savedTransforms[i]; });
     savedWrapStyles.forEach(s => { s.el.style.width = s.width; s.el.style.height = s.height; s.el.style.overflow = s.overflow; });
@@ -2504,23 +2602,36 @@ async function uploadPdfToDrive(dataUrl, filename, customerName, kdnr, rechnungs
     if(rechnungsanschrift && rechnungsanschrift.trim()) custFolderName += ' ' + rechnungsanschrift.trim();
     const custFolderId = await driveFindOrCreateFolder(custFolderName, rootId);
     let targetFolderId = custFolderId;
+    const pathParts = ['Kundenfotos', custFolderName];
     const objTrim = (objekt || '').trim();
     const rechTrim = (rechnungsanschrift || '').trim();
     if(objTrim && objTrim !== rechTrim){
       targetFolderId = await driveFindOrCreateFolder(objTrim, custFolderId);
+      pathParts.push(objTrim);
     }
     // Eigener Unterordner je Dokumenttyp (z.B. "Stundennachweis"), damit PDFs nicht
     // lose im Kundenordner zwischen den Fotos landen.
     if(docType && docType.trim()){
       targetFolderId = await driveFindOrCreateFolder(docType.trim(), targetFolderId);
+      pathParts.push(docType.trim());
     }
     await driveUploadDataUrl(dataUrl, filename, targetFolderId);
-    showToast('PDF erfolgreich zu Google Drive hochgeladen');
+    showDriveSavedConfirmation(pathParts, filename, targetFolderId);
   } catch(e){
     gDriveToken = null;
     updateDriveStatus();
     showToast('Fehler beim Hochladen zu Google Drive: ' + e.message + ' — bitte nochmal versuchen');
   }
+}
+function showDriveSavedConfirmation(pathParts, filename, folderId){
+  const pathEl = document.getElementById('driveSavedPath');
+  const openBtn = document.getElementById('driveSavedOpenBtn');
+  pathEl.textContent = pathParts.join(' ▸ ') + ' ▸ ' + filename;
+  openBtn.onclick = () => window.open('https://drive.google.com/drive/folders/' + folderId, '_blank');
+  document.getElementById('driveSavedModal').classList.add('open');
+}
+function closeDriveSavedConfirmation(){
+  document.getElementById('driveSavedModal').classList.remove('open');
 }
 
 /* ================================================================
@@ -2560,6 +2671,8 @@ async function enterApp(){
   const headerLogo = document.getElementById('headerLogo');
   if(headerLogo) headerLogo.src = logoSrc();
   updateSevdeskStatusLabel();
+  initPrivacyMode();
+  setupHomeFab();
   await switchPage('start');
 }
 sb.auth.onAuthStateChange((event) => {
@@ -2587,6 +2700,8 @@ async function switchPage(page){
   document.getElementById('page-angebote').classList.toggle('active', page === 'angebote');
   document.getElementById('page-start').classList.toggle('active', page === 'start');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  const homeBtn = document.getElementById('homeFabBtn');
+  if(homeBtn) homeBtn.classList.toggle('active', page === 'start');
   const titles = { kunden:'Kunden', stunden:'Stunden & Material', installation:'Ausführungsprotokoll', fahrtenbuch:'Fahrtenbuch', material:'Material', termine:'Termine', auftraege:'Aufträge', angebote:'Angebote & Rechnungen', start:'Battermann' };
   const titleEl = document.getElementById('pageTitle');
   const inKdDetail = (page === 'kunden' && kdDetailCustomer);
@@ -4576,6 +4691,9 @@ wirePickerAutocomplete('ts_customerPicker', () => tsCustomers, c => c.name, (c) 
   document.getElementById('ts_customerPicker').value = '';
   showToast('Kunde übernommen (beide Seiten)');
 });
+wirePickerAutocomplete('ts_timerCustomerPicker', () => tsCustomers, c => c.name, (c) => {
+  document.getElementById('ts_timerCustomerPicker').value = c.name || '';
+});
 wirePickerAutocomplete('ip_customerPicker', () => tsCustomers, c => c.name, (c) => {
   applyCustomerEverywhere(c);
   document.getElementById('ip_customerPicker').value = '';
@@ -5551,6 +5669,34 @@ async function sevdeskFetch(path){
   const json = await res.json();
   return json.objects || [];
 }
+// Für Endpunkte, deren "objects" kein Array ist (z.B. /getPdf liefert ein einzelnes Objekt)
+async function sevdeskFetchRaw(path){
+  const token = sevdeskToken();
+  if(!token) throw new Error('Kein sevDesk-Token hinterlegt');
+  const res = await fetch(SEVDESK_BASE + path, {
+    headers: { 'Authorization': token, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error('sevDesk-Anfrage fehlgeschlagen (HTTP '+res.status+')');
+  return res.json();
+}
+// Öffnet die echte Rechnungs-/Angebots-PDF direkt aus sevDesk (Invoice/Order → getPdf, base64).
+async function agViewSevdeskPdf(id){
+  showToast('Lade PDF von sevDesk…');
+  try {
+    const endpoint = agType === 'rechnungen' ? '/Invoice/' : '/Order/';
+    const json = await sevdeskFetchRaw(endpoint + id + '/getPdf?download=0');
+    const obj = json.objects;
+    if(!obj || !obj.content) throw new Error('Keine PDF-Daten erhalten');
+    const byteChars = atob(obj.content);
+    const byteNumbers = new Array(byteChars.length);
+    for(let i=0;i<byteChars.length;i++){ byteNumbers[i] = byteChars.charCodeAt(i); }
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: obj.mimetype || 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch(e){
+    showToast('PDF konnte nicht geladen werden: ' + e.message);
+  }
+}
 function openSevdeskSettings(){
   document.getElementById('sevdesk_f_token').value = sevdeskToken();
   document.getElementById('sevdesk_status').textContent = sevdeskConnected() ? 'Verbunden.' : 'Nicht verbunden.';
@@ -5713,7 +5859,7 @@ function agRenderList(){
   const statuses = AG_STATUS[agType];
   const readonly = sevdeskConnected();
   wrap.innerHTML = items.map(a => `
-    <div class="at-list-row" ${readonly ? '' : `onclick="agOpenModal('${a.id}')"`}>
+    <div class="at-list-row" onclick="${readonly ? `agViewSevdeskPdf('${a.id}')` : `agOpenModal('${a.id}')`}">
       <div class="at-list-body">
         <div class="at-title">${escAttr(a.nr || agLabel())}${a.titel ? ' · '+escAttr(a.titel) : ''}</div>
         <div class="at-sub">${escAttr(a.auftraggeber || 'Ohne Kunde')}</div>
@@ -5722,6 +5868,7 @@ function agRenderList(){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
         <div style="font-weight:700;font-size:13px;color:var(--text);">${fmtMoney(a.betrag)}</div>
         <span class="status-badge ${a.status}">${a._sevdeskLabel || statuses[a.status] || a.status}</span>
+        ${readonly ? '<span style="font-size:10px;color:var(--muted);">PDF ansehen ›</span>' : ''}
       </div>
     </div>
   `).join('');
@@ -5851,6 +5998,77 @@ async function stQuickOpenAg(type){
   agSwitchType(type);
   agOpenModal(null);
 }
+function togglePrivacyMode(){
+  const page = document.getElementById('page-start');
+  const on = !page.classList.contains('privacy-on');
+  page.classList.toggle('privacy-on', on);
+  localStorage.setItem('privacyMode', on ? '1' : '0');
+  const icon = document.getElementById('privacyEyeIcon');
+  icon.innerHTML = on
+    ? '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-6.5 0-10-7-10-8a19.3 19.3 0 0 1 5-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 8a19.4 19.4 0 0 1-3.22 4.42"></path><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+    : '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>';
+}
+function initPrivacyMode(){
+  if(localStorage.getItem('privacyMode') === '1'){
+    document.getElementById('page-start').classList.add('privacy-on');
+    document.getElementById('privacyEyeIcon').innerHTML = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-6.5 0-10-7-10-8a19.3 19.3 0 0 1 5-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 8a19.4 19.4 0 0 1-3.22 4.42"></path><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+  }
+}
+
+/* ================================================================
+   RUNDER HOME-BUTTON: antippen -> Startseite, lange drücken -> Radial-Menü
+   mit Angebot/Rechnung, Protokoll, Material, Fahrtenbuch, Aufträge.
+   ================================================================ */
+let homeLongPressTimer = null;
+let homeLongPressFired = false;
+function setupHomeFab(){
+  const btn = document.getElementById('homeFabBtn');
+  if(!btn || btn._wired) return;
+  btn._wired = true;
+  const start = (e) => {
+    homeLongPressFired = false;
+    clearTimeout(homeLongPressTimer);
+    homeLongPressTimer = setTimeout(() => {
+      homeLongPressFired = true;
+      openHomeRadial();
+    }, 450);
+  };
+  const cancel = () => { clearTimeout(homeLongPressTimer); };
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', cancel);
+  btn.addEventListener('pointerleave', cancel);
+  btn.addEventListener('pointercancel', cancel);
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  btn.addEventListener('click', () => {
+    if(homeLongPressFired){ homeLongPressFired = false; return; }
+    switchPage('start');
+  });
+}
+function openHomeRadial(){
+  const btn = document.getElementById('homeFabBtn');
+  const rect = btn.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const menu = document.getElementById('homeRadialMenu');
+  const items = menu.querySelectorAll('.home-radial-item');
+  const angles = [160, 125, 90, 55, 20]; // Grad, über einen Halbkreis oberhalb des Buttons verteilt
+  const radius = 92;
+  items.forEach((el, i) => {
+    const rad = angles[i] * Math.PI / 180;
+    const x = cx + Math.cos(rad) * radius;
+    const y = cy - Math.sin(rad) * radius;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.classList.add('open');
+  });
+  document.getElementById('homeRadialBackdrop').classList.add('open');
+  if(navigator.vibrate) navigator.vibrate(10);
+}
+function closeHomeRadial(){
+  document.querySelectorAll('.home-radial-item').forEach(el => el.classList.remove('open'));
+  document.getElementById('homeRadialBackdrop').classList.remove('open');
+}
+
 function stGreetingName(){
   const first = (tsEmployees && tsEmployees[0] && tsEmployees[0].name) ? tsEmployees[0].name.trim().split(/\s+/) : [];
   // Anrede-Wörter wie "Herr"/"Frau" überspringen, falls vorhanden, und den ersten echten Vornamen nehmen
@@ -6034,9 +6252,10 @@ async function tmLoadCalendarEvents(){
   const month = tmCalDate.getMonth();
   const rangeStart = new Date(year, month, 1).toISOString().slice(0,10);
   const rangeEnd = new Date(year, month + 1, 0).toISOString().slice(0,10);
-  const [tsRes, ipRes, ipTerminRes, atRes] = await Promise.all([
-    sb.from('timesheets').select('id,berichtsnr,auftraggeber,einsatzdatum').gte('einsatzdatum', rangeStart).lte('einsatzdatum', rangeEnd),
-    sb.from('protocols').select('id,nr,auftraggeber,datum').gte('datum', rangeStart).lte('datum', rangeEnd),
+  // Nur echte Termine: Prüf-/Austauschtermine aus Protokollen + Aufträge mit Datum.
+  // Das reine Erstelldatum eines Stundennachweises/Protokolls ist KEIN Termin und wird
+  // bewusst nicht mehr angezeigt.
+  const [ipTerminRes, atRes] = await Promise.all([
     sb.from('protocols').select('id,nr,auftraggeber,naechster_termin').gte('naechster_termin', rangeStart).lte('naechster_termin', rangeEnd),
     sb.from('auftraege').select('id,auftraggeber,beschreibung,datum,status').gte('datum', rangeStart).lte('datum', rangeEnd)
   ]);
@@ -6048,8 +6267,6 @@ async function tmLoadCalendarEvents(){
     map[key].push(ev);
   };
   const todayStr = new Date().toISOString().slice(0,10);
-  (tsRes.data||[]).forEach(r => push(r.einsatzdatum, { type:'ts', id:r.id, label:'Stundennachweis', nr:r.berichtsnr, kunde:r.auftraggeber, overdue:false }));
-  (ipRes.data||[]).forEach(r => push(r.datum, { type:'ip', id:r.id, label:'Ausführungsprotokoll', nr:r.nr, kunde:r.auftraggeber, overdue:false }));
   (ipTerminRes.data||[]).forEach(r => push(r.naechster_termin, { type:'ip', id:r.id, label:'Prüf-/Austauschtermin', nr:r.nr, kunde:r.auftraggeber, overdue:r.naechster_termin < todayStr }));
   (atRes.data||[]).forEach(r => push(r.datum, { type:'at', id:r.id, label:r.beschreibung || 'Auftrag', nr:'', kunde:r.auftraggeber, overdue:r.status !== 'abgeschlossen' && r.datum < todayStr }));
   tmEventsByDate = map;
