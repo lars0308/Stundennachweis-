@@ -3504,6 +3504,7 @@ async function subscribeTeam(teamId){
   if(teamChannel) sb.removeChannel(teamChannel);
   teamChannel = sb.channel('team-'+teamId)
     .on('broadcast', { event:'card-effect' }, ({payload})=>{ if(payload) showTeamCardEffect(payload); })
+    .on('broadcast', { event:'pikachu-sound' }, ({payload})=>{ playPikachuGroupSound(payload); })
     .on('postgres_changes', { event:'*', schema:'public', table:'team_members', filter:`team_id=eq.${teamId}` }, ()=>{ refreshTeamMembers(); })
     .on('postgres_changes', { event:'*', schema:'public', table:'teams', filter:`id=eq.${teamId}` }, ()=>{ refreshTeamDraftSettings(); })
     .on('postgres_changes', { event:'*', schema:'public', table:'game_rounds', filter:`team_id=eq.${teamId}` }, ()=>{ checkActiveRound(); })
@@ -3534,7 +3535,9 @@ function showTeamCardEffect(payload){
   layer.style.cssText='position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;background:radial-gradient(circle,rgba(34,211,209,.14),rgba(4,5,12,.08) 52%,rgba(4,5,12,.18))!important;backdrop-filter:blur(1px)!important;pointer-events:none!important;';
   const card = document.createElement('div'); card.className='team-card-effect-card';
   card.style.cssText='width:min(540px,90vw)!important;padding:18px!important;background:transparent!important;border:0!important;box-shadow:none!important;text-shadow:0 3px 18px #000,0 0 26px rgba(34,211,209,.9)!important;';
-  const icon = document.createElement('div'); icon.className='team-card-effect-icon'; icon.style.cssText='font-size:clamp(7rem,19vw,14rem)!important;filter:drop-shadow(0 0 26px rgba(34,211,209,.95))!important;animation:team-card-pop .42s cubic-bezier(.2,1.2,.4,1) forwards;'; icon.textContent=visuals[payload.id]||payload.icon||'🎯';
+  const icon = document.createElement('div'); icon.className='team-card-effect-icon'; icon.style.cssText='font-size:clamp(7rem,19vw,14rem)!important;filter:drop-shadow(0 0 26px rgba(34,211,209,.95))!important;animation:team-card-pop .42s cubic-bezier(.2,1.2,.4,1) forwards;';
+  if(payload.id==='pikachu') icon.innerHTML='<img src="assets/pikachu-avatar.gif" alt="Pikachu" style="display:block;width:clamp(9rem,24vw,16rem);height:clamp(9rem,24vw,16rem);object-fit:cover;border-radius:50%;border:3px solid #facc15;box-shadow:0 0 32px #facc15;">';
+  else icon.textContent=visuals[payload.id]||payload.icon||'🎯';
   const title = document.createElement('div'); title.className='team-card-effect-title'; title.style.cssText='font-size:clamp(1.35rem,4vw,2.4rem)!important;color:#fff!important;'; title.textContent=payload.title||'Karte eingesetzt';
   const sub = document.createElement('div'); sub.className='team-card-effect-sub'; sub.style.cssText='color:#d7fbff!important;font-size:clamp(.9rem,2.5vw,1.15rem)!important;'; sub.textContent=payload.sub||'';
   card.append(icon,title,sub); layer.appendChild(card); document.body.appendChild(layer);
@@ -3545,6 +3548,28 @@ function broadcastTeamCardEffect(item, targetName){
   const payload={ id:item.id||'', icon:item.icon||'🎯', title:item.label||'Karte eingesetzt', sub:targetName ? `${actor} greift ${targetName} an.` : `${actor} aktiviert diesen Vorteil.` };
   showTeamCardEffect(payload);
   if(teamChannel) teamChannel.send({type:'broadcast',event:'card-effect',payload}).catch(()=>{});
+}
+function hasPikachuSound(){
+  const s=currentUser && statsStore[currentUser.username];
+  return !!(s && ((s.pikachusFound||0)>=50 || (s.shopOwned&&s.shopOwned.banners||[]).includes('pikachu_expedition')));
+}
+function playPikachuGroupSound(payload){
+  showTeamCardEffect({id:'pikachu',icon:'⚡',title:'Pikachu!',sub:(payload&&payload.name?payload.name+' ruft Pikachu!':'Pikachu!')});
+  if(!userPrefs.soundVibration) return;
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type='square'; osc.frequency.setValueAtTime(880,ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1280,ctx.currentTime+.17);
+    gain.gain.setValueAtTime(.13,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.42);
+    osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.44);
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([45,30,70]);}catch(e){}
+}
+function sendPikachuGroupSound(){
+  if(!hasPikachuSound()){ showAlert('Finde erst alle 50 Pikachus, um den Pikachu-Sound freizuschalten.','⚡'); return; }
+  const payload={name:currentUser?.username||'Jemand'};
+  playPikachuGroupSound(payload);
+  if(teamChannel) Promise.resolve(teamChannel.send({type:'broadcast',event:'pikachu-sound',payload})).catch(()=>{});
 }
 let draftSyncTimer = null;
 function syncDraftSettings(){
@@ -3885,7 +3910,8 @@ function openHostTransferPicker(){
   if(!candidates.length){ showAlert('Für die Host-Übergabe wird mindestens ein weiteres Mitglied benötigt.','👑'); return; }
   let modal=document.getElementById('host-transfer-modal');
   if(!modal){
-    modal=document.createElement('div'); modal.id='host-transfer-modal'; modal.className='modal-backdrop hidden';
+    modal=document.createElement('div'); modal.id='host-transfer-modal'; modal.className='member-modal-backdrop hidden';
+    modal.onclick=(event)=>{ if(event.target===modal) modal.classList.add('hidden'); };
     document.body.appendChild(modal);
   }
   modal.innerHTML=`<div class="member-modal-card" onclick="event.stopPropagation();" style="max-width:460px;">
@@ -5300,7 +5326,7 @@ function renderTeamRoundHeader(){
   return `<div class="team-unit-banner">${unitLabel}</div>
   <div class="scoreboard-head" style="margin-bottom:14px;">
     <div class="scoreboard-info"><div class="scoreboard-title">${myTeam.name || 'Team'}${isHost ? ' 👑' : ''}</div><div class="scoreboard-meta">${gameIconHTML(currentRound.game_id,16)} ${GAME_NAME[currentRound.game_id]||''}${roundCounter}</div></div>
-    <div class="scoreboard-actions">${hostMenu}${memberLeaveMenu}</div>
+    <div class="scoreboard-actions">${hasPikachuSound()?'<button class="header-menu-btn" onclick="sendPikachuGroupSound()" title="Pikachu-Sound für die Gruppe">⚡</button>':''}${hostMenu}${memberLeaveMenu}</div>
   </div>`;
 }
 function extendTeamCampaign(){
@@ -10514,9 +10540,10 @@ renderHomeGreeting();
     const finals = prize===1000 ? Array(6).fill('W') : Array.from({length:6},()=>symbols[Math.floor(Math.random()*symbols.length)]);
     if(prize && prize!==1000) finals[Math.floor(Math.random()*6)] = prize>=100 ? '7' : prize>=20 ? '♦' : '★';
     const reels = Array.from(document.querySelectorAll('#wc-reels .wc-reel'));
+    const neonColors = {W:['#8b5cf6','#22d3ee'],7:['#fb7185','#f97316'],'♦':['#facc15','#fb7185'],'★':['#34d399','#22d3ee'],C:['#60a5fa','#8b5cf6'],'?':['#e879f9','#22d3ee']};
     const spinTimers = reels.map((reel,index)=>{
       reel.classList.add('spinning');
-      return window.setInterval(()=>{ reel.textContent = symbols[Math.floor(Math.random()*symbols.length)]; }, 62 + index * 13);
+      return window.setInterval(()=>{ reel.textContent = symbols[Math.floor(Math.random()*symbols.length)]; }, 105 + index * 18);
     });
     result.textContent = 'Die Walzen drehen …';
     window.setTimeout(()=>{
@@ -10524,8 +10551,12 @@ renderHomeGreeting();
         window.clearInterval(spinTimers[i]);
         r.classList.remove('spinning');
         r.textContent=finals[i];
+        const pair=neonColors[finals[i]]||['#22d3ee','#8b5cf6'];
+        r.style.background=`linear-gradient(145deg,${pair[0]},${pair[1]})`;
+        r.style.color='#fff';
+        r.style.textShadow=`0 0 12px #fff,0 0 24px ${pair[0]}`;
         r.classList.add('wc-landed');
-      }, i*150));
+      }, i*230));
       window.setTimeout(()=>{
       if(prize){
         s.shopBonus = (s.shopBonus||0)+prize;
@@ -10537,9 +10568,10 @@ renderHomeGreeting();
       else result.textContent = `Kein Gewinn – Einsatz: ${bet} Münzen.`;
       saveStats();
       if(btn) btn.disabled=false;
-      renderShopPage();
-      }, reels.length*150 + 120);
-    }, 1200);
+      const balance=document.getElementById('shop-balance');
+      if(balance) balance.textContent = `💰 Guthaben von ${name}: ${shopBalance(name)} Punkte`;
+      }, reels.length*230 + 180);
+    }, 2200);
   };
 })();
 
