@@ -2952,59 +2952,61 @@ async function uploadPhotosToDrive(photos, customerName, kdnr, rechnungsanschrif
 /* ---------- Aktuelle Vorschau als echte PDF-Datei direkt in Google Drive speichern ---------- */
 async function buildPdfDataUrlFromPrintArea(){
   const area = document.getElementById('printArea');
-  // Für die Aufnahme immer die volle (unskalierte) Seitenbreite verwenden — die
-  // Bildschirm-Vorschau ist ggf. nur optisch verkleinert (siehe scalePreviewPages),
-  // die echte PDF-Datei soll aber immer in voller Auflösung/Proportion entstehen.
   const pages = area.querySelectorAll('.pd-page');
-  const savedTransforms = [];
-  pages.forEach(page => { savedTransforms.push(page.style.transform); page.style.transform = 'none'; });
-  const savedWrapStyles = [];
-  area.querySelectorAll('.pd-page-scaler').forEach(wrap => {
-    savedWrapStyles.push({ el: wrap, width: wrap.style.width, height: wrap.style.height, overflow: wrap.style.overflow });
-    wrap.style.width = ''; wrap.style.height = ''; wrap.style.overflow = 'visible';
-  });
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  try {
-    // Warten bis Web-Fonts vollständig geladen sind UND alle Bilder (z.B. das Firmenlogo)
-    // fertig geladen haben, bevor der Screenshot gemacht wird — sonst wird mit falschen
-    // Höhen/Metriken gerendert, was genau zu ineinander geschobenem/überlappendem Text führt.
-    if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const imgs = Array.from(area.querySelectorAll('img'));
-    await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    // Jede .pd-page einzeln aufnehmen — NICHT das ganze #printArea (das im Vorschau-
-    // Modus zusätzliches Padding/grauen Hintergrund/eine Zentrierung um die Seite
-    // herum hat). Würde man #printArea aufnehmen, stimmt die Canvas-Breite nicht
-    // mehr exakt mit der Seite überein und der Inhalt landet beim Einpassen auf
-    // die feste 210mm-PDF-Breite seitlich verschoben bzw. wirkt abgeschnitten.
-    let firstPdfPage = true;
-    for(const page of pages){
-      const canvas = await html2canvas(page, {
+  // Warten bis Web-Fonts vollständig geladen sind UND alle Bilder (z.B. das Firmenlogo)
+  // fertig geladen haben, bevor der Screenshot gemacht wird — sonst wird mit falschen
+  // Höhen/Metriken gerendert, was genau zu ineinander geschobenem/überlappendem Text führt.
+  if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const imgs = Array.from(area.querySelectorAll('img'));
+  await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  let firstPdfPage = true;
+  for(const page of pages){
+    // Die Seite wird NICHT direkt aus der Live-Vorschau heraus aufgenommen, sondern
+    // als Klon in einen einfachen, ganz normal fließenden Container außerhalb von
+    // #printArea gehängt (das im Vorschau-Modus position:fixed + eigenes Scrollen
+    // hat). Genau diese Kombination hat html2canvas bisher dazu gebracht, die Seite
+    // an der aktuell sichtbaren Bildschirmhöhe abzuschneiden, statt die komplette,
+    // ggf. weit über den Bildschirm hinausgehende Seite zu erfassen.
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1;';
+    const clone = page.cloneNode(true);
+    clone.style.transform = 'none';
+    clone.style.margin = '0';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    // Geklonte <img>-Elemente (Unterschriften, Logo, Fotos) laden ihre data-URL
+    // erneut — kurz abwarten, bevor der Screenshot gemacht wird.
+    const cloneImgs = Array.from(clone.querySelectorAll('img'));
+    await Promise.all(cloneImgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
+    let canvas;
+    try {
+      canvas = await html2canvas(clone, {
         scale: 2, useCORS: true, backgroundColor: '#ffffff',
-        windowWidth: page.scrollWidth, windowHeight: page.scrollHeight
+        windowWidth: clone.scrollWidth, windowHeight: clone.scrollHeight
       });
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let heightLeft = imgH;
-      let position = 0;
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      if(!firstPdfPage) pdf.addPage();
-      firstPdfPage = false;
+    } finally {
+      document.body.removeChild(holder);
+    }
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    let heightLeft = imgH;
+    let position = 0;
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    if(!firstPdfPage) pdf.addPage();
+    firstPdfPage = false;
+    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+    heightLeft -= pageH;
+    while(heightLeft > 0){
+      position = heightLeft - imgH;
+      pdf.addPage();
       pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
       heightLeft -= pageH;
-      while(heightLeft > 0){
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-        heightLeft -= pageH;
-      }
     }
-  } finally {
-    pages.forEach((page, i) => { page.style.transform = savedTransforms[i]; });
-    savedWrapStyles.forEach(s => { s.el.style.width = s.width; s.el.style.height = s.height; s.el.style.overflow = s.overflow; });
   }
   return pdf.output('datauristring');
 }
