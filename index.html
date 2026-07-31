@@ -631,10 +631,19 @@
        einhält, und eine Breite von 100% statt einer festen mm-Angabe, damit
        sich der Inhalt automatisch an den wirklich verfügbaren Bereich anpasst. */
     @page{ size: A4 portrait; margin: 8mm; }
-    html, body{ width:auto; margin:0; padding:0; }
-    body *{ visibility:hidden !important; }
-    #printArea, #printArea *{ visibility:visible !important; }
-    #printArea{ position:absolute; left:0; top:0; width:100%; display:block !important; }
+    html, body{ width:auto; height:auto; margin:0; padding:0; }
+    /* Wichtig für mobile "Als PDF speichern"-Dialoge: #printArea bleibt hier im
+       GANZ NORMALEN Dokumentfluss (statt wie vorher per position:absolute
+       herausgelöst und alles andere nur unsichtbar gemacht). Viele Android-
+       WebViews ermitteln die Seitenzahl/Höhe für den Druck anhand des normalen
+       body-Inhaltsflusses — ein position:absolute-Element trägt dazu nichts bei,
+       wodurch dort nur eine (zu kurze) Seite erzeugt und der Rest der Seite
+       (z.B. die Unterschriften) einfach abgeschnitten wurde.
+       Stattdessen werden hier alle anderen direkten body-Kinder komplett aus dem
+       Fluss entfernt (display:none), sodass #printArea's echte Inhaltshöhe die
+       Seitenzahl bestimmt. */
+    body > *:not(#printArea){ display:none !important; }
+    #printArea{ display:block !important; position:static !important; width:100%; padding:0 !important; background:#fff !important; }
     .pd-page{ width:100% !important; transform:none !important; }
     .pd-page-scaler{ width:100% !important; height:auto !important; overflow:visible !important; margin:0 !important; }
   }
@@ -2973,7 +2982,7 @@ async function buildPdfDataUrlFromPrintArea(){
     // an der aktuell sichtbaren Bildschirmhöhe abzuschneiden, statt die komplette,
     // ggf. weit über den Bildschirm hinausgehende Seite zu erfassen.
     const holder = document.createElement('div');
-    holder.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1;';
+    holder.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;overflow:auto;';
     const clone = page.cloneNode(true);
     clone.style.transform = 'none';
     clone.style.margin = '0';
@@ -2983,6 +2992,7 @@ async function buildPdfDataUrlFromPrintArea(){
     // erneut — kurz abwarten, bevor der Screenshot gemacht wird.
     const cloneImgs = Array.from(clone.querySelectorAll('img'));
     await Promise.all(cloneImgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     let canvas;
     try {
       canvas = await html2canvas(clone, {
