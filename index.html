@@ -2984,7 +2984,7 @@ async function buildPdfDataUrlFromPrintArea(){
     for(const page of pages){
       const canvas = await html2canvas(page, {
         scale: 2, useCORS: true, backgroundColor: '#ffffff',
-        width: page.offsetWidth, height: page.offsetHeight, windowWidth: page.offsetWidth
+        windowWidth: page.scrollWidth, windowHeight: page.scrollHeight
       });
       const imgW = pageW;
       const imgH = (canvas.height * imgW) / canvas.width;
