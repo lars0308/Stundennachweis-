@@ -623,13 +623,20 @@
      ============================================================ */
   #printArea{ display:none; }
   @media print{
-    @page{ size: A4 portrait; margin: 0; }
-    html, body{ width:210mm; margin:0; padding:0; }
+    /* Viele mobile Drucker-Dienste (v.a. "Als PDF speichern" unter Android/iOS)
+       halten sich NICHT an @page{margin:0} und erzwingen trotzdem einen eigenen
+       Mindestrand. War die Seite dann fest auf 210mm Breite gesetzt, ragte der
+       Inhalt über den tatsächlich bedruckbaren Bereich hinaus und wurde rechts/
+       unten abgeschnitten. Deshalb hier ein Rand, den praktisch jeder Drucker
+       einhält, und eine Breite von 100% statt einer festen mm-Angabe, damit
+       sich der Inhalt automatisch an den wirklich verfügbaren Bereich anpasst. */
+    @page{ size: A4 portrait; margin: 8mm; }
+    html, body{ width:auto; margin:0; padding:0; }
     body *{ visibility:hidden !important; }
     #printArea, #printArea *{ visibility:visible !important; }
-    #printArea{ position:absolute; left:0; top:0; width:210mm; display:block !important; }
-    .pd-page{ width:210mm !important; transform:none !important; }
-    .pd-page-scaler{ width:210mm !important; height:auto !important; overflow:visible !important; margin:0 !important; }
+    #printArea{ position:absolute; left:0; top:0; width:100%; display:block !important; }
+    .pd-page{ width:100% !important; transform:none !important; }
+    .pd-page-scaler{ width:100% !important; height:auto !important; overflow:visible !important; margin:0 !important; }
   }
 
   .pd-page{ width:210mm; padding:6mm 4mm; font-family: Arial, Helvetica, sans-serif; color:#111; box-sizing:border-box; }
@@ -1860,6 +1867,10 @@
             <span class="qa-icon qa-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M10 13h4"></path><path d="M10 17h4"></path></svg></span>
             <span>Rechnung erstellen</span>
           </button>
+          <button class="qa-tile" data-tile="letzteNachweise" onclick="stOpenRecentNachweise()">
+            <span class="qa-icon qa-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"></path><path d="M9 16h4"></path><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h9.5"></path><path d="M14 2v6h6"></path><circle cx="18" cy="18" r="3.5"></circle><path d="m21.5 21.5-1.6-1.6"></path></svg></span>
+            <span>Letzte Nachweise</span>
+          </button>
         </div>
       </section>
 
@@ -2952,7 +2963,10 @@ async function buildPdfDataUrlFromPrintArea(){
     savedWrapStyles.push({ el: wrap, width: wrap.style.width, height: wrap.style.height, overflow: wrap.style.overflow });
     wrap.style.width = ''; wrap.style.height = ''; wrap.style.overflow = 'visible';
   });
-  let canvas;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
   try {
     // Warten bis Web-Fonts vollständig geladen sind UND alle Bilder (z.B. das Firmenlogo)
     // fertig geladen haben, bevor der Screenshot gemacht wird — sonst wird mit falschen
@@ -2961,29 +2975,48 @@ async function buildPdfDataUrlFromPrintArea(){
     const imgs = Array.from(area.querySelectorAll('img'));
     await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: area.scrollWidth, windowHeight: area.scrollHeight });
+    // Jede .pd-page einzeln aufnehmen — NICHT das ganze #printArea (das im Vorschau-
+    // Modus zusätzliches Padding/grauen Hintergrund/eine Zentrierung um die Seite
+    // herum hat). Würde man #printArea aufnehmen, stimmt die Canvas-Breite nicht
+    // mehr exakt mit der Seite überein und der Inhalt landet beim Einpassen auf
+    // die feste 210mm-PDF-Breite seitlich verschoben bzw. wirkt abgeschnitten.
+    let firstPdfPage = true;
+    for(const page of pages){
+      const canvas = await html2canvas(page, {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff',
+        width: page.offsetWidth, height: page.offsetHeight, windowWidth: page.offsetWidth
+      });
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      let heightLeft = imgH;
+      let position = 0;
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      if(!firstPdfPage) pdf.addPage();
+      firstPdfPage = false;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+    }
   } finally {
     pages.forEach((page, i) => { page.style.transform = savedTransforms[i]; });
     savedWrapStyles.forEach(s => { s.el.style.width = s.width; s.el.style.height = s.height; s.el.style.overflow = s.overflow; });
   }
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW;
-  const imgH = (canvas.height * imgW) / canvas.width;
-  let heightLeft = imgH;
-  let position = 0;
-  const imgData = canvas.toDataURL('image/jpeg', 0.85);
-  pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-  heightLeft -= pageH;
-  while(heightLeft > 0){
-    position = heightLeft - imgH;
-    pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-    heightLeft -= pageH;
-  }
   return pdf.output('datauristring');
+}
+/* Kunde/Adresse für den Dateinamen bereinigen: Zeichen entfernen, die in
+   Dateinamen unter Windows/Mac/Android Probleme machen, Mehrfach-Leerzeichen
+   zusammenfassen und durch Bindestriche ersetzen. */
+function sanitizeFilenamePart(str){
+  return (str || '')
+    .toString()
+    .replace(/[\\/:*?"<>|]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
 }
 async function savePreviewToDrive(){
   if(!window.html2canvas || !window.jspdf){ showToast('PDF-Bibliothek konnte nicht geladen werden — bitte Internetverbindung prüfen'); return; }
@@ -2997,7 +3030,9 @@ async function savePreviewToDrive(){
   }
   let filename, customerName, kdnr, rechnungsanschrift, objekt, docType;
   if(currentPage === 'stunden'){
-    filename = 'Stundennachweis-' + (pdVal('ts_f_berichtsnr') || 'ohne-nr') + '.pdf';
+    const tsKunde = sanitizeFilenamePart(pdVal('ts_f_auftraggeber')) || 'ohne-kunde';
+    const tsAdresse = sanitizeFilenamePart(pdVal('ts_f_rechnungsanschrift')) || sanitizeFilenamePart(pdVal('ts_f_objekt'));
+    filename = 'Stundennachweis-' + tsKunde + (tsAdresse ? '-' + tsAdresse : '') + '.pdf';
     customerName = pdVal('ts_f_auftraggeber'); kdnr = pdVal('ts_f_kdnr');
     rechnungsanschrift = pdVal('ts_f_rechnungsanschrift'); objekt = pdVal('ts_f_objekt');
     docType = 'Stundennachweis';
@@ -3850,6 +3885,11 @@ async function tsOpenLoadModal(){
   document.getElementById('ts_loadModal').classList.add('open');
   await tsRenderModalList();
 }
+/* Schnellzugriff vom Dashboard aus: öffnet die (nach Kunde gruppierte) Liste der
+   gespeicherten Stundennachweise, egal auf welcher Seite man sich gerade befindet. */
+function stOpenRecentNachweise(){
+  tsOpenLoadModal();
+}
 function tsCloseLoadModal(){
   document.getElementById('ts_loadModal').classList.remove('open');
 }
@@ -3897,12 +3937,17 @@ async function tsRenderModalList(){
       const statusBadge = t._offline
         ? '<span class="status-badge offline-item">Offline · wartet</span>'
         : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
+      const thumbs = (t.fotos || []).slice(0,4);
+      const thumbsHtml = thumbs.length
+        ? `<div class="photo-grid" style="margin-top:8px;">${thumbs.map(src => `<div class="photo-thumb" style="width:52px;height:52px;"><img src="${src}"></div>`).join('')}${(t.fotos||[]).length > 4 ? `<div class="photo-thumb" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;">+${t.fotos.length - 4}</div>` : ''}</div>`
+        : '';
       div.innerHTML = `
         <div class="trip-card-top">
           <span class="trip-card-date">${escAttr(t.berichtsnr || 'Ohne Nr.')}</span>
           ${statusBadge}
         </div>
         <div class="trip-meta-row"><span>${escAttr(t.objekt || 'Ohne Objekt')}</span><span>${fmtDateTime(t.created_at)}</span></div>
+        ${thumbsHtml}
         <div class="btn-row">
           <button class="btn small primary" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
           <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
@@ -3918,6 +3963,7 @@ async function tsRenderModalList(){
 async function tsCopyAsNew(id){
   const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
   if(error){ showToast('Fehler: '+error.message); return; }
+  await switchPage('stunden');
   await tsNewTimesheet(true);
   Object.entries(tsFieldMap).forEach(([fieldId, col]) => {
     // Auftrags-/Berichtsnummer NICHT übernehmen — die neue, frisch vergebene Nummer bleibt.
@@ -3934,6 +3980,7 @@ async function tsCopyAsNew(id){
 async function tsLoadTimesheet(id){
   const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
   if(error){ showToast('Fehler: '+error.message); return; }
+  await switchPage('stunden');
   tsApplyRecord(data);
   tsCloseLoadModal();
   showToast('Nachweis geladen');
@@ -3941,6 +3988,7 @@ async function tsLoadTimesheet(id){
 async function tsOpenAndPrint(id){
   const { data, error } = await sb.from('timesheets').select('*').eq('id', id).single();
   if(error){ showToast('Fehler: '+error.message); return; }
+  await switchPage('stunden');
   tsApplyRecord(data);
   tsCloseLoadModal();
   await printCurrent();
@@ -4873,7 +4921,8 @@ const DASHBOARD_STAT_LABELS = {
 const DASHBOARD_QA_LABELS = {
   neuerKunde: 'Neuer Kunde', neuerAuftrag: 'Neuer Auftrag', stundenStarten: 'Stunden starten',
   berichtErstellen: 'Bericht erstellen', fahrtenbuch: 'Fahrtenbuch', material: 'Material',
-  angebotErstellen: 'Angebot erstellen', rechnungErstellen: 'Rechnung erstellen'
+  angebotErstellen: 'Angebot erstellen', rechnungErstellen: 'Rechnung erstellen',
+  letzteNachweise: 'Letzte Nachweise'
 };
 const DASHBOARD_SECTION_LABELS = {
   stats: 'Statistik-Kacheln', kontoChart: 'Konten-Übersicht', statsSection: 'Statistiken',
