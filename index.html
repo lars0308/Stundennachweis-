@@ -2111,6 +2111,13 @@
         </button>
 
         <div class="sheet-divider"></div>
+        <div class="sheet-section-label">Rechtliches</div>
+        <button class="sheet-row" onclick="closeMehrMenu();openLegalModal()">
+          <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></span>
+          <div class="row-text">Impressum &amp; Datenschutz</div>
+        </button>
+
+        <div class="sheet-divider"></div>
         <button class="sheet-row danger" onclick="closeMehrMenu();logout()">
           <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span>
           <span class="row-text">Abmelden</span>
@@ -2174,6 +2181,71 @@
       <button class="modal-x" onclick="closeErledigteAuftraege()">✕</button>
       <h3>Erledigte Aufträge</h3>
       <div id="erledigteAuftraegeList"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Impressum & Datenschutzerklärung -->
+  <div class="modal-overlay" id="legalModal">
+    <div class="modal" style="max-height:85vh;overflow-y:auto;">
+      <button class="modal-x" onclick="closeLegalModal()">✕</button>
+      <h3>Impressum &amp; Datenschutz</h3>
+
+      <div style="background:#fdf1e0;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#7a5c10;line-height:1.5;margin-bottom:16px;">
+        ⚠️ Alle mit <b>[…]</b> markierten Angaben sind Platzhalter und müssen durch die echten Unternehmensdaten
+        ersetzt werden — erst dann sind Impressum und Datenschutzerklärung rechtsgültig. Dieser Text ersetzt keine
+        rechtliche Prüfung; bitte vor Verwendung von einer sachkundigen Stelle gegenlesen lassen.
+      </div>
+
+      <h4 style="margin-bottom:6px;">Impressum</h4>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+        Angaben gemäß § 5 TMG / § 5 DDG<br><br>
+        <b>Objekt- und Reparaturservice Battermann</b><br>
+        [Inhaber:in / vertretungsberechtigte Person]<br>
+        [Straße, Hausnummer]<br>
+        [PLZ, Ort]<br><br>
+        <b>Kontakt</b><br>
+        Telefon: [Telefonnummer]<br>
+        E-Mail: [E-Mail-Adresse]<br><br>
+        <b>Umsatzsteuer-ID</b> (falls vorhanden, gemäß § 27a UStG): [USt-IdNr.]<br>
+        <b>Registereintrag</b> (falls vorhanden): [Registergericht, Registernummer]<br><br>
+        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: [Name, Anschrift wie oben]
+      </p>
+
+      <div class="sheet-divider" style="margin:16px 0;"></div>
+
+      <h4 style="margin-bottom:6px;">Datenschutzerklärung</h4>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+        <b>1. Verantwortlicher</b><br>
+        [Wie im Impressum angegeben].<br><br>
+
+        <b>2. Welche Daten diese App verarbeitet</b><br>
+        Zur Auftragsabwicklung und -dokumentation verarbeitet diese App: Kunden-Stammdaten (Name, Adresse,
+        Telefon, E-Mail, Objekt-/Auftragsdaten), Fotodokumentation von Einsatzorten, digitale Unterschriften
+        von Kund:innen und Mitarbeitenden auf Stundennachweisen/Protokollen sowie Namen von Mitarbeitenden zur
+        Zuordnung erfasster Arbeitszeiten.<br><br>
+
+        <b>3. Zweck und Rechtsgrundlage</b><br>
+        Die Verarbeitung erfolgt zur Erfüllung von Werkverträgen bzw. vorvertraglichen Maßnahmen
+        (Art. 6 Abs. 1 lit. b DSGVO) sowie zur ordnungsgemäßen Leistungsabrechnung und -dokumentation
+        (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse).<br><br>
+
+        <b>4. Empfänger / Auftragsverarbeiter</b><br>
+        Für den Betrieb dieser App werden folgende Dienste eingesetzt: Supabase (Datenbank-Hosting),
+        optional Google Drive (Foto-/PDF-Sicherung, sofern aktiviert) und optional sevDesk (Rechnungswesen,
+        sofern verbunden). Mit diesen Anbietern sollte jeweils ein Auftragsverarbeitungsvertrag (AVV) nach
+        Art. 28 DSGVO vorliegen — bitte Status prüfen bzw. Verträge abschließen, falls noch nicht geschehen.<br><br>
+
+        <b>5. Speicherdauer</b><br>
+        [Aufbewahrungsfrist festlegen — gesetzliche Aufbewahrungspflichten für Geschäftsunterlagen aus HGB/AO
+        beachten (i. d. R. 6–10 Jahre), personenbezogene Daten ohne fortbestehenden Zweck darüber hinaus löschen].<br><br>
+
+        <b>6. Rechte der betroffenen Personen</b><br>
+        Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch
+        (Art. 15–21 DSGVO) sowie ein Beschwerderecht bei der zuständigen Datenschutz-Aufsichtsbehörde.<br><br>
+
+        <b>7. Kontakt für Datenschutzanfragen</b><br>
+        [E-Mail-Adresse]
+      </p>
     </div>
   </div>
 
@@ -2665,6 +2737,16 @@ async function ipUnlock(){
    ================================================================ */
 function escAttr(s){
   return (s===null||s===undefined?'':s).toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+/* Für Werte, die in einfach-quotierte JS-String-Literale innerhalb von
+   onclick="fn('${...}')"-Attributen eingebettet werden: escAttr() allein
+   schützt hier nicht, weil der Browser HTML-Entities (z.B. &#39;) VOR der
+   JS-Auswertung des Handlers dekodiert — ein eingeschleustes ' würde also
+   trotz Entity-Escaping wieder zu einem echten Anführungszeichen und könnte
+   aus dem String ausbrechen. Deshalb zusätzlich Backslash-Escaping auf
+   JS-String-Ebene, kombiniert mit escAttr() für die äußere HTML-Attribut-Grenze. */
+function escJsAttr(s){
+  return escAttr((s===null||s===undefined?'':s).toString().replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
 }
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -3893,6 +3975,12 @@ async function tsSaveTimesheet(){
   }
 }
 async function tsDeleteTimesheet(id){
+  const { data: rec, error: statusError } = await sb.from('timesheets').select('status').eq('id', id).maybeSingle();
+  if(statusError){ showToast('Fehler: '+statusError.message); return; }
+  if(rec && rec.status === 'abgeschlossen'){
+    showToast('Abgeschlossene Nachweise sind schreibgeschützt (GoBD) — bitte zuerst öffnen und "Bearbeitung freigeben", dann löschen.');
+    return;
+  }
   if(!confirm('Diesen Nachweis wirklich löschen?')) return;
   const { error } = await sb.from('timesheets').delete().eq('id', id);
   if(error){ showToast('Fehler: '+error.message); return; }
@@ -4467,6 +4555,12 @@ async function ipSaveProtocol(){
   }
 }
 async function ipDeleteProtocol(id){
+  const { data: rec, error: statusError } = await sb.from('protocols').select('status').eq('id', id).maybeSingle();
+  if(statusError){ showToast('Fehler: '+statusError.message); return; }
+  if(rec && rec.status === 'abgeschlossen'){
+    showToast('Abgeschlossene Protokolle sind schreibgeschützt (GoBD) — bitte zuerst öffnen und "Bearbeitung freigeben", dann löschen.');
+    return;
+  }
   if(!confirm('Dieses Protokoll wirklich löschen?')) return;
   const { error } = await sb.from('protocols').delete().eq('id', id);
   if(error){ showToast('Fehler: '+error.message); return; }
@@ -6064,9 +6158,9 @@ function kdRenderDetailPanel(c){
   const adresse = c.objekt || c.rechnungsanschrift || '';
   document.getElementById('kd_detailPanel').innerHTML = `
     <div class="kd-header-actions">
-      <button class="btn small kd-action-btn" ${c.tel ? '' : 'disabled'} onclick="kdCallTel('${escAttr(c.tel||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.804 1.6l-.469.351a1 1 0 0 0-.291 1.233 14 14 0 0 0 6.397 6.384"></path></svg><br>Anrufen</button>
-      <button class="btn small kd-action-btn" ${c.email ? '' : 'disabled'} onclick="kdMailTo('${escAttr(c.email||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg><br>E-Mail</button>
-      <button class="btn small kd-action-btn" ${adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escAttr(adresse)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg><br>Navigation</button>
+      <button class="btn small kd-action-btn" ${c.tel ? '' : 'disabled'} onclick="kdCallTel('${escJsAttr(c.tel||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.804 1.6l-.469.351a1 1 0 0 0-.291 1.233 14 14 0 0 0 6.397 6.384"></path></svg><br>Anrufen</button>
+      <button class="btn small kd-action-btn" ${c.email ? '' : 'disabled'} onclick="kdMailTo('${escJsAttr(c.email||'')}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg><br>E-Mail</button>
+      <button class="btn small kd-action-btn" ${adresse ? '' : 'disabled'} onclick="kdOpenMapsAddr('${escJsAttr(adresse)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg><br>Navigation</button>
       <button class="btn small kd-action-btn" onclick="kdSwitchTab('uebersicht');document.getElementById('kd_inlineNotizen').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><br>Notiz</button>
     </div>
     <div class="kd-info-grid">
@@ -6574,6 +6668,12 @@ async function openErledigteAuftraege(){
 function closeErledigteAuftraege(){
   document.getElementById('erledigteAuftraegeModal').classList.remove('open');
 }
+function openLegalModal(){
+  document.getElementById('legalModal').classList.add('open');
+}
+function closeLegalModal(){
+  document.getElementById('legalModal').classList.remove('open');
+}
 function atCustomerPicked(){
   const name = document.getElementById('at_f_kunde').value.trim();
   const c = tsCustomers.find(x => x.name === name);
@@ -6619,8 +6719,8 @@ function atOpenModal(id){
 function renderAtQuickActions(tel, adresse){
   const wrap = document.getElementById('at_quickActions');
   const parts = [];
-  if(tel && tel.trim()) parts.push(`<button class="btn small" onclick="kdCallTel('${escAttr(tel)}')">📞 Anrufen</button>`);
-  if(adresse && adresse.trim()) parts.push(`<button class="btn small" onclick="kdOpenMapsAddr('${escAttr(adresse)}')">📍 Route</button>`);
+  if(tel && tel.trim()) parts.push(`<button class="btn small" onclick="kdCallTel('${escJsAttr(tel)}')">📞 Anrufen</button>`);
+  if(adresse && adresse.trim()) parts.push(`<button class="btn small" onclick="kdOpenMapsAddr('${escJsAttr(adresse)}')">📍 Route</button>`);
   wrap.innerHTML = parts.join('');
 }
 function atCloseModal(){
@@ -7170,8 +7270,15 @@ async function agSaveItem(){
   agCloseModal();
   agLoadList();
 }
+const AG_FINAL_STATUS = { rechnungen:['bezahlt'], angebote:['angenommen','abgelehnt'] };
 async function agDeleteItem(){
   if(!agEditingId) return;
+  const { data: rec, error: statusError } = await sb.from(agType).select('status').eq('id', agEditingId).maybeSingle();
+  if(statusError){ showToast('Fehler: '+statusError.message); return; }
+  if(rec && (AG_FINAL_STATUS[agType]||[]).includes(rec.status)){
+    showToast(agLabel() + ' ist bereits abgeschlossen (' + AG_STATUS[agType][rec.status] + ') und darf laut GoBD nicht gelöscht werden — Status bei Bedarf zuerst ändern.');
+    return;
+  }
   if(!confirm('Diesen Eintrag wirklich löschen?')) return;
   const { error } = await sb.from(agType).delete().eq('id', agEditingId);
   if(error){ showToast('Fehler: '+error.message); return; }
