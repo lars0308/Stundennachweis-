@@ -2,6 +2,26 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<!-- CSP: Inline-Scripts/-Styles sind (noch) über 'unsafe-inline' erlaubt, da die App
+     durchgehend mit onclick-Attributen und inline style="" arbeitet — eine vollständig
+     strikte CSP setzt voraus, dass diese zuerst auf addEventListener/CSS-Klassen
+     umgestellt werden. Bis dahin schützt diese Policy zumindest vor dem Nachladen
+     fremden Codes/fremder Ressourcen von unbekannten Domains sowie vor Clickjacking,
+     Formular-Hijacking und Base-Tag-Manipulation. Host-Liste bei Änderungen an
+     SUPABASE_URL/Drittanbietern hier mitpflegen. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob:;
+  font-src 'self' data:;
+  connect-src 'self' https://wihdoacgqbyxxeejoxsg.supabase.co https://my.sevdesk.de https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com;
+  frame-src https://accounts.google.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'self';
+">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="theme-color" content="#4a6b2a">
 <link rel="manifest" id="pwaManifest">
@@ -11,10 +31,10 @@
 <meta name="apple-mobile-web-app-title" content="Battermann">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Objekt- und Reparaturservice Battermann – Nachweise</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.0/dist/umd/supabase.js" integrity="sha384-3lSoufGjgosjqp3JDr/NReX3PjMd3SlC8wJ23CWFjB6DSFNf71I0DhcRTUm9MwgO" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 
@@ -745,6 +765,7 @@
   .status-badge.abgelehnt{ background:#fdeaea; color:#b91c1c; }
   .status-badge.ueberfaellig{ background:#fdeaea; color:#b91c1c; }
   .status-badge.offline-item{ background:#fdeaea; color:#b91c1c; }
+  .status-badge.storniert{ background:#f1f2f4; color:#6b7280; text-decoration:line-through; }
 
   /* Liste-Suche */
   .modal-search{
@@ -1607,7 +1628,7 @@
 
       <div id="kd_listWrap">
         <section class="card">
-          <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderList()">
+          <input type="text" id="kd_search" class="modal-search" placeholder="Kunde suchen…" oninput="kdRenderListDebounced()">
           <div class="kd-csv-row">
             <button class="kd-csv-link" onclick="document.getElementById('kd_csvInput').click()">CSV importieren</button>
             <span class="kd-csv-sep">·</span>
@@ -1693,7 +1714,7 @@
 
       <section class="card">
         <div class="card-head"><span class="card-head-icon qa-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span><h2>Material verwalten</h2></div>
-        <input type="text" id="mt_search" class="modal-search" placeholder="Material suchen…" oninput="mtRenderList()">
+        <input type="text" id="mt_search" class="modal-search" placeholder="Material suchen…" oninput="mtRenderListDebounced()">
         <div class="btn-row" style="margin-bottom:14px;">
           <button class="btn primary" onclick="mtOpenModal(null)">+ Neues Material</button>
           <button class="btn" onclick="document.getElementById('mt_csvInput').click()">CSV importieren</button>
@@ -1911,7 +1932,7 @@
   <!-- Modal: Auftrag anlegen/bearbeiten -->
   <div class="modal-overlay" id="at_editModal">
     <div class="modal">
-      <button class="modal-x" onclick="atCloseModal()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="atCloseModal()">✕</button>
       <h3 id="at_editTitle">Neuer Auftrag</h3>
       <div class="field">
         <label>Kunde</label>
@@ -1955,7 +1976,7 @@
   <!-- Modal: Angebot/Rechnung anlegen/bearbeiten -->
   <div class="modal-overlay" id="ag_editModal">
     <div class="modal">
-      <button class="modal-x" onclick="agCloseModal()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="agCloseModal()">✕</button>
       <h3 id="ag_editTitle">Neues Angebot</h3>
       <div class="field"><label id="ag_f_nr_label">Nummer</label><input id="ag_f_nr" readonly></div>
       <div class="field">
@@ -2129,7 +2150,7 @@
   <!-- Modal: sevDesk API-Verbindung -->
   <div class="modal-overlay" id="sevdeskModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeSevdeskSettings()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeSevdeskSettings()">✕</button>
       <h3>sevDesk verbinden</h3>
       <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-6px;">
         Verbindet die App mit deinem sevDesk-Konto, damit "Rechnungen offen" und "Angebote offen" auf der Startseite
@@ -2165,7 +2186,7 @@
   <!-- Bestätigung nach Google-Drive-Upload: zeigt klar WO die Datei gelandet ist -->
   <div class="modal-overlay" id="driveSavedModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeDriveSavedConfirmation()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeDriveSavedConfirmation()">✕</button>
       <h3>✓ In Google Drive gespeichert</h3>
       <div id="driveSavedPath" style="font-size:13px;color:var(--text);line-height:1.6;background:#f7f8f6;border-radius:8px;padding:10px 12px;margin-bottom:14px;word-break:break-word;"></div>
       <div class="btn-row">
@@ -2178,7 +2199,7 @@
   <!-- Modal: Archiv der erledigten Aufträge -->
   <div class="modal-overlay" id="erledigteAuftraegeModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeErledigteAuftraege()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeErledigteAuftraege()">✕</button>
       <h3>Erledigte Aufträge</h3>
       <div id="erledigteAuftraegeList"></div>
     </div>
@@ -2187,28 +2208,29 @@
   <!-- Modal: Impressum & Datenschutzerklärung -->
   <div class="modal-overlay" id="legalModal">
     <div class="modal" style="max-height:85vh;overflow-y:auto;">
-      <button class="modal-x" onclick="closeLegalModal()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeLegalModal()">✕</button>
       <h3>Impressum &amp; Datenschutz</h3>
 
       <div style="background:#fdf1e0;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#7a5c10;line-height:1.5;margin-bottom:16px;">
-        ⚠️ Alle mit <b>[…]</b> markierten Angaben sind Platzhalter und müssen durch die echten Unternehmensdaten
-        ersetzt werden — erst dann sind Impressum und Datenschutzerklärung rechtsgültig. Dieser Text ersetzt keine
-        rechtliche Prüfung; bitte vor Verwendung von einer sachkundigen Stelle gegenlesen lassen.
+        ℹ️ Impressum-Angaben übernommen von service-battermann.de (Stand der Übernahme: August 2026).
+        Bei Änderungen der Firmendaten bitte hier und auf der Website gleichermaßen aktualisieren.
       </div>
 
       <h4 style="margin-bottom:6px;">Impressum</h4>
       <p style="font-size:12.5px;color:var(--muted);line-height:1.6;">
         Angaben gemäß § 5 TMG / § 5 DDG<br><br>
         <b>Objekt- und Reparaturservice Battermann</b><br>
-        [Inhaber:in / vertretungsberechtigte Person]<br>
-        [Straße, Hausnummer]<br>
-        [PLZ, Ort]<br><br>
+        Lars Battermann<br>
+        Südstraße 25<br>
+        31698 Lindhorst<br><br>
+        Handwerklicher Objekt- und Reparaturservice, ausgeführt im gesetzlich zulässigen Rahmen für
+        zulassungsfreie bzw. handwerksähnliche Tätigkeiten.<br><br>
         <b>Kontakt</b><br>
-        Telefon: [Telefonnummer]<br>
-        E-Mail: [E-Mail-Adresse]<br><br>
-        <b>Umsatzsteuer-ID</b> (falls vorhanden, gemäß § 27a UStG): [USt-IdNr.]<br>
-        <b>Registereintrag</b> (falls vorhanden): [Registergericht, Registernummer]<br><br>
-        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: [Name, Anschrift wie oben]
+        Telefon: +49 155 / 674 677 63<br>
+        E-Mail: service.battermann@gmx.de<br><br>
+        Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).<br>
+        Registereintrag: keiner<br><br>
+        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Lars Battermann (Anschrift wie oben)
       </p>
 
       <div class="sheet-divider" style="margin:16px 0;"></div>
@@ -2216,7 +2238,9 @@
       <h4 style="margin-bottom:6px;">Datenschutzerklärung</h4>
       <p style="font-size:12.5px;color:var(--muted);line-height:1.6;">
         <b>1. Verantwortlicher</b><br>
-        [Wie im Impressum angegeben].<br><br>
+        Lars Battermann, Objekt- und Reparaturservice Battermann, Südstraße 25, 31698 Lindhorst,
+        E-Mail: service.battermann@gmx.de, Telefon: +49 155 / 674 677 63. Ein separater
+        Datenschutzbeauftragter ist nicht bestellt; Anfragen richten sich direkt an den Verantwortlichen.<br><br>
 
         <b>2. Welche Daten diese App verarbeitet</b><br>
         Zur Auftragsabwicklung und -dokumentation verarbeitet diese App: Kunden-Stammdaten (Name, Adresse,
@@ -2244,7 +2268,7 @@
         (Art. 15–21 DSGVO) sowie ein Beschwerderecht bei der zuständigen Datenschutz-Aufsichtsbehörde.<br><br>
 
         <b>7. Kontakt für Datenschutzanfragen</b><br>
-        [E-Mail-Adresse]
+        service.battermann@gmx.de
       </p>
     </div>
   </div>
@@ -2252,7 +2276,7 @@
   <!-- Modal: Tagesablauf - heutige Termine direkt in Aufgaben umwandeln -->
   <div class="modal-overlay" id="tagesablaufModal">
     <div class="modal">
-      <button class="modal-x" onclick="document.getElementById('tagesablaufModal').classList.remove('open')">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="document.getElementById('tagesablaufModal').classList.remove('open')">✕</button>
       <h3>Tagesablauf</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;" id="ta_dateLine"></p>
       <div id="ta_list"></div>
@@ -2262,7 +2286,7 @@
   <!-- Modal: Kontoumsätze über alle ausgewählten Konten -->
   <div class="modal-overlay" id="kontoUmsaetzeModal">
     <div class="modal">
-      <button class="modal-x" onclick="document.getElementById('kontoUmsaetzeModal').classList.remove('open')">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="document.getElementById('kontoUmsaetzeModal').classList.remove('open')">✕</button>
       <h3>Kontoumsätze</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;">Welche Konten sollen einfließen?</p>
       <div id="umsaetzeAccountToggles" style="margin-bottom:12px;"></div>
@@ -2273,7 +2297,7 @@
   <!-- Modal: Übersicht aller sevDesk-Konten mit Kontostand -->
   <div class="modal-overlay" id="accountsModal">
     <div class="modal">
-      <button class="modal-x" onclick="document.getElementById('accountsModal').classList.remove('open')">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="document.getElementById('accountsModal').classList.remove('open')">✕</button>
       <h3>Konten &amp; Kontostände</h3>
       <div id="accountsModalList"></div>
     </div>
@@ -2282,7 +2306,7 @@
   <!-- Modal: Startseite anpassen (welche Kacheln sichtbar sind) -->
   <div class="modal-overlay" id="dashboardCustomizeModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeDashboardCustomize()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeDashboardCustomize()">✕</button>
       <h3>Startseite anpassen</h3>
       <div class="dc-tabs">
         <div class="dc-tab active" data-tab="bereiche" onclick="dcSwitchTab('bereiche')">Bereiche</div>
@@ -2339,7 +2363,7 @@
   <!-- Modal: App-Einstellungen (Firmendaten, Logo, Farbe) -->
   <div class="modal-overlay" id="appSettingsModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeAppSettingsModal()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeAppSettingsModal()">✕</button>
       <h3>Einstellungen</h3>
       <div class="field"><label>Firmenname</label><input id="as_f_firmenname" type="text"></div>
       <div class="field"><label>Adresse</label><input id="as_f_adresse" type="text"></div>
@@ -2373,7 +2397,7 @@
   <!-- Modal: Gerätesperre einrichten (PIN + optional Biometrie) -->
   <div class="modal-overlay" id="deviceLockModal">
     <div class="modal">
-      <button class="modal-x" onclick="closeDeviceLockSettings()">✕</button>
+      <button class="modal-x" aria-label="Schließen" onclick="closeDeviceLockSettings()">✕</button>
       <h3>Gerätesperre</h3>
       <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-6px;">
         Sperrt die App bei jedem Neuladen, bis ein PIN eingegeben oder per Fingerabdruck/Face-ID
@@ -2438,9 +2462,9 @@
 <!-- Modal: gespeicherte Stunden-/Materialnachweise -->
 <div class="modal-overlay" id="ts_loadModal">
   <div class="modal">
-    <button class="modal-x" onclick="tsCloseLoadModal()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="tsCloseLoadModal()">✕</button>
     <h3>Gespeicherte Nachweise</h3>
-    <input type="text" id="ts_modalSearch" class="modal-search" placeholder="Nach Kunde oder Nr. suchen…" oninput="tsRenderModalList()">
+    <input type="text" id="ts_modalSearch" class="modal-search" placeholder="Nach Kunde oder Nr. suchen…" oninput="tsRenderModalListDebounced()">
     <div id="ts_modalList"></div>
   </div>
 </div>
@@ -2448,9 +2472,9 @@
 <!-- Modal: gespeicherte Installationsprotokolle -->
 <div class="modal-overlay" id="ip_loadModal">
   <div class="modal">
-    <button class="modal-x" onclick="ipCloseLoadModal()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="ipCloseLoadModal()">✕</button>
     <h3>Gespeicherte Protokolle</h3>
-    <input type="text" id="ip_modalSearch" class="modal-search" placeholder="Nach Kunde oder Nr. suchen…" oninput="ipRenderModalList()">
+    <input type="text" id="ip_modalSearch" class="modal-search" placeholder="Nach Kunde oder Nr. suchen…" oninput="ipRenderModalListDebounced()">
     <div id="ip_modalList"></div>
   </div>
 </div>
@@ -2459,9 +2483,9 @@
 <!-- Modal: Unterschriften-Pop-up (groß, damit der Handballen beim Signieren nicht stört) -->
 <div class="modal-overlay" id="sigPadModal">
   <div class="modal">
-    <button class="modal-x" onclick="closeSigPadModal()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="closeSigPadModal()">✕</button>
     <h3 id="sigPadModalTitle">Unterschrift</h3>
-    <canvas id="sigPadModalCanvas"></canvas>
+    <canvas id="sigPadModalCanvas" role="img" aria-label="Unterschriftenfeld — mit Finger oder Stift unterschreiben"></canvas>
     <p class="sigpad-hint">Mit Finger oder Stift unterschreiben. Der Bildschirmrand kann dabei berührt werden.</p>
     <div class="btn-row" style="margin-top:12px;">
       <button class="btn" onclick="sigPadModalClear()">Löschen</button>
@@ -2473,7 +2497,7 @@
 <!-- Modal: Ausführungsprotokoll mit einbeziehen? -->
 <div class="modal-overlay" id="includeIpModal">
   <div class="modal">
-    <button class="modal-x" onclick="resolveIncludeIp(false)">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="resolveIncludeIp(false)">✕</button>
     <h3>Ausführungsprotokoll mit einbeziehen?</h3>
     <p style="font-size:13px;color:var(--muted);line-height:1.5;">Im Ausführungsprotokoll stehen bereits Daten. Soll es zusätzlich zum Stundennachweis mit ins PDF bzw. die E-Mail?</p>
     <div class="btn-row" style="margin-top:16px;">
@@ -2486,7 +2510,7 @@
 <!-- Modal: Auftrag abgeschlossen -->
 <div class="modal-overlay" id="completeModal">
   <div class="modal">
-    <button class="modal-x" onclick="closeCompleteModal()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="closeCompleteModal()">✕</button>
     <h3 id="completeModalTitle">Auftrag abgeschlossen</h3>
     <p id="completeModalText" style="font-size:13px;color:var(--muted);line-height:1.5;"></p>
     <div class="btn-row" style="margin-top:16px;">
@@ -2497,7 +2521,7 @@
 
 <div class="modal-overlay" id="kd_editModal">
   <div class="modal" style="max-width:560px;">
-    <button class="modal-x" onclick="kdCloseEdit()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="kdCloseEdit()">✕</button>
     <h3 id="kd_editTitle">Neuer Kunde</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div class="field"><label>Name / Auftraggeber</label><input id="kd_f_name" type="text"></div>
@@ -2562,7 +2586,7 @@
 <!-- Modal: Material anlegen/bearbeiten -->
 <div class="modal-overlay" id="mt_editModal">
   <div class="modal" style="max-width:480px;">
-    <button class="modal-x" onclick="mtCloseEdit()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="mtCloseEdit()">✕</button>
     <h3 id="mt_editTitle">Neues Material</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div class="field">
@@ -2593,7 +2617,7 @@
 <!-- Modal: QR-/Barcode-Scanner -->
 <div class="modal-overlay" id="mt_scanModal">
   <div class="modal">
-    <button class="modal-x" onclick="mtStopScan()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="mtStopScan()">✕</button>
     <h3>Code scannen</h3>
     <video id="mt_scanVideo" style="width:100%;border-radius:8px;background:#000;" playsinline autoplay muted></video>
     <p id="mt_scanStatus" style="font-size:12.5px;color:var(--muted);margin-top:10px;">Kamera wird gestartet…</p>
@@ -2603,7 +2627,7 @@
 <!-- Modal: Hinweis/Checklisten-Punkt hinzufügen -->
 <div class="modal-overlay" id="ip_checkPickerModal">
   <div class="modal">
-    <button class="modal-x" onclick="ipCloseCheckPicker()">✕</button>
+    <button class="modal-x" aria-label="Schließen" onclick="ipCloseCheckPicker()">✕</button>
     <h3>Hinweis hinzufügen</h3>
     <p style="font-size:11.5px;color:var(--muted);margin:0 0 10px;">Vorlage antippen zum Hinzufügen, oder eigenen Text unten eingeben.</p>
     <div id="ip_checkTemplateList" style="display:flex;flex-direction:column;gap:6px;"></div>
@@ -2718,15 +2742,23 @@ function setLocked(prefix, locked){
 }
 
 async function tsUnlock(){
-  if(!confirm('Bearbeitung wirklich freigeben? Der Nachweis gilt danach wieder als Entwurf (offen).')) return;
-  const { error } = await sb.from('timesheets').update({ status:'offen' }).eq('id', tsCurrentId);
+  const grund = prompt('Bearbeitung wirklich freigeben? Der Nachweis gilt danach wieder als Entwurf (offen).\nGrund für die erneute Öffnung (Pflichtangabe, wird protokolliert):', '');
+  if(!grund) return;
+  const { data: cur } = await sb.from('timesheets').select('aenderungen').eq('id', tsCurrentId).maybeSingle();
+  const log = Array.isArray(cur && cur.aenderungen) ? [...cur.aenderungen] : [];
+  log.push({ aktion:'wieder geöffnet', grund, zeitpunkt: new Date().toISOString() });
+  const { error } = await sb.from('timesheets').update({ status:'offen', aenderungen: log }).eq('id', tsCurrentId);
   if(error){ showToast('Fehler: '+error.message); return; }
   setLocked('stunden', false);
   showToast('Bearbeitung freigegeben');
 }
 async function ipUnlock(){
-  if(!confirm('Bearbeitung wirklich freigeben? Das Protokoll gilt danach wieder als Entwurf (offen).')) return;
-  const { error } = await sb.from('protocols').update({ status:'offen' }).eq('id', ipCurrentId);
+  const grund = prompt('Bearbeitung wirklich freigeben? Das Protokoll gilt danach wieder als Entwurf (offen).\nGrund für die erneute Öffnung (Pflichtangabe, wird protokolliert):', '');
+  if(!grund) return;
+  const { data: cur } = await sb.from('protocols').select('aenderungen').eq('id', ipCurrentId).maybeSingle();
+  const log = Array.isArray(cur && cur.aenderungen) ? [...cur.aenderungen] : [];
+  log.push({ aktion:'wieder geöffnet', grund, zeitpunkt: new Date().toISOString() });
+  const { error } = await sb.from('protocols').update({ status:'offen', aenderungen: log }).eq('id', ipCurrentId);
   if(error){ showToast('Fehler: '+error.message); return; }
   setLocked('installation', false);
   showToast('Bearbeitung freigegeben');
@@ -2748,6 +2780,21 @@ function escAttr(s){
 function escJsAttr(s){
   return escAttr((s===null||s===undefined?'':s).toString().replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
 }
+/* Verzögert Aufrufe von fn, bis `delay` ms lang keine weitere Eingabe kam —
+   verhindert, dass Live-Suchfelder bei jedem Tastendruck ein volles
+   Re-Render (bzw. bei tsRenderModalList/ipRenderModalList sogar eine neue
+   Supabase-Abfrage) auslösen. */
+function debounce(fn, delay){
+  let timer;
+  return function(...args){
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+const kdRenderListDebounced = debounce(() => kdRenderList(), 300);
+const mtRenderListDebounced = debounce(() => mtRenderList(), 300);
+const tsRenderModalListDebounced = debounce(() => tsRenderModalList(), 300);
+const ipRenderModalListDebounced = debounce(() => ipRenderModalList(), 300);
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -3978,7 +4025,12 @@ async function tsDeleteTimesheet(id){
   const { data: rec, error: statusError } = await sb.from('timesheets').select('status').eq('id', id).maybeSingle();
   if(statusError){ showToast('Fehler: '+statusError.message); return; }
   if(rec && rec.status === 'abgeschlossen'){
-    showToast('Abgeschlossene Nachweise sind schreibgeschützt (GoBD) — bitte zuerst öffnen und "Bearbeitung freigeben", dann löschen.');
+    const grund = prompt('Dieser Nachweis ist abgeschlossen und darf laut GoBD nicht gelöscht werden.\nStattdessen stornieren — er bleibt sichtbar/nachvollziehbar, zählt aber nicht mehr. Grund (Pflichtangabe):', '');
+    if(!grund) return;
+    const { error } = await sb.from('timesheets').update({ storniert:true, storno_grund:grund, storno_am: new Date().toISOString() }).eq('id', id);
+    if(error){ showToast('Fehler: '+error.message); return; }
+    await tsRenderModalList();
+    showToast('Nachweis storniert');
     return;
   }
   if(!confirm('Diesen Nachweis wirklich löschen?')) return;
@@ -4043,7 +4095,7 @@ async function tsRenderModalList(){
       div.className = 'trip-card';
       const statusBadge = t._offline
         ? '<span class="status-badge offline-item">Offline · wartet</span>'
-        : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
+        : (t.storniert ? '<span class="status-badge storniert">Storniert</span>' : (t.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>'));
       const thumbs = (t.fotos || []).slice(0,4);
       const thumbsHtml = thumbs.length
         ? `<div class="photo-grid" style="margin-top:8px;">${thumbs.map(src => `<div class="photo-thumb" style="width:52px;height:52px;"><img src="${src}"></div>`).join('')}${(t.fotos||[]).length > 4 ? `<div class="photo-thumb" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;">+${t.fotos.length - 4}</div>` : ''}</div>`
@@ -4058,8 +4110,8 @@ async function tsRenderModalList(){
         <div class="btn-row">
           <button class="btn small primary" onclick="tsLoadTimesheet('${t.id}')">Öffnen</button>
           <button class="btn small" onclick="tsOpenAndPrint('${t.id}')">PDF</button>
-          <button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Vorlage</button>
-          <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>
+          ${t.storniert ? '' : `<button class="btn small" onclick="tsCopyAsNew('${t.id}')" title="Kundendaten & Material übernehmen, neuer Nachweis">Vorlage</button>
+          <button class="btn small danger" onclick="tsDeleteTimesheet('${t.id}')">Löschen</button>`}
         </div>
       `;
       details.appendChild(div);
@@ -4558,7 +4610,12 @@ async function ipDeleteProtocol(id){
   const { data: rec, error: statusError } = await sb.from('protocols').select('status').eq('id', id).maybeSingle();
   if(statusError){ showToast('Fehler: '+statusError.message); return; }
   if(rec && rec.status === 'abgeschlossen'){
-    showToast('Abgeschlossene Protokolle sind schreibgeschützt (GoBD) — bitte zuerst öffnen und "Bearbeitung freigeben", dann löschen.');
+    const grund = prompt('Dieses Protokoll ist abgeschlossen und darf laut GoBD nicht gelöscht werden.\nStattdessen stornieren — es bleibt sichtbar/nachvollziehbar, zählt aber nicht mehr. Grund (Pflichtangabe):', '');
+    if(!grund) return;
+    const { error } = await sb.from('protocols').update({ storniert:true, storno_grund:grund, storno_am: new Date().toISOString() }).eq('id', id);
+    if(error){ showToast('Fehler: '+error.message); return; }
+    await ipRenderModalList();
+    showToast('Protokoll storniert');
     return;
   }
   if(!confirm('Dieses Protokoll wirklich löschen?')) return;
@@ -4599,7 +4656,7 @@ async function ipRenderModalList(){
       div.className = 'trip-card';
       const statusBadge = p._offline
         ? '<span class="status-badge offline-item">Offline · wartet</span>'
-        : (p.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
+        : (p.storniert ? '<span class="status-badge storniert">Storniert</span>' : (p.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>'));
       div.innerHTML = `
         <div class="trip-card-top">
           <span class="trip-card-date">${escAttr(p.nr || 'Ohne Nr.')}</span>
@@ -4609,8 +4666,8 @@ async function ipRenderModalList(){
         <div class="btn-row">
           <button class="btn small primary" onclick="ipLoadProtocol('${p.id}')">Öffnen</button>
           <button class="btn small" onclick="ipOpenAndPrint('${p.id}')">PDF</button>
-          <button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Vorlage</button>
-          <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>
+          ${p.storniert ? '' : `<button class="btn small" onclick="ipCopyAsNew('${p.id}')" title="Kundendaten übernehmen, neues Protokoll">Vorlage</button>
+          <button class="btn small danger" onclick="ipDeleteProtocol('${p.id}')">Löschen</button>`}
         </div>
       `;
       details.appendChild(div);
@@ -6222,7 +6279,7 @@ async function kdLoadLetzterAuftrag(c){
     return;
   }
   const r = items[0];
-  const badge = r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>';
+  const badge = r.storniert ? '<span class="status-badge storniert">Storniert</span>' : (r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
   wrap.innerHTML = `
     <div class="modal-item">
       <div class="info">
@@ -6263,6 +6320,10 @@ function kdRenderDetailTiles(c){
     <button class="kd-tile" onclick="kdOpenModal('${c.id}')">
       <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></span>
       <span>Kundendaten bearbeiten</span>
+    </button>
+    <button class="kd-tile" onclick="kdExportCustomerData()" title="Alle zu diesem Kunden gespeicherten Daten als JSON-Datei herunterladen (Art. 20 DSGVO)">
+      <span class="kd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+      <span>Daten exportieren (DSGVO)</span>
     </button>
     ${sevdeskConnected() ? `
     <button class="kd-tile" onclick="pushSingleCustomerToSevdesk('${c.id}')">
@@ -6320,7 +6381,7 @@ function kdRenderBerichteList(){
   const items = kdBerichteFilter === 'alle' ? kdBerichteItems : kdBerichteItems.filter(r => r._type === kdBerichteFilter);
   if(!items.length){ wrap.innerHTML = '<div class="empty-note">Nichts in dieser Ansicht.</div>'; return; }
   wrap.innerHTML = items.map(r => {
-    const badge = r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>';
+    const badge = r.storniert ? '<span class="status-badge storniert">Storniert</span>' : (r.status === 'abgeschlossen' ? '<span class="status-badge abgeschlossen">Abgeschlossen</span>' : '<span class="status-badge offen">Offen</span>');
     const typeLabel = r._type === 'ts' ? 'Stundennachweis' : 'Protokoll';
     const openFn = r._type === 'ts' ? `tsOpenAndPrint('${r.id}')` : `ipOpenAndPrint('${r.id}')`;
     return `
@@ -6356,6 +6417,35 @@ async function kdLoadBerichte(){
   kdBerichteItems = items;
   if(!items.length){ wrap.innerHTML = '<div class="empty-note">Noch keine Nachweise oder Protokolle zu diesem Kunden.</div>'; return; }
   kdRenderBerichteList();
+}
+/* ---------- DSGVO: vollständiger Datenexport für einen Kunden (Art. 20 DSGVO) ---------- */
+async function kdExportCustomerData(){
+  const c = kdDetailCustomer;
+  if(!c) return;
+  showToast('Exportiere Kundendaten…');
+  const [objRes, tsRes, ipRes] = await Promise.all([
+    sb.from('objekte').select('*').eq('customer_id', c.id),
+    sb.from('timesheets').select('*').eq('auftraggeber', c.name),
+    sb.from('protocols').select('*').eq('auftraggeber', c.name)
+  ]);
+  const exportData = {
+    hinweis: 'Vollständiger Datenexport gemäß Art. 20 DSGVO (Recht auf Datenübertragbarkeit)',
+    exportiert_am: new Date().toISOString(),
+    kunde: c,
+    objekte: objRes.data || [],
+    stundennachweise: tsRes.data || [],
+    protokolle: ipRes.data || []
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Datenexport_${(c.name||'Kunde').replace(/[^\w\-]+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Export heruntergeladen');
 }
 /* ---------- Tab "Fotos": eigene Fotos + alle Fotos aus Nachweisen & Protokollen dieses Kunden ---------- */
 let kdFotoList = [];
@@ -7198,7 +7288,7 @@ function agRenderList(){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
         <div style="font-weight:700;font-size:13px;color:var(--text);">${fmtMoney(a.betrag)}</div>
-        <span class="status-badge ${a.status}">${a._sevdeskLabel || statuses[a.status] || a.status}</span>
+        <span class="status-badge ${a.storniert ? 'storniert' : a.status}">${a.storniert ? 'Storniert' : (a._sevdeskLabel || statuses[a.status] || a.status)}</span>
         ${readonly ? '<span style="font-size:10px;color:var(--muted);">PDF ansehen ›</span>' : ''}
       </div>
     </div>
@@ -7276,7 +7366,13 @@ async function agDeleteItem(){
   const { data: rec, error: statusError } = await sb.from(agType).select('status').eq('id', agEditingId).maybeSingle();
   if(statusError){ showToast('Fehler: '+statusError.message); return; }
   if(rec && (AG_FINAL_STATUS[agType]||[]).includes(rec.status)){
-    showToast(agLabel() + ' ist bereits abgeschlossen (' + AG_STATUS[agType][rec.status] + ') und darf laut GoBD nicht gelöscht werden — Status bei Bedarf zuerst ändern.');
+    const grund = prompt(agLabel() + ' ist bereits abgeschlossen (' + AG_STATUS[agType][rec.status] + ') und darf laut GoBD nicht gelöscht werden.\nStattdessen stornieren — bleibt sichtbar/nachvollziehbar, zählt aber nicht mehr. Grund (Pflichtangabe):', '');
+    if(!grund) return;
+    const { error } = await sb.from(agType).update({ storniert:true, storno_grund:grund, storno_am: new Date().toISOString() }).eq('id', agEditingId);
+    if(error){ showToast('Fehler: '+error.message); return; }
+    showToast(agLabel() + ' storniert');
+    agCloseModal();
+    agLoadList();
     return;
   }
   if(!confirm('Diesen Eintrag wirklich löschen?')) return;
@@ -7374,6 +7470,26 @@ async function sha256Hex(str){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
+/* Salt + PBKDF2 statt reinem SHA-256: ein ungesalzener Hash einer 4-6-stelligen
+   PIN lässt sich offline in Sekundenbruchteilen durchprobieren (max. 10^6
+   Kombinationen). Der Salt verhindert vorberechnete Tabellen, die hohe
+   Iterationszahl macht jeden einzelnen Versuch spürbar teurer. */
+function deviceLockPinSalt(){
+  let s = localStorage.getItem('deviceLockPinSalt');
+  if(!s){
+    s = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('deviceLockPinSalt', s);
+  }
+  return s;
+}
+async function hashPin(pin){
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: new TextEncoder().encode(deviceLockPinSalt()), iterations: 150000, hash: 'SHA-256' },
+    keyMaterial, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 function deviceLockEnabled(){ return localStorage.getItem('deviceLockEnabled') === '1'; }
 function deviceLockCredId(){ return localStorage.getItem('deviceLockCredId') || ''; }
 function openDeviceLockSettings(){
@@ -7395,8 +7511,11 @@ async function enableDeviceLock(){
   const p2 = document.getElementById('dl_f_pin2').value.trim();
   if(!/^\d{4,6}$/.test(p1)){ showToast('PIN muss 4–6 Ziffern haben'); return; }
   if(p1 !== p2){ showToast('PINs stimmen nicht überein'); return; }
-  localStorage.setItem('deviceLockPinHash', await sha256Hex(p1));
+  localStorage.removeItem('deviceLockPinSalt');
+  localStorage.setItem('deviceLockPinHash', await hashPin(p1));
   localStorage.setItem('deviceLockEnabled', '1');
+  localStorage.removeItem('deviceLockFailCount');
+  localStorage.removeItem('deviceLockLockedUntil');
   updateDeviceLockStatusLabel();
   showToast('Gerätesperre aktiviert');
   openDeviceLockSettings();
@@ -7406,6 +7525,9 @@ function disableDeviceLock(){
   localStorage.removeItem('deviceLockEnabled');
   localStorage.removeItem('deviceLockPinHash');
   localStorage.removeItem('deviceLockCredId');
+  localStorage.removeItem('deviceLockPinSalt');
+  localStorage.removeItem('deviceLockFailCount');
+  localStorage.removeItem('deviceLockLockedUntil');
   updateDeviceLockStatusLabel();
   showToast('Gerätesperre deaktiviert');
   closeDeviceLockSettings();
@@ -7457,12 +7579,28 @@ async function tryBiometricUnlock(){
   }
 }
 async function attemptPinUnlock(){
+  const lockedUntil = parseInt(localStorage.getItem('deviceLockLockedUntil') || '0', 10);
+  if(lockedUntil > Date.now()){
+    const secs = Math.ceil((lockedUntil - Date.now()) / 1000);
+    document.getElementById('dl_unlockError').textContent = `Zu viele Fehlversuche — bitte in ${secs}s erneut versuchen`;
+    return;
+  }
   const pin = document.getElementById('dl_unlockPin').value.trim();
-  const hash = await sha256Hex(pin);
+  const hash = await hashPin(pin);
   if(hash === localStorage.getItem('deviceLockPinHash')){
+    localStorage.removeItem('deviceLockFailCount');
+    localStorage.removeItem('deviceLockLockedUntil');
     unlockDevice();
   } else {
-    document.getElementById('dl_unlockError').textContent = 'Falscher PIN';
+    const fails = parseInt(localStorage.getItem('deviceLockFailCount') || '0', 10) + 1;
+    localStorage.setItem('deviceLockFailCount', String(fails));
+    if(fails >= 5){
+      const lockSeconds = Math.min(30 * Math.pow(2, fails - 5), 3600);
+      localStorage.setItem('deviceLockLockedUntil', String(Date.now() + lockSeconds * 1000));
+      document.getElementById('dl_unlockError').textContent = `Zu viele Fehlversuche — gesperrt für ${lockSeconds}s`;
+    } else {
+      document.getElementById('dl_unlockError').textContent = 'Falscher PIN';
+    }
     document.getElementById('dl_unlockPin').value = '';
   }
 }
