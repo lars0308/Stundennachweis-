@@ -2254,10 +2254,11 @@
         (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse).<br><br>
 
         <b>4. Empfänger / Auftragsverarbeiter</b><br>
-        Für den Betrieb dieser App werden folgende Dienste eingesetzt: Supabase (Datenbank-Hosting),
-        optional Google Drive (Foto-/PDF-Sicherung, sofern aktiviert) und optional sevDesk (Rechnungswesen,
-        sofern verbunden). Mit diesen Anbietern sollte jeweils ein Auftragsverarbeitungsvertrag (AVV) nach
-        Art. 28 DSGVO vorliegen — bitte Status prüfen bzw. Verträge abschließen, falls noch nicht geschehen.<br><br>
+        Für den Betrieb dieser App werden folgende Dienste eingesetzt: Supabase (Datenbank-Hosting, Server
+        in der EU-Region Irland/eu-west-1), optional Google Drive (Foto-/PDF-Sicherung, sofern aktiviert) und
+        optional sevDesk (Rechnungswesen, sofern verbunden). Mit diesen Anbietern sollte jeweils ein
+        Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO vorliegen — bitte Status prüfen bzw. Verträge
+        abschließen, falls noch nicht geschehen.<br><br>
 
         <b>5. Speicherdauer</b><br>
         [Aufbewahrungsfrist festlegen — gesetzliche Aufbewahrungspflichten für Geschäftsunterlagen aus HGB/AO
@@ -2816,19 +2817,18 @@ function downloadCsv(rows, filename){
   URL.revokeObjectURL(url);
 }
 async function nextNumber(table, column, prefix){
+  /* Serverseitige, atomare Nummernvergabe (Postgres-Funktion next_beleg_nummer,
+     race-sicher via INSERT ... ON CONFLICT DO UPDATE). Ersetzt die frühere
+     Client-seitige "Maximalwert+1"-Abfrage, die bei gleichzeitigen Anfragen
+     doppelte Nummern erzeugen konnte. */
   const year = new Date().getFullYear();
   const fullPrefix = prefix + '-' + year + '-';
-  const { data, error } = await sb.from(table).select(column).ilike(column, fullPrefix + '%');
-  if(error || !data) return fullPrefix + '001';
-  let max = 0;
-  data.forEach(r => {
-    const v = r[column] || '';
-    if(v.startsWith(fullPrefix)){
-      const n = parseInt(v.slice(fullPrefix.length), 10);
-      if(!isNaN(n) && n > max) max = n;
-    }
-  });
-  return fullPrefix + String(max+1).padStart(3,'0');
+  const { data, error } = await sb.rpc('next_beleg_nummer', { p_table: table, p_column: column, p_prefix: prefix });
+  if(error || !data){
+    showToast('Nummernvergabe fehlgeschlagen — bitte Nummer manuell prüfen (' + (error ? error.message : 'unbekannter Fehler') + ')');
+    return fullPrefix + '001';
+  }
+  return data;
 }
 
 /* ---------- Unterschriften-Pads (kanalunabhängig, per canvasId) ---------- */
