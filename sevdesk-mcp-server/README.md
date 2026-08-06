@@ -19,9 +19,12 @@ GoBD-Gründen nach dem endgültigen Versand nicht mehr einfach gelöscht werden 
 
 ### 1. Projekt herunterladen und bauen
 
+Der Server liegt im Branch `sevdesk-mcp-server` des Stundennachweis-Repos, im
+Unterordner `sevdesk-mcp-server/`:
+
 ```bash
-git clone https://github.com/<DEIN-GITHUB-NAME>/sevdesk-mcp-server.git
-cd sevdesk-mcp-server
+git clone -b sevdesk-mcp-server https://github.com/lars0308/Stundennachweis-.git
+cd Stundennachweis-/sevdesk-mcp-server
 npm install
 npm run build
 ```
